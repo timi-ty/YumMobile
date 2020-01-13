@@ -39,7 +39,7 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_nearRestaurants"
             android:layout_width="0dp"
-            android:layout_height="800dp"
+            android:layout_height="600dp"
             android:layout_marginTop="8dp"
             app:layout_constraintEnd_toStartOf="@+id/guideline16"
             app:layout_constraintStart_toStartOf="@+id/guideline15"

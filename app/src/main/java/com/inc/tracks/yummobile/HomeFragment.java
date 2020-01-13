@@ -80,7 +80,7 @@ public class HomeFragment extends Fragment{
             rvRestaurantList.setAdapter(restaurantsAdapter);
         }
 
-        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+        if(fragView.getId() == R.id.layout_landHome){
             rvRecentOrders.setLayoutManager(new LinearLayoutManager(fragView.getContext(),
                     LinearLayoutManager.VERTICAL, false));
             rvRecentOrders.setAdapter(new RecentOrdersRVAdapter());
