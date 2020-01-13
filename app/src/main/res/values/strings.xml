@@ -1,0 +1,77 @@
+<resources>
+    <string name="app_name">Yum Mobile</string>
+    <string name="hint_phone">Phone</string>
+    <string name="hint_password">Password</string>
+    <string name="switch_account">Switch account</string>
+    <string name="title_activity_home_page">HomePage</string>
+    <string name="title_home">Home</string>
+    <string name="title_catalogue">Catalogue</string>
+    <string name="title_active_orders">Active Orders</string>
+    <string name="done">Done</string>
+    <string name="switch_account_Q">Clicked on the wrong account?</string>
+    <string name="username">Username</string>
+    <string name="title_recent_orders">Recent Orders</string>
+    <string name="recently_bought_food">Recently Bought Food</string>
+    <string name="sample_restaurant_name">Yummy Restaurant</string>
+    <string name="sample_description">Your one stop for all things dangerously sweet.</string>
+    <string name="sample_address">13/14 Savory Street, Glaze Town, Lagos.</string>
+    <string name="title_restaurants">Restaurants</string>
+    <string name="dont_got_account_Q">Don\'t have an account?</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="sample_food">Yummy Food</string>
+    <string name="sample_food_desc">Nice food with nice ingredients.</string>
+    <string name="sample_extra_detail">Excessively long text to demonstrate the description
+    of a food item or restaurant: \n
+        1. Description item one \n
+        2. Description item two \n
+        3. Description item three \n
+        4. Description item four \n
+        5. Description item five \n
+        6. Description item six</string>
+    <string name="title_close_restaurants">Restaurants Close To You</string>
+    <string name="title_food_menu">Menu</string>
+    <string name="search_prompt">Search For Restaurants</string>
+    <string name="my_account">My Account</string>
+    <string name="settings">Settings</string>
+    <string name="my_cart">My Cart</string>
+    <string name="drawer">Drawer</string>
+    <string name="open">Open</string>
+    <string name="close">Close</string>
+    <string name="title_my_address">My Address</string>
+    <string name="title_my_orders">My Orders</string>
+    <string name="title_support">Support</string>
+    <string name="title_about">About</string>
+    <string name="title_keep_shopping">Keep Shopping</string>
+    <string name="tag_proceed_to_checkout">Proceed To Checkout</string>
+    <string name="title_payment_methods">Payment Methods</string>
+    <string name="desc_cart_food">About To Buy This Food</string>
+    <string name="desc_sample_checkout">You are buying some food from this restaurant</string>
+    <string name="sample_food_price">N500.00</string>
+    <string name="prompt_card_payment">Pay With Card</string>
+    <string name="title_total">Total</string>
+    <string name="sample_total_price">N2500.00</string>
+    <string name="prompt_delivery_payment">Pay On Delivery</string>
+    <string name="msg_order_complete">Your food is on the way!\n\nWould you like to save this order?</string>
+    <string name="prompt_save_order">Save Order?</string>
+    <string name="sample_desc_active_order">Yummy food from Yummy Restaurant is on its way</string>
+    <string name="prompt_view_more">view more+</string>
+    <string name="sample_greeting">Hello, User</string>
+    <string name="title_sign_out">Sign Out</string>
+    <string name="title_manage_services">Manage Services</string>
+    <string name="manage_restaurants">Manage Restaurants</string>
+    <string name="manage_orders">Manage Orders</string>
+    <string name="hint_restaurant_name">Restaurant Name</string>
+    <string name="hint_restaurant_description">Restaurant Description</string>
+    <string name="hint_restaurant_address">Restaurant Address</string>
+    <string name="btn_upload_Image">Upload Image</string>
+    <string name="save_restaurant">Save Restaurant</string>
+    <string name="manage_menu">Manage Menu</string>
+    <string name="hint_food_name">Food Name</string>
+    <string name="hint_food_description">Food Description</string>
+    <string name="hint_price">Price In Naira</string>
+    <string name="save">Save</string>
+    <string name="sample_price">5000</string>
+    <string name="default_count">0</string>
+</resources>
