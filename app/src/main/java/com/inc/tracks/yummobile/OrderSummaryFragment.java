@@ -10,8 +10,8 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -30,11 +30,17 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
     private HashMap<String, HashMap<String, Integer>> orderGroups;
 
+    private HashMap<String, Integer> groupsPrices = new HashMap<>();
+
+    private HashMap<String, String> groupsDescs = new HashMap<>();
+
     private OnFragmentInteractionListener mListener;
 
     private ConstraintLayout btnCardPay;
 
     private ConstraintLayout btnDeliveryPay;
+
+    private ProgressBar pbLoading;
 
     private TextView tvTotalPrice;
 
@@ -74,12 +80,14 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         btnCardPay =  fragView.findViewById(R.id.btn_cardPay);
         btnDeliveryPay = fragView.findViewById(R.id.btn_deliveryPay);
 
+        pbLoading  = fragView.findViewById(R.id.pb_orderSummary);
+
         return fragView;
     }
 
     private void onButtonPressed(int buttonId) {
         if (mListener != null) {
-            mListener.onFragmentInteraction(buttonId, orderGroups);
+            mListener.onFragmentInteraction(buttonId, orderGroups, groupsPrices, groupsDescs);
         }
     }
 
@@ -107,13 +115,16 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
 
     public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(int buttonId, HashMap orderGroups);
+        void onFragmentInteraction(int buttonId, HashMap orderGroups,
+                                   HashMap groupPrices, HashMap groupDescriptions);
     }
 
-    private void setPaymentOptions(HashMap groupPrices){
-        if(groupPrices.size() == orderGroups.size()){
+    private void setPaymentOptions(){
+        if(groupsPrices.size() == orderGroups.size()){
             btnDeliveryPay.setVisibility(View.VISIBLE);
             btnCardPay.setVisibility(View.VISIBLE);
+
+            pbLoading.setVisibility(View.INVISIBLE);
 
             btnCardPay.setOnClickListener(this);
             btnCardPay.setOnClickListener(this);
@@ -121,16 +132,14 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         else{
             btnDeliveryPay.setVisibility(View.INVISIBLE);
             btnCardPay.setVisibility(View.INVISIBLE);
+
+            pbLoading.setVisibility(View.VISIBLE);
         }
     }
 
     public class OrderSummaryRVAdapter extends RecyclerView.Adapter<OrderSummaryRVAdapter.RstViewHolder>{
 
         private List<RestaurantItem> restaurantItems = new ArrayList<>();
-
-        private HashMap<String, Integer> groupsPrices = new HashMap<>();
-
-        private HashMap<String, String> groupsDescs = new HashMap<>();
 
         OrderSummaryRVAdapter(){
             ArrayList<String> groups = new ArrayList<>(orderGroups.keySet());
@@ -182,6 +191,8 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
                                 groupsPrices.put(group, price);
 
                                 groupsDescs.put(group, strDesc.toString());
+
+                                setPaymentOptions();
 
                                 notifyDataSetChanged();
                             }

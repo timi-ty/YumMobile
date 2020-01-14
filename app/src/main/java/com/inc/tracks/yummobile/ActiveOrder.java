@@ -10,10 +10,13 @@ public class ActiveOrder implements Serializable {
     public ActiveOrder(){}
 
     public ActiveOrder(String clientId, String restaurantId,
-                       HashMap<String, Integer> orderItems, Timestamp timestamp) {
+                       HashMap<String, Integer> orderItems, int cost,
+                       String description, Timestamp timestamp) {
         this.clientId = clientId;
         this.restaurantId = restaurantId;
         this.orderItems = orderItems;
+        this.cost = cost;
+        this.description = description;
         this.timestamp = timestamp;
     }
 
@@ -24,6 +27,10 @@ public class ActiveOrder implements Serializable {
     private String restaurantId;
 
     private HashMap<String, Integer> orderItems;
+
+    private int cost;
+
+    private String description;
 
     private Timestamp timestamp;
 
@@ -62,5 +69,21 @@ public class ActiveOrder implements Serializable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public int getCost() {
+        return cost;
+    }
+
+    public void setCost(int cost) {
+        this.cost = cost;
     }
 }

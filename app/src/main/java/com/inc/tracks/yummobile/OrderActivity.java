@@ -72,31 +72,33 @@ public class OrderActivity extends AppCompatActivity implements
         return true;
     }
 
-    @SuppressWarnings("unchecked")
+
     @Override
     public void onFragmentInteraction(int buttonId, HashMap orderGroups) {
-        switch (buttonId){
-            case R.id.btn_checkout:
-                goToOrderSummaryFragment(orderGroups);
-                break;
-            case R.id.btn_cardPay:
-            case R.id.btn_deliveryPay:
-                if(takePayments()){
-                    confirmOrder(orderGroups);
-                }
-                break;
+        if (buttonId == R.id.btn_checkout) {
+            goToOrderSummaryFragment(orderGroups);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void confirmOrder(final HashMap<String, HashMap> orderGroups){
+    private void confirmOrder(final HashMap<String, HashMap> orderGroups,
+                              HashMap<String, Integer> groupPrices,
+                              HashMap<String, String> groupDescs){
         FirebaseFirestore fireDB = FirebaseFirestore.getInstance();
 
         ArrayList<String> restaurantIds = new ArrayList<>(orderGroups.keySet());
 
         for(String restaurantId : restaurantIds){
-            ActiveOrder activeOrder = new ActiveOrder(UserAuth.currentUser.getUid(),
-                    restaurantId, orderGroups.get(restaurantId), Timestamp.now());
+
+            String clientId = UserAuth.currentUser.getUid();
+            HashMap orderItems = orderGroups.get(restaurantId);
+            Integer cost = groupPrices.get(restaurantId);
+            String description = groupDescs.get(restaurantId);
+
+            assert cost != null;
+
+            ActiveOrder activeOrder = new ActiveOrder(clientId, restaurantId, orderItems,
+                    cost, description, Timestamp.now());
 
             String uniqueOrderId = activeOrder.getClientId() + activeOrder.getRestaurantId()
                     + activeOrder.getTimestamp().hashCode();
@@ -110,6 +112,20 @@ public class OrderActivity extends AppCompatActivity implements
                                     goToOrderCompleteFragment(orderGroups);
                                 }
                             });
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void onFragmentInteraction(int buttonId, HashMap orderGroups,
+                                      HashMap groupPrices, HashMap groupDescriptions) {
+        switch (buttonId){
+            case R.id.btn_cardPay:
+            case R.id.btn_deliveryPay:
+                if(takePayments()){
+                    confirmOrder(orderGroups, groupPrices, groupDescriptions);
+                }
+                break;
         }
     }
 }
