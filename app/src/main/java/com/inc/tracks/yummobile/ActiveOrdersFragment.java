@@ -176,6 +176,9 @@ public class ActiveOrdersFragment extends Fragment {
 
             MenuItemViewHolder(@NonNull View itemView) {
                 super(itemView);
+
+                tvDescription = itemView.findViewById(R.id.tv_orderDesc);
+                imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
             }
 
             void bindView(final ActiveOrder activeOrder){
