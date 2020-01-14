@@ -1,6 +1,7 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
+import android.graphics.drawable.shapes.PathShape;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,6 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class ActiveOrdersFragment extends Fragment {
@@ -69,6 +71,7 @@ public class ActiveOrdersFragment extends Fragment {
 
         private final String TAG = "FireStore";
         private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
+        private HashMap<String, String> restNames = new HashMap<>();
 
         ActiveOrdersRVAdapter() {
             FirebaseFirestore fireDB = FirebaseFirestore.getInstance();
@@ -142,16 +145,16 @@ public class ActiveOrdersFragment extends Fragment {
 
         @NonNull
         @Override
-        public ActiveOrdersRVAdapter.MenuItemViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        public MenuItemViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
             View restaurantView = LayoutInflater.from(getContext())
                     .inflate(R.layout.item_active_order, viewGroup, false);
-            return new ActiveOrdersRVAdapter.MenuItemViewHolder(restaurantView);
+            return new MenuItemViewHolder(restaurantView);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull ActiveOrdersRVAdapter.MenuItemViewHolder viewHolder, int i) {
-            viewHolder.bindView();
+        public void onBindViewHolder(@NonNull MenuItemViewHolder viewHolder, int i) {
+            viewHolder.bindView(activeOrders.get(i));
         }
 
         @Override
@@ -165,8 +168,14 @@ public class ActiveOrdersFragment extends Fragment {
                 super(itemView);
             }
 
-            void bindView(){
+            void bindView(ActiveOrder activeOrder){
+                String restName = restNames.get(activeOrder.getRestaurantId());
+                if(restName != null){
 
+                }
+                else {
+
+                }
             }
         }
     }
