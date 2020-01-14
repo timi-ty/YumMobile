@@ -52,7 +52,7 @@ public class ManagerActivity extends AppCompatActivity implements
         fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction
                 .replace(R.id.manager_frag_container,
-                        ManagerRestaurantsFragment.newInstance("", ""))
+                        ManagerRestaurantsFragment.newInstance())
                 .addToBackStack(null);
         fragmentTransaction.commit();
     }

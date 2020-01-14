@@ -6,7 +6,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -22,10 +21,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
@@ -36,11 +33,6 @@ import java.util.ArrayList;
 
 
 public class ManagerRestaurantsFragment extends Fragment implements View.OnClickListener{
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    private String mParam1;
-    private String mParam2;
 
     private OnFragmentInteractionListener mListener;
 
@@ -51,11 +43,9 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
     }
 
 
-    public static ManagerRestaurantsFragment newInstance(String param1, String param2) {
+    public static ManagerRestaurantsFragment newInstance() {
         ManagerRestaurantsFragment fragment = new ManagerRestaurantsFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -63,10 +53,6 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -87,7 +73,7 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
         return fragView;
     }
 
-    public void onButtonPressed(int buttonId, RestaurantItem restaurantItem) {
+    private void onButtonPressed(int buttonId, RestaurantItem restaurantItem) {
         if (mListener != null) {
             mListener.onFragmentInteraction(buttonId);
             mListener.onFragmentInteraction(buttonId, restaurantItem);
@@ -95,7 +81,7 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
@@ -130,7 +116,7 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
         private ArrayList<RestaurantItem> restaurantItems = new ArrayList<>();
         FirebaseFirestore fireDB;
 
-        public RestaurantsRVAdapter() {
+        RestaurantsRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
 
             EventListener<QuerySnapshot> dataChangedListener =
