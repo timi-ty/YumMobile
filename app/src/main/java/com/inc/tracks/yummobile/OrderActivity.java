@@ -8,6 +8,11 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.view.View;
 
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 
 
@@ -67,6 +72,7 @@ public class OrderActivity extends AppCompatActivity implements
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void onFragmentInteraction(int buttonId, HashMap orderGroups) {
         switch (buttonId){
@@ -76,9 +82,34 @@ public class OrderActivity extends AppCompatActivity implements
             case R.id.btn_cardPay:
             case R.id.btn_deliveryPay:
                 if(takePayments()){
-                    goToOrderCompleteFragment(orderGroups);
+                    confirmOrder(orderGroups);
                 }
                 break;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void confirmOrder(final HashMap<String, HashMap> orderGroups){
+        FirebaseFirestore fireDB = FirebaseFirestore.getInstance();
+
+        ArrayList<String> restaurantIds = new ArrayList<>(orderGroups.keySet());
+
+        for(String restaurantId : restaurantIds){
+            ActiveOrder activeOrder = new ActiveOrder(UserAuth.currentUser.getUid(),
+                    restaurantId, orderGroups.get(restaurantId), Timestamp.now());
+
+            String uniqueOrderId = activeOrder.getClientId() + activeOrder.getRestaurantId()
+                    + activeOrder.getTimestamp().hashCode();
+
+                    fireDB.collection("activeOrders")
+                            .document(uniqueOrderId)
+                            .set(activeOrder)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    goToOrderCompleteFragment(orderGroups);
+                                }
+                            });
         }
     }
 }

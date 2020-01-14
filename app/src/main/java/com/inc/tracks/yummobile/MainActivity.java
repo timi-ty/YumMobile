@@ -1,7 +1,6 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -24,8 +23,7 @@ import java.util.HashMap;
 
 
 public class MainActivity extends AppCompatActivity implements
-        HomeFragment.OnFragmentInteractionListener,
-        ActiveOrdersFragment.OnFragmentInteractionListener{
+        HomeFragment.OnFragmentInteractionListener{
 
     FragmentManager fragmentManager;
 
@@ -77,10 +75,6 @@ public class MainActivity extends AppCompatActivity implements
         initializeSideNav(myToolbar);
     }
 
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-
-    }
 
     @Override
     public void onFragmentInteraction(int interactionId, RestaurantItem restaurantItem) {
@@ -147,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private void goToOrdersFragment(){
         if(activeOrdersFragment == null){
-            activeOrdersFragment = ActiveOrdersFragment.newInstance("", "");
+            activeOrdersFragment = ActiveOrdersFragment.newInstance();
         }
 
         FragmentTransaction fragmentTransaction;
