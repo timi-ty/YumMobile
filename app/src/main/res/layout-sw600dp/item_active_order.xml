@@ -33,12 +33,30 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
             android:text="@string/sample_desc_active_order"
             android:textColor="@android:color/secondary_text_light"
             android:textSize="30sp"
+            app:layout_constraintBottom_toTopOf="@+id/tv_orderPrice"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/img_restaurantLogo"
-            app:layout_constraintTop_toTopOf="@+id/img_restaurantLogo" />
+            app:layout_constraintTop_toTopOf="@+id/img_restaurantLogo"
+            app:layout_constraintVertical_bias="0.0" />
+
+        <TextView
+            android:id="@+id/tv_orderPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="8dp"
+            android:drawableStart="@drawable/ic_naira"
+            android:drawablePadding="4dp"
+            android:gravity="center"
+            android:text="@string/sample_price"
+            android:textSize="24sp"
+            app:layout_constraintBottom_toTopOf="@+id/pb_orderProgress"
+            app:layout_constraintEnd_toEndOf="parent" />
+
 
         <ProgressBar
             android:id="@+id/pb_orderProgress"

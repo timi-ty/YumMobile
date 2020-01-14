@@ -12,13 +12,15 @@
         android:background="@drawable/rounded_background_accent_dark_ring_8"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0">
 
         <ImageView
             android:id="@+id/img_restaurantLogo"
-            android:layout_width="@dimen/thumb_size_mobile"
-            android:layout_height="@dimen/thumb_size_mobile"
+            android:layout_width="@dimen/thumb_size_tablet"
+            android:layout_height="@dimen/thumb_size_tablet"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
             android:scaleType="centerCrop"
@@ -36,7 +38,7 @@
             android:layout_marginBottom="8dp"
             android:text="@string/sample_desc_active_order"
             android:textColor="@android:color/secondary_text_light"
-            android:textSize="18sp"
+            android:textSize="24sp"
             app:layout_constraintBottom_toTopOf="@+id/tv_orderPrice"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/img_restaurantLogo"
@@ -47,14 +49,32 @@
             android:id="@+id/tv_orderPrice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="24dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="32dp"
             android:layout_marginBottom="8dp"
             android:drawableStart="@drawable/ic_naira"
             android:drawablePadding="4dp"
             android:gravity="center"
             android:text="@string/sample_price"
+            android:textSize="24sp"
             app:layout_constraintBottom_toTopOf="@+id/pb_orderProgress"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_timeStamp" />
+
+        <TextView
+            android:id="@+id/tv_timeStamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:drawablePadding="4dp"
+            android:gravity="center"
+            android:text="@string/sample_time_stamp"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toTopOf="@+id/tv_orderPrice"
+            app:layout_constraintStart_toEndOf="@+id/img_restaurantLogo"
+            app:layout_constraintTop_toBottomOf="@+id/tv_orderDesc"
+            app:layout_constraintVertical_bias="1.0" />
 
         <ProgressBar
             android:id="@+id/pb_orderProgress"
@@ -62,9 +82,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:progressDrawable="@drawable/rounded_background_primary_dark_8"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

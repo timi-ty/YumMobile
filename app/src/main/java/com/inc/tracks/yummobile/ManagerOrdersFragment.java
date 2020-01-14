@@ -2,18 +2,18 @@ package com.inc.tracks.yummobile;
 
 import android.content.Context;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.fragment.app.Fragment;
-
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentChange;
@@ -29,15 +29,17 @@ import java.util.HashMap;
 import java.util.Locale;
 
 
-public class ActiveOrdersFragment extends Fragment {
+public class ManagerOrdersFragment extends Fragment{
 
-    public ActiveOrdersFragment() {
+    private OnFragmentInteractionListener mListener;
+
+    public ManagerOrdersFragment() {
         // Required empty public constructor
     }
 
 
-    public static ActiveOrdersFragment newInstance() {
-        ActiveOrdersFragment fragment = new ActiveOrdersFragment();
+    public static ManagerOrdersFragment newInstance() {
+        ManagerOrdersFragment fragment = new ManagerOrdersFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -51,34 +53,57 @@ public class ActiveOrdersFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View fragView = inflater.inflate(R.layout.fragment_active_orders, container, false);
-        RecyclerView activeOrders = fragView.findViewById(R.id.rv_activeOrders);
+        View fragView = inflater.inflate(R.layout.fragment_manager_active_orders, container, false);
 
-        activeOrders.setLayoutManager(new LinearLayoutManager(getContext()));
-        activeOrders.setAdapter(new ActiveOrdersRVAdapter());
+        RecyclerView rvOrders = fragView.findViewById(R.id.rv_activeOrders);
+
+        rvOrders.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvOrders.setAdapter(new ActiveOrdersRVAdapter());
+
+        mListener.onFragmentInteraction(R.layout.fragment_manager_active_orders);
 
         return fragView;
     }
 
+    private void onButtonPressed(int buttonId, ActiveOrder activeOrder) {
+        if (mListener != null) {
+            mListener.onFragmentInteraction(buttonId);
+            mListener.onFragmentInteraction(buttonId, activeOrder);
+        }
+    }
 
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
+        if (context instanceof OnFragmentInteractionListener) {
+            mListener = (OnFragmentInteractionListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnFragmentInteractionListener");
+        }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
+        mListener = null;
     }
 
 
-    public class ActiveOrdersRVAdapter extends RecyclerView.Adapter<ActiveOrdersRVAdapter.MenuItemViewHolder>{
+
+    public interface OnFragmentInteractionListener {
+        void onFragmentInteraction(int interactionId);
+        void onFragmentInteraction(int interactionId, ActiveOrder activeOrder);
+    }
+
+    public class ActiveOrdersRVAdapter extends RecyclerView.Adapter<ActiveOrdersRVAdapter.RstViewHolder>{
 
         private final String TAG = "FireStore";
         FirebaseFirestore fireDB;
 
         private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
+        private HashMap<String, UserPrefs> buyers = new HashMap<>();
 
         ActiveOrdersRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
@@ -145,23 +170,22 @@ public class ActiveOrdersFragment extends Fragment {
                         }
                     };
 
-            fireDB.collection("activeOrders")
-                    .whereEqualTo("clientId", UserAuth.currentUser.getUid())
-                    .addSnapshotListener(dataChangedListener);
+            fireDB.collection("activeOrders").addSnapshotListener(dataChangedListener);
         }
 
         @NonNull
         @Override
-        public MenuItemViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        public RstViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
-            View restaurantView = LayoutInflater.from(getContext())
-                    .inflate(R.layout.item_active_order, viewGroup, false);
-            return new MenuItemViewHolder(restaurantView);
+            View restaurantView = LayoutInflater.from(viewGroup.getContext())
+                    .inflate(R.layout.item_manage_active_order, viewGroup, false);
+            return new RstViewHolder(restaurantView);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull MenuItemViewHolder viewHolder, int i) {
-            viewHolder.bindView(activeOrders.get(i));
+        public void onBindViewHolder(@NonNull RstViewHolder viewHolder, int position) {
+            ActiveOrder activeOrder = activeOrders.get(position);
+            viewHolder.bindView(activeOrder);
         }
 
         @Override
@@ -169,34 +193,40 @@ public class ActiveOrdersFragment extends Fragment {
             return activeOrders.size();
         }
 
-        class MenuItemViewHolder extends RecyclerView.ViewHolder{
-
-            TextView tvDescription;
-            TextView tvOrderPrice;
+        class RstViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+            TextView tvDesc;
+            TextView tvTimestamp;
+            TextView tvPrice;
             ImageView imgLogo;
 
-            MenuItemViewHolder(@NonNull View itemView) {
+            RstViewHolder(@NonNull View itemView) {
                 super(itemView);
-
-                tvDescription = itemView.findViewById(R.id.tv_orderDesc);
-                tvOrderPrice = itemView.findViewById(R.id.tv_orderPrice);
+                tvDesc = itemView.findViewById(R.id.tv_orderDesc);
+                tvTimestamp = itemView.findViewById(R.id.tv_timeStamp);
+                tvPrice = itemView.findViewById(R.id.tv_orderPrice);
                 imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
+
+                itemView.setOnClickListener(this);
             }
 
             void bindView(final ActiveOrder activeOrder){
                 RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
-                if(restaurantItem != null){
-                    String message = activeOrder.getDescription() + " from "
-                            + restaurantItem.getName() + " is coming up.";
+                UserPrefs buyer = buyers.get(activeOrder.getClientId());
+                if(restaurantItem != null && buyer != null){
+                    String message = "Order for " + buyer.getUserName() +
+                            " (" + buyer.getUserPhone() +") from "
+                            + restaurantItem.getName() + " is pending.";
 
-                    tvDescription.setText(message);
+                    tvDesc.setText(message);
 
-                    tvOrderPrice.setText(String.format(Locale.ENGLISH,
+                    tvPrice.setText(String.format(Locale.ENGLISH,
                             "%d", activeOrder.getCost()));
+
+                    tvTimestamp.setText(activeOrder.getTimestamp().toDate().toString());
 
                     refreshThumbnail(restaurantItem);
                 }
-                else {
+                if(restaurantItem == null) {
                     fireDB.collection("restaurants")
                             .document(activeOrder.getRestaurantId())
                             .get()
@@ -208,6 +238,23 @@ public class ActiveOrdersFragment extends Fragment {
 
                                     restaurantItems.put(activeOrder.getRestaurantId(),
                                             restaurantItem);
+
+                                    notifyItemChanged(getAdapterPosition());
+                                }
+                            });
+                }
+                if(buyer == null) {
+                    fireDB.collection("users")
+                            .document(activeOrder.getClientId())
+                            .get()
+                            .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                                @Override
+                                public void onSuccess(DocumentSnapshot documentSnapshot) {
+                                    UserPrefs buyer = documentSnapshot
+                                            .toObject(UserPrefs.class);
+
+                                    buyers.put(activeOrder.getClientId(),
+                                            buyer);
 
                                     notifyItemChanged(getAdapterPosition());
                                 }
@@ -227,6 +274,11 @@ public class ActiveOrdersFragment extends Fragment {
                 catch(Exception e){
                     e.printStackTrace();
                 }
+            }
+
+            @Override
+            public void onClick(View v) {
+                onButtonPressed(v.getId(), activeOrders.get(getAdapterPosition()));
             }
         }
     }

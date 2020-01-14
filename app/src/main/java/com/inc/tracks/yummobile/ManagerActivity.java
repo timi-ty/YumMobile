@@ -13,7 +13,8 @@ public class ManagerActivity extends AppCompatActivity implements
         ManagerHomeFragment.OnFragmentInteractionListener,
         ManagerRestaurantsFragment.OnFragmentInteractionListener,
         ManagerRestaurantsEditorFragment.OnFragmentInteractionListener,
-        ManagerMenuFragment.OnFragmentInteractionListener{
+        ManagerMenuFragment.OnFragmentInteractionListener,
+        ManagerOrdersFragment.OnFragmentInteractionListener{
 
     private final String TAG = "ManagerActivity";
 
@@ -89,13 +90,13 @@ public class ManagerActivity extends AppCompatActivity implements
     }
 
     private void goToManageOrdersFragment(){
-//        FragmentTransaction fragmentTransaction;
-//        fragmentTransaction = fragmentManager.beginTransaction();
-//        fragmentTransaction
-//                .replace(R.id.manager_frag_container, new CatalogueFragment())
-//                .addToBackStack(null);
-//        fragmentTransaction.commit();
-        Log.w(TAG, "Could not manage menu because a restaurant could not be found.");
+        FragmentTransaction fragmentTransaction;
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction
+                .replace(R.id.manager_frag_container,
+                        ManagerOrdersFragment.newInstance())
+                .addToBackStack(null);
+        fragmentTransaction.commit();
     }
 
     @Override
@@ -116,6 +117,11 @@ public class ManagerActivity extends AppCompatActivity implements
                 myToolbar.setVisibility(View.VISIBLE);
                 break;
         }
+    }
+
+    @Override
+    public void onFragmentInteraction(int interactionId, ActiveOrder activeOrder) {
+
     }
 
     @Override

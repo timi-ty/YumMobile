@@ -43,7 +43,7 @@ public class ManagerHomeFragment extends Fragment implements View.OnClickListene
         return fragView;
     }
 
-    public void onButtonPressed(int buttonId) {
+    private void onButtonPressed(int buttonId) {
         if (mListener != null) {
             mListener.onFragmentInteraction(buttonId);
         }

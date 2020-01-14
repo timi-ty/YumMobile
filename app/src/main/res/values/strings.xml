@@ -75,4 +75,6 @@
     <string name="sample_price">5000</string>
     <string name="default_count">0</string>
     <string name="prompt_go_home">Go Home</string>
+    <string name="sample_time_stamp">Thursday November 2, 5:49 PM.</string>
+    <string name="order_fulfilled">Order Fulfilled</string>
 </resources>
