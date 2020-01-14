@@ -376,7 +376,7 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
 
                 txtName.setText(menuItem.getName());
                 txtDesc.setText(menuItem.getDescription());
-                txtPrice.setText(menuItem.getPrice());
+                txtPrice.setText(String.valueOf(menuItem.getPrice()));
 
                 refreshThumbnail();
             }
@@ -434,7 +434,7 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
 
                 menuItem.setName(txtName.getText().toString());
                 menuItem.setDescription(txtDesc.getText().toString());
-                menuItem.setPrice(txtPrice.getText().toString());
+                menuItem.setPrice(Integer.parseInt(txtPrice.getText().toString()));
 
                 if(imgUri != null && imgUri.getLastPathSegment() != null){
                     final StorageReference ref = UserAuth.firebaseMenuStorageRef
@@ -572,6 +572,14 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
                     txtPrice.setHint("Set a price");
                     txtPrice.setHintTextColor(getResources().getColor(R.color.colorError));
                     isVerified = false;
+                }
+
+                try{
+                    Integer.parseInt(price);
+                }
+                catch (NumberFormatException e){
+                    isVerified = false;
+                    e.printStackTrace();
                 }
 
                 return isVerified;

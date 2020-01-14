@@ -2,7 +2,6 @@ package com.inc.tracks.yummobile;
 
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -38,13 +37,12 @@ import java.util.Objects;
 
 public class CatalogueFragment extends Fragment implements View.OnClickListener{
     private static final String ARG_REST_ITEM = "arg_rest_path";
+    private static final String ARG_ORDER_GROUPS = "arg_order_groups";
 
     private ConstraintLayout myLayout;
 
     private RestaurantItem activeRestItem;
     private int activeRestPosition;
-
-    private OnFragmentInteractionListener mListener;
 
     private RecyclerView rvRestaurantList;
     private RecyclerView rvFoodMenu;
@@ -56,8 +54,8 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
 
     private FirebaseFirestore fireDB;
 
-    HashMap<String, HashMap<String, Integer>> orderGroups = new HashMap<>();
-    HashMap<String, Integer> orderItems = new HashMap<>();
+    private HashMap<String, HashMap<String, Integer>> orderGroups = new HashMap<>();
+    private HashMap<String, Integer> orderItems = new HashMap<>();
 
     public CatalogueFragment() {
         // Required empty public constructor
@@ -71,15 +69,27 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
             restaurantItem  = new RestaurantItem();
         }
         args.putSerializable(ARG_REST_ITEM, restaurantItem);
+        args.putSerializable(ARG_ORDER_GROUPS, new HashMap<>());
         fragment.setArguments(args);
         return fragment;
     }
 
+    public static CatalogueFragment newInstance(HashMap orderGroups) {
+        CatalogueFragment fragment = new CatalogueFragment();
+        Bundle args = new Bundle();
+        args.putSerializable(ARG_ORDER_GROUPS, orderGroups);
+        args.putSerializable(ARG_REST_ITEM, new RestaurantItem());
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @SuppressWarnings("unchecked")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             activeRestItem = (RestaurantItem) getArguments().getSerializable(ARG_REST_ITEM);
+            orderGroups = (HashMap) getArguments().getSerializable(ARG_ORDER_GROUPS);
         }
     }
 
@@ -119,41 +129,24 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
         return fragView;
     }
 
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        mListener = null;
     }
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.fab_cart:
-                goToCart();
-                break;
+        if (v.getId() == R.id.fab_cart) {
+            goToCart();
         }
     }
 
-    public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(Uri uri);
-    }
 
     private void goToCart(){
         Intent orderIntent = new Intent(getActivity(), OrderActivity.class);
@@ -241,13 +234,28 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
         rvFoodMenu.invalidate();
     }
 
+    @SuppressWarnings("unchecked")
+    void updateOrderGroups(HashMap<String, HashMap<String, Integer>> orderGroups){
+        this.orderGroups = orderGroups;
+        if (getArguments() != null) {
+            getArguments().putSerializable(ARG_ORDER_GROUPS, orderGroups);
+            this.orderGroups = (HashMap) getArguments().getSerializable(ARG_ORDER_GROUPS);
+        }
+
+        menuItemsAdapter = new FoodMenuRVAdapter();
+
+        rvFoodMenu.setAdapter(menuItemsAdapter);
+
+        rvFoodMenu.invalidate();
+    }
+
 
     public class RestaurantsRVAdapter extends RecyclerView.Adapter<RestaurantsRVAdapter.RstViewHolder>{
 
         private final String TAG = "FireStore";
         private ArrayList<RestaurantItem> restaurantItems = new ArrayList<>();
 
-        public RestaurantsRVAdapter() {
+        RestaurantsRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
 
             EventListener<QuerySnapshot> dataChangedListener =
@@ -409,7 +417,7 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
         private int activeMenuItemPos = -1;
 
 
-        public FoodMenuRVAdapter() {
+        FoodMenuRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
 
             orderItems = orderGroups.get(activeRestItem.getId());
@@ -580,7 +588,7 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
 
                 tvName.setText(menuItem.getName());
                 tvDesc.setText(menuItem.getDescription());
-                tvPrice.setText(menuItem.getPrice());
+                tvPrice.setText(String.valueOf(menuItem.getPrice()));
 
                 updateOrderCount();
 

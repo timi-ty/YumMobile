@@ -1,7 +1,6 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -10,56 +9,47 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.StorageReference;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link OrderSummaryFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link OrderSummaryFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class OrderSummaryFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+public class OrderSummaryFragment extends Fragment implements View.OnClickListener{
+    private static final String ARG_ORDER_GROUPS = "order_groups";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private HashMap<String, HashMap<String, Integer>> orderGroups;
 
     private OnFragmentInteractionListener mListener;
+
+    private TextView tvTotalPrice;
 
     public OrderSummaryFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment OrderSummaryFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static OrderSummaryFragment newInstance(String param1, String param2) {
+    public static OrderSummaryFragment newInstance(HashMap param1) {
         OrderSummaryFragment fragment = new OrderSummaryFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putSerializable(ARG_ORDER_GROUPS, param1);
         fragment.setArguments(args);
         return fragment;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            orderGroups = (HashMap) getArguments().getSerializable(ARG_ORDER_GROUPS);
         }
     }
 
@@ -70,37 +60,25 @@ public class OrderSummaryFragment extends Fragment {
         View fragView =  inflater.inflate(R.layout.fragment_order_summary, container, false);
 
         RecyclerView orderSummary = fragView.findViewById(R.id.rv_orderSummary);
+        tvTotalPrice = fragView.findViewById(R.id.tv_totalPrice);
 
         orderSummary.setLayoutManager(new LinearLayoutManager(getContext()));
         orderSummary.setAdapter(new OrderSummaryRVAdapter());
 
-        fragView.findViewById(R.id.btn_cardPay).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onButtonPressed(Uri.fromParts("Fragment",
-                        "onClick", "OrderSummary"));
-            }
-        });
-       fragView.findViewById(R.id.btn_deliveryPay).setOnClickListener(new View.OnClickListener() {
-           @Override
-           public void onClick(View v) {
-               onButtonPressed(Uri.fromParts("Fragment",
-                       "onClick", "OrderSummary"));
-           }
-       });
+        fragView.findViewById(R.id.btn_cardPay).setOnClickListener(this);
+        fragView.findViewById(R.id.btn_deliveryPay).setOnClickListener(this);
 
         return fragView;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
+    private void onButtonPressed(int buttonId) {
         if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
+            mListener.onFragmentInteraction(buttonId, orderGroups);
         }
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
@@ -116,52 +94,143 @@ public class OrderSummaryFragment extends Fragment {
         mListener = null;
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
+    @Override
+    public void onClick(View v) {
+        onButtonPressed(v.getId());
+    }
+
+
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
+        void onFragmentInteraction(int buttonId, HashMap orderGroups);
     }
 
     public class OrderSummaryRVAdapter extends RecyclerView.Adapter<OrderSummaryRVAdapter.RstViewHolder>{
 
+        private List<RestaurantItem> restaurantItems = new ArrayList<>();
+
+        private HashMap<String, Integer> groupsPrices = new HashMap<>();
+
+        private HashMap<String, String> groupsDescs = new HashMap<>();
+
+        OrderSummaryRVAdapter(){
+            ArrayList<String> groups = new ArrayList<>(orderGroups.keySet());
+
+            FirebaseFirestore fireDB = FirebaseFirestore.getInstance();
+
+            fireDB.collection("restaurants")
+                    .whereIn("id", groups)
+                    .get()
+                    .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                        @Override
+                        public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                            restaurantItems = queryDocumentSnapshots.toObjects(RestaurantItem.class);
+                            notifyDataSetChanged();
+                        }
+                    });
+
+            for(final String group : groups){
+                final HashMap<String, Integer> itemCount = orderGroups.get(group);
+                assert itemCount != null;
+                ArrayList<String> items = new ArrayList<>(itemCount.keySet());
+
+                fireDB.collection("restaurants")
+                        .document(group)
+                        .collection("menuItems")
+                        .whereIn("id", items)
+                        .get()
+                        .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                            @Override
+                            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                                List<MenuItem> menuItems =
+                                        queryDocumentSnapshots.toObjects(MenuItem.class);
+
+                                int price = 0;
+                                StringBuilder strDesc = new StringBuilder();
+
+                                for(MenuItem menuItem : menuItems){
+                                    Integer mCount = itemCount.get(menuItem.getId());
+                                    assert mCount != null;
+
+                                    price += (menuItem.getPrice() * mCount);
+
+                                    strDesc.append(mCount.toString()).append(" ")
+                                            .append(menuItem.getName()).append(", ");
+                                }
+
+                                strDesc.delete(strDesc.length() - 2, strDesc.length());
+
+                                groupsPrices.put(group, price);
+
+                                groupsDescs.put(group, strDesc.toString());
+
+                                notifyDataSetChanged();
+                            }
+                        });
+            }
+        }
+
         @NonNull
         @Override
-        public OrderSummaryRVAdapter.RstViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        public RstViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
             View restaurantView = LayoutInflater.from(getContext())
                     .inflate(R.layout.item_order_summary, viewGroup, false);
-            return new OrderSummaryRVAdapter.RstViewHolder(restaurantView);
+            return new RstViewHolder(restaurantView);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull OrderSummaryRVAdapter.RstViewHolder viewHolder, int i) {
-            viewHolder.bindView();
+        public void onBindViewHolder(@NonNull RstViewHolder viewHolder, int i) {
+            viewHolder.bindView(restaurantItems.get(i));
         }
 
         @Override
         public int getItemCount() {
-            // TODO: 10/14/2019 Replace '5' with the number of restaurants around the user
-            return 5;
+            return restaurantItems.size();
         }
 
         class RstViewHolder extends RecyclerView.ViewHolder{
+            TextView tvName;
+            TextView tvDesc;
+            TextView tvPrice;
+            ImageView imgLogo;
 
             RstViewHolder(@NonNull View itemView) {
                 super(itemView);
+                tvName = itemView.findViewById(R.id.tv_restaurantName);
+                tvDesc = itemView.findViewById(R.id.tv_orderGroupDesc);
+                tvPrice = itemView.findViewById(R.id.tv_orderGroupPrice);
+                imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
             }
 
-            void bindView(){
-                // TODO: 10/14/2019 Add onClickListener(s) for the views in this view holder
-                // TODO: 10/21/2019 populate the item view with its details here
+            void bindView(RestaurantItem restaurantItem){
+                tvName.setText(restaurantItem.getName());
+                tvDesc.setText(groupsDescs.get(restaurantItem.getId()));
+
+                Integer price = groupsPrices.get(restaurantItem.getId());
+                assert price != null;
+                tvPrice.setText(String.format(Locale.ENGLISH, "%d", price));
+
+                int totalPrice = 0;
+                for(Integer groupPrice : groupsPrices.values()){
+                    totalPrice  += groupPrice;
+                }
+                tvTotalPrice.setText(String.format(Locale.ENGLISH, "%d", totalPrice));
+
+                refreshThumbnail(restaurantItem);
+            }
+
+            private void refreshThumbnail(RestaurantItem item) {
+                try {
+                    StorageReference imageRef = UserAuth.firebaseStorage
+                            .getReferenceFromUrl(item.getImgRef());
+
+                    GlideApp.with(imgLogo.getContext())
+                            .load(imageRef)
+                            .into(imgLogo);
+                }
+                catch(Exception e){
+                    e.printStackTrace();
+                }
             }
         }
     }

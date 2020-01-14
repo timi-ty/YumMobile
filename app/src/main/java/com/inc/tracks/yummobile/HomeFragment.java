@@ -1,9 +1,6 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.res.Configuration;
-import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,8 +15,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
@@ -27,18 +26,17 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
 
 
-public class HomeFragment extends Fragment{
+public class HomeFragment extends Fragment implements View.OnClickListener{
 
     private OnFragmentInteractionListener mListener;
 
-    FirebaseFirestore fireDB;
+    private FirebaseFirestore fireDB;
 
-    RecyclerView rvRestaurantList;
-    RecyclerView rvRecentOrders;
-
-    RestaurantsRVAdapter restaurantsAdapter;
+    private RestaurantsRVAdapter restaurantsAdapter;
 
     private TextView txtUserGreeting;
 
@@ -56,9 +54,6 @@ public class HomeFragment extends Fragment{
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-
-        }
     }
 
     @Override
@@ -69,8 +64,10 @@ public class HomeFragment extends Fragment{
 
         txtUserGreeting = fragView.findViewById(R.id.txt_userGreeting);
 
-        rvRestaurantList = fragView.findViewById(R.id.rv_nearRestaurants);
-        rvRecentOrders = fragView.findViewById(R.id.rv_recentOrders);
+        RecyclerView rvRestaurantList = fragView.findViewById(R.id.rv_nearRestaurants);
+        RecyclerView rvRecentOrders = fragView.findViewById(R.id.rv_recentOrders);
+
+        fragView.findViewById(R.id.tv_viewMore).setOnClickListener(this);
 
         rvRestaurantList.setLayoutManager(new LinearLayoutManager(fragView.getContext()));
         if(restaurantsAdapter == null){
@@ -96,9 +93,15 @@ public class HomeFragment extends Fragment{
         return fragView;
     }
 
-    public void onButtonPressed(int buttonId, RestaurantItem restaurantItem) {
+    private void onButtonPressed(int buttonId, RestaurantItem restaurantItem) {
         if (mListener != null) {
             mListener.onFragmentInteraction(buttonId, restaurantItem);
+        }
+    }
+
+    private void onButtonPressed(int buttonId, HashMap orderSummary) {
+        if (mListener != null) {
+            mListener.onFragmentInteraction(buttonId, orderSummary);
         }
     }
 
@@ -119,8 +122,16 @@ public class HomeFragment extends Fragment{
         mListener = null;
     }
 
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.tv_viewMore) {
+            onButtonPressed(v.getId(), (RestaurantItem) null);
+        }
+    }
+
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction(int interactionId, RestaurantItem restaurantItem);
+        void onFragmentInteraction(int interactionId, HashMap orderSummary);
     }
 
     private void greetUser(){
@@ -135,7 +146,7 @@ public class HomeFragment extends Fragment{
         private final String TAG = "FireStore";
         private ArrayList<RestaurantItem> restaurantItems = new ArrayList<>();
 
-        public RestaurantsRVAdapter() {
+        RestaurantsRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
 
             EventListener<QuerySnapshot> dataChangedListener =
@@ -269,12 +280,11 @@ public class HomeFragment extends Fragment{
 
             @Override
             public void onClick(View v) {
-                switch (v.getId()){
-                    case R.id.item_nearRestaurant:
-                        int position = getAdapterPosition();
-                        RestaurantItem restaurantItem = restaurantItems.get(position);
+                if (v.getId() == R.id.item_nearRestaurant) {
+                    int position = getAdapterPosition();
+                    RestaurantItem restaurantItem = restaurantItems.get(position);
 
-                        onButtonPressed(v.getId(), restaurantItem);
+                    onButtonPressed(v.getId(), restaurantItem);
                 }
             }
         }
@@ -282,52 +292,181 @@ public class HomeFragment extends Fragment{
 
     public class RecentOrdersRVAdapter extends RecyclerView.Adapter<RecentOrdersRVAdapter.RecentOrderViewHolder>{
 
+        private final String TAG = "FireStore";
+        private ArrayList<RecentOrder> recentOrders = new ArrayList<>();
+
+        RecentOrdersRVAdapter() {
+            fireDB = FirebaseFirestore.getInstance();
+
+            EventListener<QuerySnapshot> dataChangedListener =
+                    new EventListener<QuerySnapshot>() {
+                        @Override
+                        public void onEvent(@Nullable QuerySnapshot snapshots,
+                                            @Nullable FirebaseFirestoreException e) {
+                            if (e != null) {
+                                Log.w(TAG, "listen:error", e);
+                                return;
+                            }
+
+                            if (snapshots == null) {
+                                Log.w(TAG, "snapshot not found:error");
+                                return;
+                            }
+
+                            for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                                RecentOrder recentOrder;
+                                int position = -1;
+                                switch (dc.getType()) {
+                                    case ADDED:
+                                        Log.d(TAG, "New RecentOrder: " + dc.getDocument().getData());
+
+                                        recentOrder = dc.getDocument().toObject(RecentOrder.class);
+
+                                        recentOrder.setId(dc.getDocument().getId());
+
+                                        recentOrders.add(recentOrder);
+
+                                        notifyItemInserted(recentOrders.size() - 1);
+                                        break;
+                                    case MODIFIED:
+                                        Log.d(TAG, "Modified RecentOrder: " + dc.getDocument().getData());
+
+                                        recentOrder = dc.getDocument().toObject(RecentOrder.class);
+
+                                        for(RecentOrder order : recentOrders){
+                                            if(order.getId().equals(recentOrder.getId())){
+                                                position = recentOrders.indexOf(order);
+                                            }
+                                        }
+                                        if(position >= 0){
+                                            notifyItemChanged(position);
+                                        }
+                                        break;
+                                    case REMOVED:
+                                        Log.d(TAG, "Removed RecentOrder: " + dc.getDocument().getData());
+
+                                        recentOrder = dc.getDocument().toObject(RecentOrder.class);
+
+                                        for(RecentOrder order : recentOrders){
+                                            if(order.getId().equals(recentOrder.getId())){
+                                                position = recentOrders.indexOf(order);
+                                                Log.d(TAG, "Removed RecentOrder Notified!: " + order.getId()
+                                                        + " => " + recentOrder.getId() + " => " + recentOrders.indexOf(order));
+                                            }
+                                        }
+
+                                        if(position >= 0){
+                                            recentOrders.remove(position);
+                                            notifyItemRemoved(position);
+                                        }
+                                        break;
+                                }
+                            }
+
+                        }
+                    };
+
+            fireDB.collection("users")
+                    .document(UserAuth.currentUser.getUid())
+                    .collection("recentOrders")
+                    .addSnapshotListener(dataChangedListener);
+        }
+
         @NonNull
         @Override
         public RecentOrderViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
             View restaurantView;
-//            if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
-//                restaurantView = LayoutInflater.from(getContext())
-//                        .inflate(R.layout.item_catalogue_food, viewGroup, false);
-//            }
-//            else{
-                restaurantView = LayoutInflater.from(viewGroup.getContext())
-                        .inflate(R.layout.item_food_recent, viewGroup, false);
-//            }
+            restaurantView = LayoutInflater.from(viewGroup.getContext())
+                    .inflate(R.layout.item_food_recent, viewGroup, false);
             return new RecentOrderViewHolder(restaurantView);
         }
 
         @Override
         public void onBindViewHolder(@NonNull RecentOrderViewHolder viewHolder, int i) {
-            viewHolder.bindView();
+            viewHolder.bindView(recentOrders.get(i));
         }
 
         @Override
         public int getItemCount() {
-            // TODO: 10/14/2019 Replace '15' with the number of recent orders by the user
-            return 15;
+            return recentOrders.size();
         }
 
         class RecentOrderViewHolder extends RecyclerView.ViewHolder{
+
             View recentOrderItem;
+            TextView tvOrderName;
+            ImageView imgOrderImage;
 
             RecentOrderViewHolder(@NonNull View itemView) {
                 super(itemView);
                 recentOrderItem = itemView;
+                tvOrderName = itemView.findViewById(R.id.tv_orderName);
+                imgOrderImage = itemView.findViewById(R.id.img_orderLogo);
             }
 
-            void bindView(){
-                // TODO: 10/14/2019 Add onClickListener(s) for the views in this view holder
-                // TODO: 10/21/2019 populate the item view with its details here
+            void bindView(final RecentOrder recentOrder){
+                tvOrderName.setText(recentOrder.getOrderName());
 
                 recentOrderItem.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Intent orderIntent = new Intent(getActivity(), OrderActivity.class);
-                        startActivity(orderIntent);
+                        onButtonPressed(v.getId(), recentOrder.getOrderSummary());
                     }
                 });
+
+                refreshThumbnail(recentOrder);
+            }
+
+            private void refreshThumbnail(RecentOrder recentOrder) {
+                if(recentOrder.getImgRef() != null){
+                    try {
+                        StorageReference imageRef = UserAuth.firebaseStorage
+                                .getReferenceFromUrl(recentOrder.getImgRef());
+
+                        GlideApp.with(imgOrderImage.getContext())
+                                .load(imageRef)
+                                .into(imgOrderImage);
+                    }
+                    catch(Exception e){
+                        e.printStackTrace();
+                    }
+                }
+                else{
+                    selectOrderImage(recentOrder);
+                }
+            }
+
+            private void selectOrderImage(final RecentOrder recentOrder){
+                String restId = recentOrder.getOrderSummary().keySet().toArray(new String[1])[0];
+                String menuItemId = Objects.requireNonNull(recentOrder
+                        .getOrderSummary().get(restId)).keySet().toArray(new String[1])[0];
+
+                final DocumentReference orderRef = fireDB.collection("users")
+                        .document(UserAuth.currentUser.getUid())
+                        .collection("recentOrders")
+                        .document(recentOrder.getId());
+
+                fireDB.collection("restaurants")
+                        .document(restId)
+                        .collection("menuItems")
+                        .document(menuItemId)
+                        .get()
+                        .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                            @Override
+                            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                                MenuItem menuItem = documentSnapshot.toObject(MenuItem.class);
+                                assert menuItem != null;
+                                recentOrder.setImgRef(menuItem.getImgRef());
+                                orderRef.set(recentOrder)
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void aVoid) {
+                                                notifyItemChanged(getAdapterPosition());
+                                            }
+                                        });
+                            }
+                        });
             }
         }
     }

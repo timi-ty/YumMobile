@@ -11,7 +11,6 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -21,11 +20,12 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.util.HashMap;
+
 
 public class MainActivity extends AppCompatActivity implements
         HomeFragment.OnFragmentInteractionListener,
-        ActiveOrdersFragment.OnFragmentInteractionListener,
-        CatalogueFragment.OnFragmentInteractionListener{
+        ActiveOrdersFragment.OnFragmentInteractionListener{
 
     FragmentManager fragmentManager;
 
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements
                     goToHomeFragment();
                     return true;
                 case R.id.navigation_catalogue:
-                    goToCatalogueFragment(null);
+                    goToCatalogueFragment((RestaurantItem) null);
                     return true;
                 case R.id.navigation_orders:
                     goToOrdersFragment();
@@ -86,8 +86,15 @@ public class MainActivity extends AppCompatActivity implements
     public void onFragmentInteraction(int interactionId, RestaurantItem restaurantItem) {
         switch (interactionId){
             case R.id.item_nearRestaurant:
+            case R.id.tv_viewMore:
                 goToCatalogueFragment(restaurantItem);
+                break;
         }
+    }
+
+    @Override
+    public void onFragmentInteraction(int interactionId, HashMap orderSummary) {
+        goToCatalogueFragment(orderSummary);
     }
 
     private void goToHomeFragment(){
@@ -118,6 +125,25 @@ public class MainActivity extends AppCompatActivity implements
 
         bottomMenu.getItem(0).setChecked(true);
     }
+
+
+    @SuppressWarnings("unchecked")
+    private void goToCatalogueFragment(HashMap orderGroups){
+        if(catalogueFragment == null){
+            catalogueFragment = CatalogueFragment.newInstance(orderGroups);
+        }
+        else if(orderGroups != null){
+            catalogueFragment.updateOrderGroups(orderGroups);
+        }
+
+        FragmentTransaction fragmentTransaction;
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.frag_container, catalogueFragment);
+        fragmentTransaction.commit();
+
+        bottomMenu.getItem(0).setChecked(true);
+    }
+
 
     private void goToOrdersFragment(){
         if(activeOrdersFragment == null){

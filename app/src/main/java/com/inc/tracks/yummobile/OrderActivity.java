@@ -1,6 +1,5 @@
 package com.inc.tracks.yummobile;
 
-import android.net.Uri;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -10,7 +9,7 @@ import androidx.fragment.app.FragmentTransaction;
 import android.view.View;
 
 import java.util.HashMap;
-import java.util.Objects;
+
 
 public class OrderActivity extends AppCompatActivity implements
         OrderDetailsFragment.OnFragmentInteractionListener,
@@ -40,12 +39,7 @@ public class OrderActivity extends AppCompatActivity implements
         myToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(fragmentManager.getBackStackEntryCount() < 1){
-                    OrderActivity.this.finish();
-                }
-                else{
-                    fragmentManager.popBackStack();
-                }
+                onBackPressed();
             }
         });
     }
@@ -56,19 +50,35 @@ public class OrderActivity extends AppCompatActivity implements
         fragmentTransaction.commit();
     }
 
+    private void goToOrderSummaryFragment(HashMap orderSummary){
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.order_fragment, OrderSummaryFragment.newInstance(orderSummary));
+        fragmentTransaction.commit();
+    }
+
+    private void goToOrderCompleteFragment(HashMap orderSummary){
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.order_fragment, OrderCompleteFragment.newInstance(orderSummary));
+        fragmentTransaction.commit();
+    }
+
+    private boolean takePayments(){
+        //paystack payment
+        return true;
+    }
+
     @Override
-    public void onFragmentInteraction(Uri uri) {
-        if(Objects.equals(uri.getFragment(), "OrderDetails")){
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.order_fragment, new OrderSummaryFragment())
-                    .addToBackStack(null);
-            fragmentTransaction.commit();
-        }
-        else if(Objects.equals(uri.getFragment(), "OrderSummary")){
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.order_fragment, new OrderCompleteFragment())
-                    .addToBackStack(null);
-            fragmentTransaction.commit();
+    public void onFragmentInteraction(int buttonId, HashMap orderGroups) {
+        switch (buttonId){
+            case R.id.btn_checkout:
+                goToOrderSummaryFragment(orderGroups);
+                break;
+            case R.id.btn_cardPay:
+            case R.id.btn_deliveryPay:
+                if(takePayments()){
+                    goToOrderCompleteFragment(orderGroups);
+                }
+                break;
         }
     }
 }

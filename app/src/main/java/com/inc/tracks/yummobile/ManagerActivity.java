@@ -43,7 +43,7 @@ public class ManagerActivity extends AppCompatActivity implements
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction
-                .replace(R.id.manager_frag_container, ManagerHomeFragment.newInstance("", ""));
+                .replace(R.id.manager_frag_container, ManagerHomeFragment.newInstance());
         fragmentTransaction.commit();
     }
 
@@ -95,6 +95,7 @@ public class ManagerActivity extends AppCompatActivity implements
 //                .replace(R.id.manager_frag_container, new CatalogueFragment())
 //                .addToBackStack(null);
 //        fragmentTransaction.commit();
+        Log.w(TAG, "Could not manage menu because a restaurant could not be found.");
     }
 
     @Override

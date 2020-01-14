@@ -1,7 +1,6 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -72,22 +71,21 @@ public class OrderDetailsFragment extends Fragment {
         checkoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onButtonPressed(Uri.fromParts("Fragment",
-                        "onClick", "OrderDetails"));
+                onButtonPressed(v.getId(), orderGroups);
             }
         });
 
         return fragView;
     }
 
-    public void onButtonPressed(Uri uri) {
+    private void onButtonPressed(int buttonId, HashMap orderGroups) {
         if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
+            mListener.onFragmentInteraction(buttonId, orderGroups);
         }
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
@@ -105,14 +103,14 @@ public class OrderDetailsFragment extends Fragment {
 
 
     public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(Uri uri);
+        void onFragmentInteraction(int buttonId, HashMap orderGroups);
     }
 
     public class OrderDetailsRVAdapter extends RecyclerView.Adapter<OrderDetailsRVAdapter.RstViewHolder>{
 
         private List<RestaurantItem> restaurantItems = new ArrayList<>();
 
-        public OrderDetailsRVAdapter() {
+        OrderDetailsRVAdapter() {
             ArrayList<String> groups = new ArrayList<>(orderGroups.keySet());
 
             fireDB = FirebaseFirestore.getInstance();
@@ -193,7 +191,7 @@ public class OrderDetailsFragment extends Fragment {
         private List<MenuItem> menuItems = new ArrayList<>();
         private HashMap<String, Integer> itemCount;
 
-        public OrderItemsRVAdapter(String groupId) {
+        OrderItemsRVAdapter(String groupId) {
             itemCount = orderGroups.get(groupId);
             assert itemCount != null;
             ArrayList<String> items = new ArrayList<>(itemCount.keySet());

@@ -53,8 +53,8 @@
     <string name="title_total">Total</string>
     <string name="sample_total_price">N2500.00</string>
     <string name="prompt_delivery_payment">Pay On Delivery</string>
-    <string name="msg_order_complete">Your food is on the way!\n\nWould you like to save this order?</string>
-    <string name="prompt_save_order">Save Order?</string>
+    <string name="msg_order_complete">Your food is on the way!\n\nGive this order a name to save it.</string>
+    <string name="prompt_save_order">Save Order</string>
     <string name="sample_desc_active_order">Yummy food from Yummy Restaurant is on its way</string>
     <string name="prompt_view_more">view more+</string>
     <string name="sample_greeting">Hello, User</string>
@@ -74,4 +74,5 @@
     <string name="save">Save</string>
     <string name="sample_price">5000</string>
     <string name="default_count">0</string>
+    <string name="prompt_go_home">Go Home</string>
 </resources>
