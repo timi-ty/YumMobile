@@ -3,12 +3,14 @@ package com.inc.tracks.yummobile;
 import android.content.Context;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -29,6 +31,10 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
     private HashMap<String, HashMap<String, Integer>> orderGroups;
 
     private OnFragmentInteractionListener mListener;
+
+    private ConstraintLayout btnCardPay;
+
+    private ConstraintLayout btnDeliveryPay;
 
     private TextView tvTotalPrice;
 
@@ -65,8 +71,8 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         orderSummary.setLayoutManager(new LinearLayoutManager(getContext()));
         orderSummary.setAdapter(new OrderSummaryRVAdapter());
 
-        fragView.findViewById(R.id.btn_cardPay).setOnClickListener(this);
-        fragView.findViewById(R.id.btn_deliveryPay).setOnClickListener(this);
+        btnCardPay =  fragView.findViewById(R.id.btn_cardPay);
+        btnDeliveryPay = fragView.findViewById(R.id.btn_deliveryPay);
 
         return fragView;
     }
@@ -102,6 +108,20 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction(int buttonId, HashMap orderGroups);
+    }
+
+    private void setPaymentOptions(HashMap groupPrices){
+        if(groupPrices.size() == orderGroups.size()){
+            btnDeliveryPay.setVisibility(View.VISIBLE);
+            btnCardPay.setVisibility(View.VISIBLE);
+
+            btnCardPay.setOnClickListener(this);
+            btnCardPay.setOnClickListener(this);
+        }
+        else{
+            btnDeliveryPay.setVisibility(View.INVISIBLE);
+            btnCardPay.setVisibility(View.INVISIBLE);
+        }
     }
 
     public class OrderSummaryRVAdapter extends RecyclerView.Adapter<OrderSummaryRVAdapter.RstViewHolder>{

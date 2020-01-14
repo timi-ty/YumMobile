@@ -118,13 +118,9 @@ public class ActiveOrdersFragment extends Fragment {
                                     case REMOVED:
                                         Log.d(TAG, "Removed Restaurant: " + dc.getDocument().getData());
 
-                                        activeOrder = dc.getDocument().toObject(ActiveOrder.class);
-
                                         for(ActiveOrder item : activeOrders){
                                             if(item.getId().equals(dc.getDocument().getId())){
                                                 position = activeOrders.indexOf(item);
-                                                Log.d(TAG, "Removed Restaurant Notified!: " + item.getId()
-                                                        + " => " + activeOrder.getId() + " => " + activeOrders.indexOf(item));
                                             }
                                         }
 
@@ -139,7 +135,9 @@ public class ActiveOrdersFragment extends Fragment {
                         }
                     };
 
-            fireDB.collection("restaurants").addSnapshotListener(dataChangedListener);
+            fireDB.collection("activeOrders")
+                    .whereEqualTo("clientId", UserAuth.currentUser.getUid())
+                    .addSnapshotListener(dataChangedListener);
         }
 
         @NonNull
@@ -158,7 +156,7 @@ public class ActiveOrdersFragment extends Fragment {
 
         @Override
         public int getItemCount() {
-            return 5;
+            return activeOrders.size();
         }
 
         class MenuItemViewHolder extends RecyclerView.ViewHolder{
