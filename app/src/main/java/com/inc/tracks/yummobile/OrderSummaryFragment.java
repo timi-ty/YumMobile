@@ -110,6 +110,8 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
     @Override
     public void onClick(View v) {
+        btnDeliveryPay.setVisibility(View.INVISIBLE);
+        btnCardPay.setVisibility(View.INVISIBLE);
         onButtonPressed(v.getId());
     }
 
@@ -127,7 +129,7 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
             pbLoading.setVisibility(View.INVISIBLE);
 
             btnCardPay.setOnClickListener(this);
-            btnCardPay.setOnClickListener(this);
+            btnDeliveryPay.setOnClickListener(this);
         }
         else{
             btnDeliveryPay.setVisibility(View.INVISIBLE);
