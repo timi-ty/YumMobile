@@ -1,7 +1,6 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
-import android.graphics.drawable.shapes.PathShape;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -78,7 +77,7 @@ public class ActiveOrdersFragment extends Fragment {
         FirebaseFirestore fireDB;
 
         private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
-        private HashMap<String, RestaurantItem> restaurntItems = new HashMap<>();
+        private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
 
         ActiveOrdersRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
@@ -103,7 +102,7 @@ public class ActiveOrdersFragment extends Fragment {
                                 int position = -1;
                                 switch (dc.getType()) {
                                     case ADDED:
-                                        Log.d(TAG, "New Restaurant: " + dc.getDocument().getData());
+                                        Log.d(TAG, "New ActiveOrder: " + dc.getDocument().getData());
 
                                         activeOrder = dc.getDocument().toObject(ActiveOrder.class);
 
@@ -114,7 +113,7 @@ public class ActiveOrdersFragment extends Fragment {
                                         notifyItemInserted(activeOrders.size() - 1);
                                         break;
                                     case MODIFIED:
-                                        Log.d(TAG, "Modified Restaurant: " + dc.getDocument().getData());
+                                        Log.d(TAG, "Modified ActiveOrder: " + dc.getDocument().getData());
 
                                         for(ActiveOrder item : activeOrders){
                                             if(item.getId().equals(dc.getDocument().getId())){
@@ -126,7 +125,7 @@ public class ActiveOrdersFragment extends Fragment {
                                         }
                                         break;
                                     case REMOVED:
-                                        Log.d(TAG, "Removed Restaurant: " + dc.getDocument().getData());
+                                        Log.d(TAG, "Removed ActiveOrder: " + dc.getDocument().getData());
 
                                         for(ActiveOrder item : activeOrders){
                                             if(item.getId().equals(dc.getDocument().getId())){
@@ -182,7 +181,7 @@ public class ActiveOrdersFragment extends Fragment {
             }
 
             void bindView(final ActiveOrder activeOrder){
-                RestaurantItem restaurantItem = restaurntItems.get(activeOrder.getRestaurantId());
+                RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
                 if(restaurantItem != null){
                     String message = activeOrder.getDescription() + " from "
                             + restaurantItem.getName() + " is coming up.";
@@ -201,7 +200,7 @@ public class ActiveOrdersFragment extends Fragment {
                                     RestaurantItem restaurantItem = documentSnapshot
                                             .toObject(RestaurantItem.class);
 
-                                    restaurntItems.put(activeOrder.getRestaurantId(),
+                                    restaurantItems.put(activeOrder.getRestaurantId(),
                                             restaurantItem);
 
                                     notifyItemChanged(getAdapterPosition());
