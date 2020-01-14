@@ -67,8 +67,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         RecyclerView rvRestaurantList = fragView.findViewById(R.id.rv_nearRestaurants);
         RecyclerView rvRecentOrders = fragView.findViewById(R.id.rv_recentOrders);
 
-        fragView.findViewById(R.id.tv_viewMore).setOnClickListener(this);
-
         rvRestaurantList.setLayoutManager(new LinearLayoutManager(fragView.getContext()));
         if(restaurantsAdapter == null){
             restaurantsAdapter = new RestaurantsRVAdapter();
@@ -86,6 +84,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
             rvRecentOrders.setLayoutManager(new LinearLayoutManager(fragView.getContext(),
                     LinearLayoutManager.HORIZONTAL, false));
             rvRecentOrders.setAdapter(new RecentOrdersRVAdapter());
+
+            fragView.findViewById(R.id.tv_viewMore).setOnClickListener(this);
         }
 
         greetUser();
