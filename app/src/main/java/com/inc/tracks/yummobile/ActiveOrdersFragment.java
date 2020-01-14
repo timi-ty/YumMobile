@@ -13,12 +13,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,11 +75,13 @@ public class ActiveOrdersFragment extends Fragment {
     public class ActiveOrdersRVAdapter extends RecyclerView.Adapter<ActiveOrdersRVAdapter.MenuItemViewHolder>{
 
         private final String TAG = "FireStore";
+        FirebaseFirestore fireDB;
+
         private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
-        private HashMap<String, String> restNames = new HashMap<>();
+        private HashMap<String, RestaurantItem> restaurntItems = new HashMap<>();
 
         ActiveOrdersRVAdapter() {
-            FirebaseFirestore fireDB = FirebaseFirestore.getInstance();
+            fireDB = FirebaseFirestore.getInstance();
 
             EventListener<QuerySnapshot> dataChangedListener =
                     new EventListener<QuerySnapshot>() {
@@ -164,17 +171,53 @@ public class ActiveOrdersFragment extends Fragment {
 
         class MenuItemViewHolder extends RecyclerView.ViewHolder{
 
+            TextView tvDescription;
+            ImageView imgLogo;
+
             MenuItemViewHolder(@NonNull View itemView) {
                 super(itemView);
             }
 
-            void bindView(ActiveOrder activeOrder){
-                String restName = restNames.get(activeOrder.getRestaurantId());
-                if(restName != null){
+            void bindView(final ActiveOrder activeOrder){
+                RestaurantItem restaurantItem = restaurntItems.get(activeOrder.getRestaurantId());
+                if(restaurantItem != null){
+                    String message = activeOrder.getDescription() + " from "
+                            + restaurantItem.getName() + " is coming up.";
 
+                    tvDescription.setText(message);
+
+                    refreshThumbnail(restaurantItem);
                 }
                 else {
+                    fireDB.collection("restaurants")
+                            .document(activeOrder.getRestaurantId())
+                            .get()
+                            .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                                @Override
+                                public void onSuccess(DocumentSnapshot documentSnapshot) {
+                                    RestaurantItem restaurantItem = documentSnapshot
+                                            .toObject(RestaurantItem.class);
 
+                                    restaurntItems.put(activeOrder.getRestaurantId(),
+                                            restaurantItem);
+
+                                    notifyItemChanged(getAdapterPosition());
+                                }
+                            });
+                }
+            }
+
+            private void refreshThumbnail(RestaurantItem item) {
+                try {
+                    StorageReference imageRef = UserAuth.firebaseStorage
+                            .getReferenceFromUrl(item.getImgRef());
+
+                    GlideApp.with(imgLogo.getContext())
+                            .load(imageRef)
+                            .into(imgLogo);
+                }
+                catch(Exception e){
+                    e.printStackTrace();
                 }
             }
         }

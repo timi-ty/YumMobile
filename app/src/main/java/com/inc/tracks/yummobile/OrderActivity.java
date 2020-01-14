@@ -81,6 +81,20 @@ public class OrderActivity extends AppCompatActivity implements
     }
 
     @SuppressWarnings("unchecked")
+    @Override
+    public void onFragmentInteraction(int buttonId, HashMap orderGroups,
+                                      HashMap groupPrices, HashMap groupDescriptions) {
+        switch (buttonId){
+            case R.id.btn_cardPay:
+            case R.id.btn_deliveryPay:
+                if(takePayments()){
+                    confirmOrder(orderGroups, groupPrices, groupDescriptions);
+                }
+                break;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     private void confirmOrder(final HashMap<String, HashMap> orderGroups,
                               HashMap<String, Integer> groupPrices,
                               HashMap<String, String> groupDescs){
@@ -112,20 +126,6 @@ public class OrderActivity extends AppCompatActivity implements
                                     goToOrderCompleteFragment(orderGroups);
                                 }
                             });
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void onFragmentInteraction(int buttonId, HashMap orderGroups,
-                                      HashMap groupPrices, HashMap groupDescriptions) {
-        switch (buttonId){
-            case R.id.btn_cardPay:
-            case R.id.btn_deliveryPay:
-                if(takePayments()){
-                    confirmOrder(orderGroups, groupPrices, groupDescriptions);
-                }
-                break;
         }
     }
 }
