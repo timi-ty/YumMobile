@@ -17,6 +17,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -112,11 +113,14 @@ public class OrderCompleteFragment extends Fragment implements View.OnClickListe
 
         RecentOrder recentOrder = new RecentOrder(txtNameOrder.getText().toString(), orderSummary);
 
-        fireDB.collection("users")
+        DocumentReference docRef = fireDB.collection("users")
                 .document(UserAuth.currentUser.getUid())
                 .collection("recentOrders")
-                .document()
-                .set(recentOrder)
+                .document();
+
+        recentOrder.setId(docRef.getId());
+
+        docRef.set(recentOrder)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {

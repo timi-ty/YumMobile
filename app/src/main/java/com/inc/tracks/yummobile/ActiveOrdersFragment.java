@@ -101,7 +101,7 @@ public class ActiveOrdersFragment extends Fragment {
 
                                         activeOrders.add(activeOrder);
 
-                                        notifyItemInserted(ActiveOrdersRVAdapter.this.activeOrders.size() - 1);
+                                        notifyItemInserted(activeOrders.size() - 1);
                                         break;
                                     case MODIFIED:
                                         Log.d(TAG, "Modified Restaurant: " + dc.getDocument().getData());
@@ -120,16 +120,16 @@ public class ActiveOrdersFragment extends Fragment {
 
                                         activeOrder = dc.getDocument().toObject(ActiveOrder.class);
 
-                                        for(ActiveOrder item : ActiveOrdersRVAdapter.this.activeOrders){
-                                            if(item.getId().equals(activeOrder.getId())){
-                                                position = ActiveOrdersRVAdapter.this.activeOrders.indexOf(item);
+                                        for(ActiveOrder item : activeOrders){
+                                            if(item.getId().equals(dc.getDocument().getId())){
+                                                position = activeOrders.indexOf(item);
                                                 Log.d(TAG, "Removed Restaurant Notified!: " + item.getId()
-                                                        + " => " + activeOrder.getId() + " => " + ActiveOrdersRVAdapter.this.activeOrders.indexOf(item));
+                                                        + " => " + activeOrder.getId() + " => " + activeOrders.indexOf(item));
                                             }
                                         }
 
                                         if(position >= 0){
-                                            ActiveOrdersRVAdapter.this.activeOrders.remove(position);
+                                            activeOrders.remove(position);
                                             notifyItemRemoved(position);
                                         }
                                         break;
