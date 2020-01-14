@@ -32,14 +32,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="24dp"
             android:layout_marginEnd="16dp"
             android:text="@string/sample_desc_active_order"
             android:textColor="@android:color/secondary_text_light"
             android:textSize="30sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/img_restaurantLogo"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="@+id/img_restaurantLogo" />
 
         <ProgressBar
             android:id="@+id/pb_orderProgress"
