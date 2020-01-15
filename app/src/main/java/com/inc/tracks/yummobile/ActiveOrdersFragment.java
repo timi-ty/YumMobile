@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -178,6 +179,7 @@ public class ActiveOrdersFragment extends Fragment {
             TextView tvDescription;
             TextView tvOrderPrice;
             ProgressBar pbOrderProgress;
+            Button btnConfirmReceived;
             ImageView imgLogo;
 
             MenuItemViewHolder(@NonNull View itemView) {
@@ -187,6 +189,7 @@ public class ActiveOrdersFragment extends Fragment {
                 tvOrderPrice = itemView.findViewById(R.id.tv_orderPrice);
                 pbOrderProgress = itemView.findViewById(R.id.pb_orderProgress);
                 imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
+                btnConfirmReceived = itemView.findViewById(R.id.btn_confirmReceived);
             }
 
             void bindView(final ActiveOrder activeOrder){
@@ -205,9 +208,12 @@ public class ActiveOrdersFragment extends Fragment {
                         pbOrderProgress.setProgressDrawable(getResources()
                                 .getDrawable(R.drawable.rounded_background_primary_dark_8));
 
+                        if(activeOrder.isTransporterConfirmed()){
+                            pbOrderProgress.setVisibility(View.INVISIBLE);
+                            btnConfirmReceived.setVisibility(View.VISIBLE);
+                        }
+
                         tvDescription.setOnClickListener(this);
-
-
                     }
                     else{
                         message = activeOrder.getDescription() + " from "

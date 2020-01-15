@@ -264,7 +264,6 @@ public class ManagerOrdersFragment extends Fragment{
                 pbLoading = itemView.findViewById(R.id.pb_activeOrder);
 
                 itemView.setOnClickListener(this);
-                btnAcceptOrder.setOnClickListener(this);
             }
 
             void bindView(final ActiveOrder activeOrder){
@@ -284,6 +283,8 @@ public class ManagerOrdersFragment extends Fragment{
                     tvTimestamp.setText(activeOrder.getTimestamp().toDate().toString());
 
                     btnAcceptOrder.setText(R.string.accept_order);
+
+                    btnAcceptOrder.setOnClickListener(this);
 
                     refreshThumbnail(restaurantItem);
                 }
@@ -429,6 +430,8 @@ public class ManagerOrdersFragment extends Fragment{
                                         for(ActiveOrder item : acceptedOrders){
                                             if(item.getId().equals(dc.getDocument().getId())){
                                                 position = acceptedOrders.indexOf(item);
+                                                acceptedOrders.set(position, dc.getDocument()
+                                                        .toObject(ActiveOrder.class));
                                             }
                                         }
                                         if(position >= 0){
@@ -484,7 +487,8 @@ public class ManagerOrdersFragment extends Fragment{
             TextView tvDesc;
             TextView tvTimestamp;
             TextView tvPrice;
-            Button btnOrderFulfilled;
+            Button btnOrderDelivered;
+            ProgressBar pbLoading;
             ImageView imgLogo;
 
             RstViewHolder(@NonNull View itemView) {
@@ -493,7 +497,8 @@ public class ManagerOrdersFragment extends Fragment{
                 tvTimestamp = itemView.findViewById(R.id.tv_timeStamp);
                 tvPrice = itemView.findViewById(R.id.tv_orderPrice);
                 imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
-                btnOrderFulfilled = itemView.findViewById(R.id.btn_orderInteraction);
+                btnOrderDelivered = itemView.findViewById(R.id.btn_orderInteraction);
+                pbLoading = itemView.findViewById(R.id.pb_activeOrder);
 
                 itemView.setOnClickListener(this);
             }
@@ -514,7 +519,11 @@ public class ManagerOrdersFragment extends Fragment{
 
                     tvTimestamp.setText(activeOrder.getTimestamp().toDate().toString());
 
-                    btnOrderFulfilled.setText(R.string.order_fulfilled);
+                    boolean fulfilled = activeOrder.isTransporterConfirmed();
+                    btnOrderDelivered.setText(fulfilled ?
+                            R.string.wait_on_customer : R.string.confirm_delivered);
+
+                    btnOrderDelivered.setOnClickListener(this);
 
                     refreshThumbnail(restaurantItem);
                 }
@@ -570,7 +579,44 @@ public class ManagerOrdersFragment extends Fragment{
 
             @Override
             public void onClick(View v) {
-                onButtonPressed(v.getId(), acceptedOrders.get(getAdapterPosition()));
+                if(v.getId() == R.id.btn_orderInteraction){
+                    fulfillOrder();
+                }
+                else{
+                    onButtonPressed(v.getId(), acceptedOrders.get(getAdapterPosition()));
+                }
+            }
+
+            private void fulfillOrder(){
+                btnOrderDelivered.setVisibility(View.INVISIBLE);
+                pbLoading.setVisibility(View.VISIBLE);
+
+                ActiveOrder acceptedOrder = acceptedOrders.get(getAdapterPosition());
+
+                acceptedOrder.setTransporterConfirmed(true);
+
+                fireDB.collection("activeOrders")
+                        .document(acceptedOrder.getId())
+                        .set(acceptedOrder, SetOptions.merge())
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Snackbar.make(myLayout, "You delivered the order!",
+                                        Snackbar.LENGTH_SHORT).show();
+                                btnOrderDelivered.setVisibility(View.VISIBLE);
+                                pbLoading.setVisibility(View.INVISIBLE);
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Snackbar.make(myLayout, "Failed to confirm delivery.",
+                                        Snackbar.LENGTH_SHORT).show();
+
+                                btnOrderDelivered.setVisibility(View.VISIBLE);
+                                pbLoading.setVisibility(View.INVISIBLE);
+                            }
+                        });
             }
         }
     }

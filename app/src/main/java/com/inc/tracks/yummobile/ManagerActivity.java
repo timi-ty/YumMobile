@@ -164,6 +164,7 @@ public class ManagerActivity extends AppCompatActivity implements
                 break;
             case R.layout.fragment_manager_restaurants:
             case R.layout.fragment_manager_menu:
+            case R.layout.fragment_manager_active_orders:
                 myToolbar.setVisibility(View.VISIBLE);
                 break;
         }

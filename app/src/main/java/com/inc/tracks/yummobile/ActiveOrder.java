@@ -18,6 +18,10 @@ public class ActiveOrder implements Serializable {
         this.cost = cost;
         this.description = description;
         this.timestamp = timestamp;
+
+        accepted = false;
+        transporterConfirmed = false;
+        clientConfirmed = false;
     }
 
     private String id;
@@ -33,6 +37,9 @@ public class ActiveOrder implements Serializable {
     private String description;
 
     private boolean accepted;
+
+    private boolean transporterConfirmed;
+    private boolean clientConfirmed;
 
     private String transporterId;
 
@@ -107,5 +114,21 @@ public class ActiveOrder implements Serializable {
 
     public String getTransporterId() {
         return transporterId;
+    }
+
+    public boolean isTransporterConfirmed() {
+        return transporterConfirmed;
+    }
+
+    public void setTransporterConfirmed(boolean transporterConfirmed) {
+        this.transporterConfirmed = transporterConfirmed;
+    }
+
+    public boolean isClientConfirmed() {
+        return clientConfirmed;
+    }
+
+    public void setClientConfirmed(boolean clientConfirmed) {
+        this.clientConfirmed = clientConfirmed;
     }
 }

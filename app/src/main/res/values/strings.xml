@@ -76,7 +76,7 @@
     <string name="default_count">0</string>
     <string name="prompt_go_home">Go Home</string>
     <string name="sample_time_stamp">Thursday November 2, 5:49 PM.</string>
-    <string name="order_fulfilled">Order Fulfilled</string>
+    <string name="confirm_delivered">Confirm Order Delivered</string>
     <string name="sample_client_name">SlowMobius</string>
     <string name="sample_client_number">09025213546</string>
     <string name="sample_client_location">No. 17 Hermes Road, Olympus.</string>
@@ -86,4 +86,6 @@
     <string name="title_transport_orders">Transport Orders</string>
     <string name="title_pending_orders">Pending Orders</string>
     <string name="title_your_deliveries">Your Deliveries</string>
+    <string name="wait_on_customer">Waiting For Customer To Confirm</string>
+    <string name="confirm_order_received">Confirm Order Received</string>
 </resources>
