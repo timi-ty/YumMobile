@@ -4,6 +4,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -20,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -38,6 +41,12 @@ import java.util.Locale;
 public class ManagerOrdersFragment extends Fragment{
 
     private OnFragmentInteractionListener mListener;
+
+    private TextView tvTitle;
+
+    private RecyclerView rvOrders;
+
+    private Menu bottomMenu;
 
     private ConstraintLayout myLayout;
 
@@ -65,19 +74,47 @@ public class ManagerOrdersFragment extends Fragment{
 
         myLayout = fragView.findViewById(R.id.layout_orderManager);
 
-        RecyclerView rvActiveOrders = fragView.findViewById(R.id.rv_activeOrders);
-        RecyclerView rvAcceptedOrders = fragView.findViewById(R.id.rv_acceptedOrders);
+        tvTitle = fragView.findViewById(R.id.tv_orderRVTitle);
 
-        rvActiveOrders.setLayoutManager(new LinearLayoutManager(getContext()));
-        rvActiveOrders.setAdapter(new ActiveOrdersRVAdapter());
+        rvOrders = fragView.findViewById(R.id.rv_activeOrders);
 
-        rvAcceptedOrders.setLayoutManager(new LinearLayoutManager(getContext()));
-        rvAcceptedOrders.setAdapter(new AcceptedOrdersRVAdapter());
+        if(savedInstanceState == null){
+            rvOrders.setLayoutManager(new LinearLayoutManager(getContext()));
+            rvOrders.setAdapter(new ActiveOrdersRVAdapter());
+        }
+
+        BottomNavigationView bottomNavView = fragView.findViewById(R.id.bottom_nav_view);
+
+        bottomNavView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+        bottomMenu = bottomNavView.getMenu();
+
 
         mListener.onFragmentInteraction(R.layout.fragment_manager_active_orders);
 
         return fragView;
     }
+
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+
+            switch (item.getItemId()) {
+                case R.id.navigation_pending_orders:
+                    rvOrders.setAdapter(new ActiveOrdersRVAdapter());
+                    tvTitle.setText(R.string.title_pending_orders);
+                    bottomMenu.getItem(0).setChecked(true);
+                    return true;
+                case R.id.navigation_accepted_orders:
+                    rvOrders.setAdapter(new AcceptedOrdersRVAdapter());
+                    tvTitle.setText(R.string.title_your_deliveries);
+                    bottomMenu.getItem(1).setChecked(true);
+                    return true;
+            }
+            return false;
+        }
+    };
 
     private void onButtonPressed(int buttonId, ActiveOrder activeOrder) {
         if (mListener != null) {
@@ -227,6 +264,7 @@ public class ManagerOrdersFragment extends Fragment{
                 pbLoading = itemView.findViewById(R.id.pb_activeOrder);
 
                 itemView.setOnClickListener(this);
+                btnAcceptOrder.setOnClickListener(this);
             }
 
             void bindView(final ActiveOrder activeOrder){
@@ -317,7 +355,7 @@ public class ManagerOrdersFragment extends Fragment{
 
                 ActiveOrder activeOrder = activeOrders.get(getAdapterPosition());
 
-                activeOrder.setAccepted(UserAuth.currentUser.getUid());
+                activeOrder.setTransporter(UserAuth.currentUser.getUid());
 
                 fireDB.collection("activeOrders")
                         .document(activeOrder.getId())

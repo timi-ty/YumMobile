@@ -84,4 +84,6 @@
     <string name="placeholder_loading">.....................</string>
     <string name="accept_order">Accept Order</string>
     <string name="title_transport_orders">Transport Orders</string>
+    <string name="title_pending_orders">Pending Orders</string>
+    <string name="title_your_deliveries">Your Deliveries</string>
 </resources>

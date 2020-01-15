@@ -7,7 +7,7 @@
         android:title="@string/title_home" />
     <item
         android:id="@+id/side_nav_orders"
-        android:icon="@drawable/ic_case"
+        android:icon="@drawable/ic_cart"
         android:title="@string/title_my_orders" />
     <item
         android:id="@+id/side_nav_address"
@@ -31,11 +31,10 @@
         android:title="@string/title_sign_out" />
     <item
         android:id="@+id/side_nav_manage_services"
-        android:icon="@drawable/ic_notifications_black_24dp"
+        android:icon="@drawable/ic_menu"
         android:title="@string/title_manage_services" />
-
     <item
         android:id="@+id/side_nav_transport_orders"
-        android:icon="@drawable/ic_bike"
+        android:icon="@drawable/ic_active_orders"
         android:title="@string/title_transport_orders" />
 </menu>

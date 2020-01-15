@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <item
+        android:id="@+id/navigation_pending_orders"
+        android:icon="@drawable/ic_dashboard_black_24dp"
+        android:title="@string/title_pending_orders" />
+
+    <item
+        android:id="@+id/navigation_accepted_orders"
+        android:icon="@drawable/ic_bike"
+        android:title="@string/title_your_deliveries" />
+
+</menu>

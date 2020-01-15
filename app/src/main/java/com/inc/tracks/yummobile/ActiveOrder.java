@@ -95,12 +95,12 @@ public class ActiveOrder implements Serializable {
         return accepted;
     }
 
-    public void unAccept() {
-        this.accepted = false;
-        this.transporterId = null;
+
+    public void setAccepted(boolean accepted) {
+        this.accepted = accepted;
     }
 
-    public void setAccepted(String transporterId) {
+    public void setTransporter(String transporterId) {
         this.accepted = true;
         this.transporterId = transporterId;
     }

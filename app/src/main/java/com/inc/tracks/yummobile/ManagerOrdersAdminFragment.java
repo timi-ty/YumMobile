@@ -223,9 +223,9 @@ public class ManagerOrdersAdminFragment extends Fragment{
 
                     if(activeOrder.isAccepted() && transporter != null){
                         message = "Order for " + buyer.getUserName() +
-                                "(" + buyer.getUserPhone() +") from "
-                                + restaurantItem.getName() + " is being delivered by" +
-                                transporter.getUserName() + "(" + transporter.getUserPhone() +
+                                " (" + buyer.getUserPhone() +") from "
+                                + restaurantItem.getName() + " is being delivered by " +
+                                transporter.getUserName() + " (" + transporter.getUserPhone() +
                                 ").";
                     }
                     else{

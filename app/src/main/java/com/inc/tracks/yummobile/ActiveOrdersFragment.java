@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -79,6 +80,7 @@ public class ActiveOrdersFragment extends Fragment {
 
         private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
+        private HashMap<String, UserPrefs> transporters = new HashMap<>();
 
         ActiveOrdersRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
@@ -119,6 +121,8 @@ public class ActiveOrdersFragment extends Fragment {
                                         for(ActiveOrder item : activeOrders){
                                             if(item.getId().equals(dc.getDocument().getId())){
                                                 position = activeOrders.indexOf(item);
+                                                activeOrders.set(position,
+                                                        dc.getDocument().toObject(ActiveOrder.class));
                                             }
                                         }
                                         if(position >= 0){
@@ -169,10 +173,11 @@ public class ActiveOrdersFragment extends Fragment {
             return activeOrders.size();
         }
 
-        class MenuItemViewHolder extends RecyclerView.ViewHolder{
+        class MenuItemViewHolder extends RecyclerView.ViewHolder implements  View.OnClickListener{
 
             TextView tvDescription;
             TextView tvOrderPrice;
+            ProgressBar pbOrderProgress;
             ImageView imgLogo;
 
             MenuItemViewHolder(@NonNull View itemView) {
@@ -180,14 +185,34 @@ public class ActiveOrdersFragment extends Fragment {
 
                 tvDescription = itemView.findViewById(R.id.tv_orderDesc);
                 tvOrderPrice = itemView.findViewById(R.id.tv_orderPrice);
+                pbOrderProgress = itemView.findViewById(R.id.pb_orderProgress);
                 imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
             }
 
             void bindView(final ActiveOrder activeOrder){
                 RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
-                if(restaurantItem != null){
-                    String message = activeOrder.getDescription() + " from "
-                            + restaurantItem.getName() + " is coming up.";
+                UserPrefs transporter = transporters.get(activeOrder.getTransporterId());
+                if(restaurantItem != null && (transporter != null || !activeOrder.isAccepted())){
+
+                    String message;
+
+                    if(activeOrder.isAccepted() && transporter != null){
+                        message = "Order Confirmed! Click here to call "
+                                + transporter.getUserName() + " (" + transporter.getUserPhone() +
+                                ") to track your delivery of " + activeOrder.getDescription() +
+                                " from " + restaurantItem.getName();
+
+                        pbOrderProgress.setProgressDrawable(getResources()
+                                .getDrawable(R.drawable.rounded_background_primary_dark_8));
+
+                        tvDescription.setOnClickListener(this);
+
+
+                    }
+                    else{
+                        message = activeOrder.getDescription() + " from "
+                                + restaurantItem.getName() + " is coming up.";
+                    }
 
                     tvDescription.setText(message);
 
@@ -196,7 +221,7 @@ public class ActiveOrdersFragment extends Fragment {
 
                     refreshThumbnail(restaurantItem);
                 }
-                else {
+                if(restaurantItem == null) {
                     fireDB.collection("restaurants")
                             .document(activeOrder.getRestaurantId())
                             .get()
@@ -208,6 +233,24 @@ public class ActiveOrdersFragment extends Fragment {
 
                                     restaurantItems.put(activeOrder.getRestaurantId(),
                                             restaurantItem);
+
+                                    notifyItemChanged(getAdapterPosition());
+                                }
+                            });
+                }
+
+                if(activeOrder.isAccepted() && transporter == null) {
+                    fireDB.collection("users")
+                            .document(activeOrder.getTransporterId())
+                            .get()
+                            .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                                @Override
+                                public void onSuccess(DocumentSnapshot documentSnapshot) {
+                                    UserPrefs transporter = documentSnapshot
+                                            .toObject(UserPrefs.class);
+
+                                    transporters.put(activeOrder.getTransporterId(),
+                                            transporter);
 
                                     notifyItemChanged(getAdapterPosition());
                                 }
@@ -227,6 +270,11 @@ public class ActiveOrdersFragment extends Fragment {
                 catch(Exception e){
                     e.printStackTrace();
                 }
+            }
+
+            @Override
+            public void onClick(View v) {
+
             }
         }
     }

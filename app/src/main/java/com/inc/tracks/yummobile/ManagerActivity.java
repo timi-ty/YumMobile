@@ -17,7 +17,8 @@ public class ManagerActivity extends AppCompatActivity implements
         ManagerRestaurantsEditorFragment.OnFragmentInteractionListener,
         ManagerMenuFragment.OnFragmentInteractionListener,
         ManagerOrdersFragment.OnFragmentInteractionListener,
-        ManagerOrderDetailsFragment.OnFragmentInteractionListener{
+        ManagerOrderDetailsFragment.OnFragmentInteractionListener,
+        ManagerOrdersAdminFragment.OnFragmentInteractionListener{
 
     private final String TAG = "ManagerActivity";
 
@@ -123,8 +124,7 @@ public class ManagerActivity extends AppCompatActivity implements
         fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction
                 .replace(R.id.manager_frag_container,
-                        ManagerOrdersFragment.newInstance())
-                .addToBackStack(null);
+                        ManagerOrdersFragment.newInstance());
         fragmentTransaction.commit();
     }
 
@@ -159,6 +159,7 @@ public class ManagerActivity extends AppCompatActivity implements
                 break;
             case R.layout.fragment_manager_home:
             case R.layout.fragment_manager_restaurant_editor:
+            case R.layout.fragment_manager_order_details:
                 myToolbar.setVisibility(View.GONE);
                 break;
             case R.layout.fragment_manager_restaurants:
