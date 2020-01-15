@@ -82,4 +82,6 @@
     <string name="sample_client_location">No. 17 Hermes Road, Olympus.</string>
     <string name="sample_price_count">1000 X 5</string>
     <string name="placeholder_loading">.....................</string>
+    <string name="accept_order">Accept Order</string>
+    <string name="title_transport_orders">Transport Orders</string>
 </resources>

@@ -91,7 +91,7 @@ public class Launcher extends AppCompatActivity implements
     }
 
     @Override
-    public void onUserConnected(boolean isUser, boolean isAdmin) {
+    public void onUserConnected(boolean isUser) {
         Log.d(TAG, "User Connected");
         finalizeLaunch(isUser);
     }

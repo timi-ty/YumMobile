@@ -1,10 +1,12 @@
 package com.inc.tracks.yummobile;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -18,6 +20,8 @@ public class ManagerActivity extends AppCompatActivity implements
         ManagerOrderDetailsFragment.OnFragmentInteractionListener{
 
     private final String TAG = "ManagerActivity";
+
+    private String mode;
 
     FragmentManager fragmentManager;
 
@@ -38,7 +42,31 @@ public class ManagerActivity extends AppCompatActivity implements
 
         setSupportActionBar(myToolbar);
 
-        goToHomeFragment();
+        Intent incoming = getIntent();
+
+        if(savedInstanceState == null){
+            assert incoming.getExtras() != null;
+            mode = incoming.getExtras().getString("mode");
+            assert mode != null;
+
+            if(mode.equals("manage")){
+                goToHomeFragment();
+            }
+            else if(mode.equals("transport")){
+                goToManageOrdersFragment();
+            }
+        }
+        else{
+            mode = savedInstanceState.getString("mode");
+            assert mode != null;
+
+            if(mode.equals("manage")){
+                goToHomeFragment();
+            }
+            else if(mode.equals("transport")){
+                goToManageOrdersFragment();
+            }
+        }
     }
 
     private void goToHomeFragment(){
@@ -100,6 +128,16 @@ public class ManagerActivity extends AppCompatActivity implements
         fragmentTransaction.commit();
     }
 
+    private void goToManageOrdersAdminFragment(){
+        FragmentTransaction fragmentTransaction;
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction
+                .replace(R.id.manager_frag_container,
+                        ManagerOrdersAdminFragment.newInstance())
+                .addToBackStack(null);
+        fragmentTransaction.commit();
+    }
+
     private void goToManageOrderDetailsFragment(ActiveOrder activeOrder){
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
@@ -117,7 +155,7 @@ public class ManagerActivity extends AppCompatActivity implements
                 goToManageRestaurantsFragment();
                 break;
             case R.id.btn_manageOrders:
-                goToManageOrdersFragment();
+                goToManageOrdersAdminFragment();
                 break;
             case R.layout.fragment_manager_home:
             case R.layout.fragment_manager_restaurant_editor:
@@ -146,5 +184,11 @@ public class ManagerActivity extends AppCompatActivity implements
                 goToMenuEditorFragment(restaurantItem);
                 break;
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putString("mode", mode);
+        super.onSaveInstanceState(outState);
     }
 }

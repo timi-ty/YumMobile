@@ -32,9 +32,11 @@ class UserAuth {
 
     static UserPrefs userPrefs;
 
+    private static Boolean isUser = null;
+
     static Boolean isAdmin = null;
 
-    static Boolean isUser = null;
+    static Boolean isTransporter = null;
 
     private UserAuth(){}
 
@@ -59,6 +61,7 @@ class UserAuth {
                 else{
                     lookUpUser(currentUser);
                     lookUpAdmin(currentUser);
+                    lookUpTransporter(currentUser);
                 }
             }
         };
@@ -84,7 +87,7 @@ class UserAuth {
                             userPrefs = userDocument.toObject(UserPrefs.class);
                             concludeLookUp();
                         } else {
-                            //In case where user isn't looked up, display sign in button again.
+                            mListener.onUserDisconnected();
                             Log.w(TAG, "Error getting documents.", task.getException());
                         }
                     }
@@ -106,7 +109,29 @@ class UserAuth {
                             isAdmin = adminDocument.exists();
                             concludeLookUp();
                         } else {
-                            //In case where user isn't looked up, display sign in button again.
+                            mListener.onUserDisconnected();
+                            Log.w(TAG, "Error getting documents.", task.getException());
+                        }
+                    }
+                });
+    }
+
+    private static void lookUpTransporter(final FirebaseUser user){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("transporters")
+                .document(user.getUid())
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if(task.isSuccessful()){
+                            DocumentSnapshot transporterDocument = task.getResult();
+                            assert transporterDocument != null;
+                            isTransporter = transporterDocument.exists();
+                            concludeLookUp();
+                        } else {
+                            mListener.onUserDisconnected();
                             Log.w(TAG, "Error getting documents.", task.getException());
                         }
                     }
@@ -114,13 +139,13 @@ class UserAuth {
     }
 
     private static void concludeLookUp(){
-        if(isUser != null && isAdmin != null){
-            mListener.onUserConnected(isUser, isAdmin);
+        if(isUser != null && isAdmin != null && isTransporter != null){
+            mListener.onUserConnected(isUser);
         }
     }
 
     static void attachAuthListener(){
-        isUser = isAdmin = null;
+        isUser = isAdmin = isTransporter = null;
         firebaseAuth.addAuthStateListener(firebaseAuthListener);
     }
 
@@ -135,7 +160,7 @@ class UserAuth {
     }
 
     public interface authChangeListener {
-        void onUserConnected(boolean isUser, boolean isAdmin);
+        void onUserConnected(boolean isUser);
         void onUserDisconnected();
     }
 }

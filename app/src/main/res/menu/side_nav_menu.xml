@@ -33,4 +33,9 @@
         android:id="@+id/side_nav_manage_services"
         android:icon="@drawable/ic_notifications_black_24dp"
         android:title="@string/title_manage_services" />
+
+    <item
+        android:id="@+id/side_nav_transport_orders"
+        android:icon="@drawable/ic_bike"
+        android:title="@string/title_transport_orders" />
 </menu>

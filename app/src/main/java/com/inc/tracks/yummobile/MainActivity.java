@@ -168,6 +168,9 @@ public class MainActivity extends AppCompatActivity implements
         MenuItem manageRestaurants = sideNavView.getMenu().findItem(R.id.side_nav_manage_services);
         manageRestaurants.setVisible(UserAuth.isAdmin);
 
+        MenuItem transportOrders = sideNavView.getMenu().findItem(R.id.side_nav_transport_orders);
+        transportOrders.setVisible(UserAuth.isTransporter);
+
         sideNavView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -204,6 +207,9 @@ public class MainActivity extends AppCompatActivity implements
                     case R.id.side_nav_manage_services:
                         startManagingServices();
                         break;
+                    case R.id.side_nav_transport_orders:
+                        startTransportingOrders();
+                        break;
                     default:
                         return true;
                 }
@@ -223,8 +229,13 @@ public class MainActivity extends AppCompatActivity implements
 
     private void startManagingServices(){
         Intent managerIntent = new Intent(MainActivity.this, ManagerActivity.class);
+        managerIntent.putExtra("mode", "manage");
         startActivity(managerIntent);
     }
 
-
+    private void startTransportingOrders(){
+        Intent managerIntent = new Intent(MainActivity.this, ManagerActivity.class);
+        managerIntent.putExtra("mode", "transport");
+        startActivity(managerIntent);
+    }
 }

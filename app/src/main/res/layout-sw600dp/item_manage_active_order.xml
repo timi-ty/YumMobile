@@ -23,7 +23,9 @@
             android:layout_height="@dimen/thumb_size_tablet"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
             android:scaleType="centerCrop"
+            app:layout_constraintBottom_toTopOf="@+id/btn_orderInteraction"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/pizza"
@@ -51,13 +53,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="32dp"
-            android:layout_marginBottom="8dp"
             android:drawableStart="@drawable/ic_naira"
             android:drawablePadding="4dp"
             android:gravity="center"
             android:text="@string/placeholder_loading"
             android:textSize="24sp"
-            app:layout_constraintBottom_toTopOf="@+id/pb_orderProgress"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_timeStamp" />
 
@@ -76,20 +76,29 @@
             app:layout_constraintTop_toBottomOf="@+id/tv_orderDesc"
             app:layout_constraintVertical_bias="1.0" />
 
-        <ProgressBar
-            android:id="@+id/pb_orderProgress"
-            style="?android:attr/progressBarStyleHorizontal"
+        <Button
+            android:id="@+id/btn_orderInteraction"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="8dp"
-            android:progressDrawable="@drawable/rounded_background_primary_dark_8"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:backgroundTint="@color/colorPrimaryDark"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/img_restaurantLogo" />
+            app:layout_constraintTop_toBottomOf="@id/tv_orderPrice" />
+
+        <ProgressBar
+            android:id="@+id/pb_activeOrder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminateTint="@color/colorAccent"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/btn_orderInteraction"
+            app:layout_constraintEnd_toEndOf="@+id/btn_orderInteraction"
+            app:layout_constraintStart_toStartOf="@+id/btn_orderInteraction"
+            app:layout_constraintTop_toTopOf="@+id/btn_orderInteraction" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

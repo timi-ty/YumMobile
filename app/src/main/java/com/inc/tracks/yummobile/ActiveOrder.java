@@ -32,6 +32,10 @@ public class ActiveOrder implements Serializable {
 
     private String description;
 
+    private boolean accepted;
+
+    private String transporterId;
+
     private Timestamp timestamp;
 
 
@@ -85,5 +89,23 @@ public class ActiveOrder implements Serializable {
 
     public void setCost(int cost) {
         this.cost = cost;
+    }
+
+    public boolean isAccepted() {
+        return accepted;
+    }
+
+    public void unAccept() {
+        this.accepted = false;
+        this.transporterId = null;
+    }
+
+    public void setAccepted(String transporterId) {
+        this.accepted = true;
+        this.transporterId = transporterId;
+    }
+
+    public String getTransporterId() {
+        return transporterId;
     }
 }

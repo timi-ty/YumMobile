@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item_activeOrder"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -23,7 +24,9 @@
             android:layout_height="@dimen/thumb_size_mobile"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
+            android:layout_marginBottom="5dp"
             android:scaleType="centerCrop"
+            app:layout_constraintBottom_toTopOf="@+id/btn_orderInteraction"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/pizza"
@@ -78,16 +81,27 @@
             app:layout_constraintTop_toBottomOf="@+id/tv_orderDesc" />
 
         <Button
-            android:id="@+id/button"
+            android:id="@+id/btn_orderInteraction"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:backgroundTint="@color/colorPrimaryDark"
-            android:text="@string/order_fulfilled"
             android:textColor="@color/white"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_orderPrice" />
+
+        <ProgressBar
+            android:id="@+id/pb_activeOrder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminateTint="@color/colorAccent"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/btn_orderInteraction"
+            app:layout_constraintEnd_toEndOf="@+id/btn_orderInteraction"
+            app:layout_constraintStart_toStartOf="@+id/btn_orderInteraction"
+            app:layout_constraintTop_toTopOf="@+id/btn_orderInteraction" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
