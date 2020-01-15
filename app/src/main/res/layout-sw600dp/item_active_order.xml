@@ -34,7 +34,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="16dp"
-            android:text="@string/sample_desc_active_order"
+            android:text="@string/placeholder_loading"
             android:textColor="@android:color/secondary_text_light"
             android:textSize="30sp"
             app:layout_constraintBottom_toTopOf="@+id/tv_orderPrice"
@@ -52,7 +52,7 @@
             android:drawableStart="@drawable/ic_naira"
             android:drawablePadding="4dp"
             android:gravity="center"
-            android:text="@string/sample_price"
+            android:text="@string/placeholder_loading"
             android:textSize="24sp"
             app:layout_constraintBottom_toTopOf="@+id/pb_orderProgress"
             app:layout_constraintEnd_toEndOf="parent" />

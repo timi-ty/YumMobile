@@ -18,9 +18,9 @@
         app:layout_constraintVertical_bias="0.0">
 
         <ImageView
-            android:id="@+id/img_restaurantLogo"
-            android:layout_width="@dimen/thumb_size_mobile"
-            android:layout_height="@dimen/thumb_size_mobile"
+            android:id="@+id/img_menuItemLogo"
+            android:layout_width="@dimen/thumb_size_tablet"
+            android:layout_height="@dimen/thumb_size_tablet"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
             android:scaleType="centerCrop"
@@ -30,64 +30,56 @@
             tools:ignore="ContentDescription" />
 
         <TextView
-            android:id="@+id/tv_orderDesc"
+            android:id="@+id/tv_menuItemName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="32dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="8dp"
             android:text="@string/placeholder_loading"
             android:textColor="@android:color/secondary_text_light"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toTopOf="@+id/tv_orderPrice"
+            android:textSize="30sp"
+            app:layout_constraintBottom_toTopOf="@+id/tv_subCost"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toEndOf="@+id/img_restaurantLogo"
-            app:layout_constraintTop_toTopOf="@+id/img_restaurantLogo"
+            app:layout_constraintStart_toEndOf="@+id/img_menuItemLogo"
+            app:layout_constraintTop_toTopOf="@+id/img_menuItemLogo"
             app:layout_constraintVertical_bias="0.0" />
 
         <TextView
-            android:id="@+id/tv_orderPrice"
+            android:id="@+id/tv_subCost"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="24dp"
+            android:layout_marginBottom="8dp"
             android:drawableStart="@drawable/ic_naira"
             android:drawablePadding="4dp"
             android:gravity="center"
             android:text="@string/placeholder_loading"
-            android:textSize="14sp"
+            android:textSize="30sp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_timeStamp" />
+            app:layout_constraintTop_toBottomOf="@+id/tv_priceAndCount" />
 
         <TextView
-            android:id="@+id/tv_timeStamp"
+            android:id="@+id/tv_priceAndCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="32dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
+            android:drawableStart="@drawable/ic_naira_small"
             android:drawablePadding="4dp"
             android:gravity="center"
             android:text="@string/placeholder_loading"
-            android:textSize="12sp"
-            app:layout_constraintBottom_toTopOf="@+id/tv_orderPrice"
+            android:textSize="24sp"
+            app:drawableTint="@color/colorDark"
+            app:layout_constraintBottom_toTopOf="@+id/tv_subCost"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toEndOf="@+id/img_restaurantLogo"
-            app:layout_constraintTop_toBottomOf="@+id/tv_orderDesc" />
-
-        <Button
-            android:id="@+id/button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/colorPrimaryDark"
-            android:text="@string/order_fulfilled"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_orderPrice" />
+            app:layout_constraintStart_toEndOf="@+id/img_menuItemLogo"
+            app:layout_constraintTop_toBottomOf="@+id/tv_menuItemName" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

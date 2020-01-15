@@ -77,4 +77,9 @@
     <string name="prompt_go_home">Go Home</string>
     <string name="sample_time_stamp">Thursday November 2, 5:49 PM.</string>
     <string name="order_fulfilled">Order Fulfilled</string>
+    <string name="sample_client_name">SlowMobius</string>
+    <string name="sample_client_number">09025213546</string>
+    <string name="sample_client_location">No. 17 Hermes Road, Olympus.</string>
+    <string name="sample_price_count">1000 X 5</string>
+    <string name="placeholder_loading">.....................</string>
 </resources>

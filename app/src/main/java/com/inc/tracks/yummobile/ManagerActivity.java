@@ -14,7 +14,8 @@ public class ManagerActivity extends AppCompatActivity implements
         ManagerRestaurantsFragment.OnFragmentInteractionListener,
         ManagerRestaurantsEditorFragment.OnFragmentInteractionListener,
         ManagerMenuFragment.OnFragmentInteractionListener,
-        ManagerOrdersFragment.OnFragmentInteractionListener{
+        ManagerOrdersFragment.OnFragmentInteractionListener,
+        ManagerOrderDetailsFragment.OnFragmentInteractionListener{
 
     private final String TAG = "ManagerActivity";
 
@@ -99,6 +100,16 @@ public class ManagerActivity extends AppCompatActivity implements
         fragmentTransaction.commit();
     }
 
+    private void goToManageOrderDetailsFragment(ActiveOrder activeOrder){
+        FragmentTransaction fragmentTransaction;
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction
+                .replace(R.id.manager_frag_container,
+                        ManagerOrderDetailsFragment.newInstance(activeOrder))
+                .addToBackStack(null);
+        fragmentTransaction.commit();
+    }
+
     @Override
     public void onFragmentInteraction(int interactionId) {
         switch (interactionId){
@@ -121,7 +132,7 @@ public class ManagerActivity extends AppCompatActivity implements
 
     @Override
     public void onFragmentInteraction(int interactionId, ActiveOrder activeOrder) {
-
+        goToManageOrderDetailsFragment(activeOrder);
     }
 
     @Override
