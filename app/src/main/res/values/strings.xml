@@ -88,4 +88,6 @@
     <string name="title_your_deliveries">Your Deliveries</string>
     <string name="wait_on_customer">Waiting For Customer To Confirm</string>
     <string name="confirm_order_received">Confirm Order Received</string>
+    <string name="location_permission_rationale">Setting the location automatically requires this permission.</string>
+    <string name="location_permission_consequence">Cannot set the location automatically without this permission.</string>
 </resources>

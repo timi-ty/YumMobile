@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.fragment.app.Fragment;
@@ -17,7 +18,11 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -32,6 +37,8 @@ import java.util.Locale;
 
 
 public class ActiveOrdersFragment extends Fragment {
+
+    private View myLayout;
 
     public ActiveOrdersFragment() {
         // Required empty public constructor
@@ -54,10 +61,13 @@ public class ActiveOrdersFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View fragView = inflater.inflate(R.layout.fragment_active_orders, container, false);
+
         RecyclerView activeOrders = fragView.findViewById(R.id.rv_activeOrders);
 
         activeOrders.setLayoutManager(new LinearLayoutManager(getContext()));
         activeOrders.setAdapter(new ActiveOrdersRVAdapter());
+
+        myLayout = (View) activeOrders.getParent();
 
         return fragView;
     }
@@ -179,6 +189,7 @@ public class ActiveOrdersFragment extends Fragment {
             TextView tvDescription;
             TextView tvOrderPrice;
             ProgressBar pbOrderProgress;
+            ProgressBar pbLoading;
             Button btnConfirmReceived;
             ImageView imgLogo;
 
@@ -188,6 +199,7 @@ public class ActiveOrdersFragment extends Fragment {
                 tvDescription = itemView.findViewById(R.id.tv_orderDesc);
                 tvOrderPrice = itemView.findViewById(R.id.tv_orderPrice);
                 pbOrderProgress = itemView.findViewById(R.id.pb_orderProgress);
+                pbLoading = itemView.findViewById(R.id.pb_activeOrder);
                 imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
                 btnConfirmReceived = itemView.findViewById(R.id.btn_confirmReceived);
             }
@@ -211,6 +223,14 @@ public class ActiveOrdersFragment extends Fragment {
                         if(activeOrder.isTransporterConfirmed()){
                             pbOrderProgress.setVisibility(View.INVISIBLE);
                             btnConfirmReceived.setVisibility(View.VISIBLE);
+
+                            btnConfirmReceived.setOnClickListener(this);
+                        }
+                        else {
+                            pbOrderProgress.setVisibility(View.VISIBLE);
+                            btnConfirmReceived.setVisibility(View.INVISIBLE);
+
+                            btnConfirmReceived.setOnClickListener(null);
                         }
 
                         tvDescription.setOnClickListener(this);
@@ -280,7 +300,67 @@ public class ActiveOrdersFragment extends Fragment {
 
             @Override
             public void onClick(View v) {
+                switch (v.getId()){
+                    case R.id.tv_orderDesc:
+                        break;
+                    case R.id.btn_confirmReceived:
+                        confirmOrderReceived(activeOrders.get(getAdapterPosition()));
+                        break;
+                }
+            }
 
+            private void confirmOrderReceived(final ActiveOrder activeOrder){
+                if(activeOrder.isTransporterConfirmed()) {
+                    setLoading(true);
+                    activeOrder.setClientConfirmed(true);
+
+                    fireDB.collection("transporters")
+                            .document(activeOrder.getTransporterId())
+                            .collection("completedDeliveries")
+                            .document(activeOrder.getId())
+                            .set(activeOrder)
+                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    fireDB.collection("activeOrders")
+                                            .document(activeOrder.getId())
+                                            .delete()
+                                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<Void> task) {
+                                                    Snackbar.make(myLayout, "Thank you for shopping with us!",
+                                                            Snackbar.LENGTH_SHORT).show();
+                                                    setLoading(false);
+                                                }
+                                            })
+                                            .addOnFailureListener(new OnFailureListener() {
+                                                @Override
+                                                public void onFailure(@NonNull Exception e) {
+                                                    Snackbar.make(myLayout, "Failed. Please try again.",
+                                                            Snackbar.LENGTH_SHORT).show();
+                                                    setLoading(false);
+                                                }
+                                            });
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Snackbar.make(myLayout, "Failed. Please try again.",
+                                            Snackbar.LENGTH_SHORT).show();
+                                    setLoading(false);
+                                }
+                            });
+                }
+                else{
+                    Snackbar.make(myLayout, "Failed. Transporter is yet to confirm.",
+                            Snackbar.LENGTH_SHORT).show();
+                }
+            }
+
+            private void setLoading(boolean loading){
+                btnConfirmReceived.setVisibility(loading ? View.INVISIBLE : View.VISIBLE);
+                pbLoading.setVisibility(loading ? View.VISIBLE : View.INVISIBLE);
             }
         }
     }

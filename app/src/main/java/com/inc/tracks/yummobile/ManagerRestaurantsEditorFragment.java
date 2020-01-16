@@ -1,7 +1,14 @@
 package com.inc.tracks.yummobile;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -11,13 +18,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -25,19 +35,24 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.util.Calendar;
 import java.util.Objects;
 
 import static android.app.Activity.RESULT_OK;
+import static androidx.core.content.ContextCompat.checkSelfPermission;
 
 
-public class ManagerRestaurantsEditorFragment extends Fragment implements View.OnClickListener{
+public class ManagerRestaurantsEditorFragment extends Fragment implements
+        View.OnClickListener, LocationListener {
     private final static String TAG = "FragRestEditor";
 
     private final static int RC_GET_IMAGE = 9011;
+    private static int RC_PERMISSION_LOCATION = 4505;
 
 
     private static final String ARG_REST_ITEM = "paramRestItem";
@@ -62,8 +77,11 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements View.O
     private Button btnUpImage;
     private Button btnSaveRestaurant;
     private Button btnManageMenu;
+    private ImageButton btnAutoAddress;
 
     private ProgressBar pbUploading;
+
+    private LocationManager locationManager;
 
     public ManagerRestaurantsEditorFragment() {
         // Required empty public constructor
@@ -99,6 +117,7 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements View.O
         btnUpImage = fragView.findViewById(R.id.btn_upRestaurantImage);
         btnSaveRestaurant = fragView.findViewById(R.id.btn_saveRestaurant);
         btnManageMenu = fragView.findViewById(R.id.btn_manageMenu);
+        btnAutoAddress = fragView.findViewById(R.id.btn_autoAddress);
 
         txtRestaurantName = fragView.findViewById(R.id.txt_restaurantName);
         txtRestaurantDesc = fragView.findViewById(R.id.txt_restaurantDesc);
@@ -114,6 +133,7 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements View.O
         btnUpImage.setOnClickListener(this);
         btnSaveRestaurant.setOnClickListener(this);
         btnManageMenu.setOnClickListener(this);
+        btnAutoAddress.setOnClickListener(this);
 
         synchronizeTextFields(txtRestaurantName, tvRestaurantName);
         synchronizeTextFields(txtRestaurantDesc, tvRestaurantDesc);
@@ -130,14 +150,14 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements View.O
         return fragView;
     }
 
-    public void onButtonPressed(int buttonId) {
+    private void onButtonPressed(int buttonId) {
         if (mListener != null) {
             mListener.onFragmentInteraction(buttonId, currentRestItem);
         }
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
@@ -145,6 +165,9 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements View.O
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+
+        locationManager =
+                (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
     }
 
     @Override
@@ -166,6 +189,8 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements View.O
                 break;
             case R.id.btn_manageMenu:
                 onButtonPressed(v.getId());
+            case R.id.btn_autoAddress:
+                queryAutoAdress();
                 break;
         }
     }
@@ -185,9 +210,44 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements View.O
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    @Override
+    public void onLocationChanged(Location location) {
+        queryAutoAdress();
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
+    }
+
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction(int buttonId);
         void onFragmentInteraction(int buttonId, RestaurantItem restaurantItem);
+        void onFragmentInteraction(int buttonId, MessageDialog messageDialog);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == RC_PERMISSION_LOCATION){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                queryAutoAdress();
+            }
+            else{
+                Snackbar.make(myLayout, "You can't auto address " +
+                        "without granting this permission", Snackbar.LENGTH_SHORT).show();
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     /* Worker methods below */
@@ -252,6 +312,71 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements View.O
             Snackbar.make(myLayout.findViewById(R.id.layout_restEditor),
                     "Admin Verification Failed.", Snackbar.LENGTH_LONG).show();
         }
+    }
+
+    private void queryAutoAdress(){
+        assert getContext() != null && getActivity() != null;
+
+        if (checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED &&
+                checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                        PackageManager.PERMISSION_GRANTED) {
+            if(ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+                    Manifest.permission.ACCESS_FINE_LOCATION)){
+                showPermissionReason();
+            }
+            else {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        RC_PERMISSION_LOCATION);
+            }
+            return;
+        }
+
+
+        Criteria criteria = new Criteria();
+        criteria.setCostAllowed(false);
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+
+        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+        if(location != null && location.getTime() >
+                Calendar.getInstance().getTimeInMillis() - 2 * 300 * 1000) {
+
+            currentRestItem.setLocation(location.getLatitude(),
+                    location.getLongitude());
+
+            Snackbar.make(myLayout, "Successfully geo tagged this restaurant.",
+                    Snackbar.LENGTH_SHORT).show();
+
+            updateEditorUi(true);
+        }
+        else {
+            Snackbar.make(myLayout, "Failed. Turn on your location services and try again.",
+                    Snackbar.LENGTH_SHORT).show();
+
+
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                    0, 0, this);
+        }
+    }
+
+    private void showPermissionReason(){
+        assert getActivity() != null;
+        MessageDialog reasonDialog = new MessageDialog(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        RC_PERMISSION_LOCATION);
+            }
+        }, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Snackbar.make(myLayout,
+                        R.string.location_permission_consequence, Snackbar.LENGTH_SHORT).show();
+            }
+        }, getResources().getString(R.string.location_permission_rationale), getActivity());
+
+        mListener.onFragmentInteraction(RC_PERMISSION_LOCATION, reasonDialog);
     }
 
     private void saveRestaurantItem(){
@@ -403,6 +528,17 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements View.O
             btnManageMenu.setVisibility(View.INVISIBLE);
         }
         else if(_check_5){
+            btnSaveRestaurant.setVisibility(View.INVISIBLE);
+            btnManageMenu.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void updateEditorUi(boolean canSave){
+        if(canSave){
+            btnSaveRestaurant.setVisibility(View.VISIBLE);
+            btnManageMenu.setVisibility(View.INVISIBLE);
+        }
+        else{
             btnSaveRestaurant.setVisibility(View.INVISIBLE);
             btnManageMenu.setVisibility(View.VISIBLE);
         }

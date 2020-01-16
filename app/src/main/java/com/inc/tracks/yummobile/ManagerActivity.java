@@ -7,6 +7,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -36,6 +37,8 @@ public class ManagerActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager);
+
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         fragmentManager = getSupportFragmentManager();
 
@@ -186,6 +189,11 @@ public class ManagerActivity extends AppCompatActivity implements
                 goToMenuEditorFragment(restaurantItem);
                 break;
         }
+    }
+
+    @Override
+    public void onFragmentInteraction(int buttonId, MessageDialog messageDialog) {
+        messageDialog.show(fragmentManager, "Dialog");
     }
 
     @Override
