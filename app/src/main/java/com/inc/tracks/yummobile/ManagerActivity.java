@@ -50,9 +50,9 @@ public class ManagerActivity extends AppCompatActivity implements
 
     private static int REQUEST_CHECK_SETTINGS = 8714;
 
-    private static int REASON_GEOTAG_RESTAURANT = 2732;
+    private static int REASON_GEO_TAG_RESTAURANT = 2732;
 
-    private static int REASON_SORT_RESTAURANTS = 3273;
+    private static int REASON_ORDER_PROGRESS = 3273;
 
 
     private String mode;
@@ -248,11 +248,12 @@ public class ManagerActivity extends AppCompatActivity implements
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if(requestCode == RC_PERMISSION_LOCATION){
             if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                geoTagCurrentRestaurant();
+                Snackbar.make(myLayout, "Location Permission Granted.",
+                        Snackbar.LENGTH_SHORT).show();
             }
             else{
-                Snackbar.make(myLayout, "You can't auto address " +
-                        "without granting this permission", Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(myLayout, "You Must Grant Location Permission " +
+                        "For Effective Management And Delivery.", Snackbar.LENGTH_SHORT).show();
             }
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -261,30 +262,18 @@ public class ManagerActivity extends AppCompatActivity implements
     private void geoTagCurrentRestaurant(){
         restEditorFragment.onStartGeoTagAttempt();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) !=
-                    PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !=
-                            PackageManager.PERMISSION_GRANTED) {
-                if(ActivityCompat.shouldShowRequestPermissionRationale(this,
-                        Manifest.permission.ACCESS_FINE_LOCATION)){
-                    showPermissionReason();
-                }
-                else {
-                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                            RC_PERMISSION_LOCATION);
-                }
-                return;
-            }
+        if(hasLocationPermission()){
+            createLocationRequest(REASON_GEO_TAG_RESTAURANT);
+        }
+        else {
+            restEditorFragment.onEndGeoTagAttempt();
         }
 
-        createLocationRequest(REASON_GEOTAG_RESTAURANT);
     }
 
     protected void createLocationRequest(final int requestReason) {
         final LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(5000);
+        locationRequest.setInterval(100000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
@@ -302,7 +291,7 @@ public class ManagerActivity extends AppCompatActivity implements
                 Snackbar.make(myLayout, "Waiting For Location Update...",
                         Snackbar.LENGTH_SHORT).show();
 
-                if(requestReason == REASON_GEOTAG_RESTAURANT){
+                if(requestReason == REASON_GEO_TAG_RESTAURANT){
                     new Handler(getMainLooper()).postDelayed(new Runnable() {
                         @Override
                         public void run() {
@@ -362,6 +351,29 @@ public class ManagerActivity extends AppCompatActivity implements
         });
     }
 
+    private boolean hasLocationPermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) !=
+                    PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                            PackageManager.PERMISSION_GRANTED) {
+                if(ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)){
+                    showPermissionReason();
+                }
+                else {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            RC_PERMISSION_LOCATION);
+                }
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+        return true;
+    }
+
     private void showPermissionReason(){
         MessageDialog reasonDialog = new MessageDialog(new DialogInterface.OnClickListener() {
             @Override
@@ -380,5 +392,4 @@ public class ManagerActivity extends AppCompatActivity implements
         }, getResources().getString(R.string.location_permission_rationale), this);
         reasonDialog.show(fragmentManager, "Dialog");
     }
-
 }

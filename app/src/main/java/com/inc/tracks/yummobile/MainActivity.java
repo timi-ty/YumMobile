@@ -1,29 +1,58 @@
 package com.inc.tracks.yummobile;
 
+import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.util.Calendar;
 import java.util.HashMap;
 
 
 public class MainActivity extends AppCompatActivity implements
-        HomeFragment.OnFragmentInteractionListener{
+        HomeFragment.OnFragmentInteractionListener {
+
+    private static int REQUEST_CHECK_SETTINGS = 8714;
+
+    private static int RC_PERMISSION_LOCATION = 4505;
+
+    View myLayout;
 
     FragmentManager fragmentManager;
 
@@ -32,6 +61,12 @@ public class MainActivity extends AppCompatActivity implements
     ActiveOrdersFragment activeOrdersFragment;
 
     Menu bottomMenu;
+
+    private FusedLocationProviderClient fusedLocationClient;
+
+    private LocationCallback locationCallback;
+
+    private Location mCurrentLocation;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -60,6 +95,10 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
         fragmentManager = getSupportFragmentManager();
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        myLayout = findViewById(R.id.layout_mainActivity);
+
         BottomNavigationView bottomNavView = findViewById(R.id.bottom_nav_view);
         Toolbar myToolbar = findViewById(R.id.toolbar);
 
@@ -73,6 +112,20 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         initializeSideNav(myToolbar);
+
+        if(hasLocationPermission()){
+            createLocationRequest();
+        }
+
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+                mCurrentLocation = locationResult.getLastLocation();
+            }
+        };
     }
 
 
@@ -155,7 +208,7 @@ public class MainActivity extends AppCompatActivity implements
     private void initializeSideNav(Toolbar mToolbar){
         ActionBarDrawerToggle drawerToggle;
         NavigationView sideNavView;
-        final DrawerLayout drawerLayout = findViewById(R.id.side_drawer);
+        final DrawerLayout drawerLayout = findViewById(R.id.layout_mainActivity);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, mToolbar, R.string.open, R.string.close);
 
 
@@ -237,5 +290,136 @@ public class MainActivity extends AppCompatActivity implements
         Intent managerIntent = new Intent(MainActivity.this, ManagerActivity.class);
         managerIntent.putExtra("mode", "transport");
         startActivity(managerIntent);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == RC_PERMISSION_LOCATION){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                Snackbar.make(myLayout, "Location Permission Granted.",
+                        Snackbar.LENGTH_SHORT).show();
+            }
+            else{
+                Snackbar.make(myLayout, "You Must Grant Location Permission " +
+                        "For Convenient Shopping And Delivery.", Snackbar.LENGTH_SHORT).show();
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    private boolean hasLocationPermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) !=
+                    PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                            PackageManager.PERMISSION_GRANTED) {
+                if(ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)){
+                    showPermissionReason();
+                }
+                else {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            RC_PERMISSION_LOCATION);
+                }
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+        return true;
+    }
+
+    protected void createLocationRequest() {
+        final LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setInterval(100000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+
+        SettingsClient client = LocationServices.getSettingsClient(this);
+        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+
+        task.addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
+            @Override
+            public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
+                // All location settings are satisfied. The client can initialize
+                // location requests here.
+                // ...
+                Snackbar.make(myLayout, "Waiting For Location Update...",
+                        Snackbar.LENGTH_SHORT).show();
+
+                new Handler(getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        fusedLocationClient.getLastLocation()
+                                .addOnSuccessListener(MainActivity.this, new OnSuccessListener<Location>() {
+                                    @Override
+                                    public void onSuccess(Location location) {
+                                        if(location != null && location.getTime() >
+                                                Calendar.getInstance().getTimeInMillis() - 2 * 60 * 1000) {
+                                            mCurrentLocation = location;
+                                        }
+                                        else {
+                                            Snackbar snack = Snackbar.make(myLayout,
+                                                    "Location Update Timed Out.",
+                                                    Snackbar.LENGTH_SHORT);
+                                            snack.setActionTextColor(getResources().getColor(R.color.colorPrimaryDark));
+                                            snack.setAction("Try Again", new View.OnClickListener() {
+                                                @Override
+                                                public void onClick(View v) {
+                                                    createLocationRequest();
+                                                }
+                                            });
+                                            snack.show();
+                                        }
+                                    }
+                                });
+                    }
+                }, 3000);
+            }
+        });
+
+        task.addOnFailureListener(this, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                if (e instanceof ResolvableApiException) {
+                    // Location settings are not satisfied, but this can be fixed
+                    // by showing the user a dialog.
+                    try {
+                        // Show the dialog by calling startResolutionForResult(),
+                        // and check the result in onActivityResult().
+                        Snackbar.make(myLayout, "Failed. Turn on your location services and try again.",
+                                Snackbar.LENGTH_SHORT).show();
+
+                        ResolvableApiException resolvable = (ResolvableApiException) e;
+                        resolvable.startResolutionForResult(MainActivity.this,
+                                REQUEST_CHECK_SETTINGS);
+                    } catch (IntentSender.SendIntentException sendEx) {
+                        // Ignore the error.
+                    }
+                }
+            }
+        });
+    }
+
+    private void showPermissionReason(){
+        MessageDialog reasonDialog = new MessageDialog(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            RC_PERMISSION_LOCATION);
+                }
+            }
+        }, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Snackbar.make(myLayout,
+                        R.string.whine_about_location_permission, Snackbar.LENGTH_SHORT).show();
+            }
+        }, getResources().getString(R.string.location_permission_encouragement), this);
+        reasonDialog.show(fragmentManager, "Dialog");
     }
 }

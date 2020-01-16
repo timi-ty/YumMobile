@@ -322,7 +322,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                     startActivity(mapIntent);
                 }
                 else{
-                    Snackbar.make(myLayout, "Install Google Maps to see this restaurant on the map.",
+                    Snackbar.make(myLayout, "Install Google Maps to find this restaurant on the map.",
                             Snackbar.LENGTH_SHORT).show();
                 }
             }
