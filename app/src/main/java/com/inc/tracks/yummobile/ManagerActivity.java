@@ -3,14 +3,37 @@ package com.inc.tracks.yummobile;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
+
+import java.util.Calendar;
 
 public class ManagerActivity extends AppCompatActivity implements
         ManagerHomeFragment.OnFragmentInteractionListener,
@@ -23,7 +46,18 @@ public class ManagerActivity extends AppCompatActivity implements
 
     private final String TAG = "ManagerActivity";
 
+    private static int RC_PERMISSION_LOCATION = 4505;
+
+    private static int REQUEST_CHECK_SETTINGS = 8714;
+
+    private static int REASON_GEOTAG_RESTAURANT = 2732;
+
+    private static int REASON_SORT_RESTAURANTS = 3273;
+
+
     private String mode;
+
+    ConstraintLayout myLayout;
 
     FragmentManager fragmentManager;
 
@@ -33,6 +67,8 @@ public class ManagerActivity extends AppCompatActivity implements
 
     Toolbar myToolbar;
 
+    private FusedLocationProviderClient fusedLocationClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,7 +76,11 @@ public class ManagerActivity extends AppCompatActivity implements
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
         fragmentManager = getSupportFragmentManager();
+
+        myLayout = findViewById(R.id.layout_managerActivity);
 
         myToolbar = findViewById(R.id.toolbar);
 
@@ -187,6 +227,8 @@ public class ManagerActivity extends AppCompatActivity implements
                 break;
             case R.id.btn_manageMenu:
                 goToMenuEditorFragment(restaurantItem);
+            case R.id.btn_geoTagRestaurant:
+                geoTagCurrentRestaurant();
                 break;
         }
     }
@@ -201,4 +243,142 @@ public class ManagerActivity extends AppCompatActivity implements
         outState.putString("mode", mode);
         super.onSaveInstanceState(outState);
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == RC_PERMISSION_LOCATION){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                geoTagCurrentRestaurant();
+            }
+            else{
+                Snackbar.make(myLayout, "You can't auto address " +
+                        "without granting this permission", Snackbar.LENGTH_SHORT).show();
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    private void geoTagCurrentRestaurant(){
+        restEditorFragment.onStartGeoTagAttempt();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) !=
+                    PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                            PackageManager.PERMISSION_GRANTED) {
+                if(ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)){
+                    showPermissionReason();
+                }
+                else {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            RC_PERMISSION_LOCATION);
+                }
+                return;
+            }
+        }
+
+        createLocationRequest(REASON_GEOTAG_RESTAURANT);
+    }
+
+    protected void createLocationRequest(final int requestReason) {
+        final LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(5000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+
+        SettingsClient client = LocationServices.getSettingsClient(this);
+        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+
+        task.addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
+            @Override
+            public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
+                // All location settings are satisfied. The client can initialize
+                // location requests here.
+                // ...
+                Snackbar.make(myLayout, "Waiting For Location Update...",
+                        Snackbar.LENGTH_SHORT).show();
+
+                if(requestReason == REASON_GEOTAG_RESTAURANT){
+                    new Handler(getMainLooper()).postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            fusedLocationClient.getLastLocation()
+                                    .addOnSuccessListener(ManagerActivity.this, new OnSuccessListener<Location>() {
+                                        @Override
+                                        public void onSuccess(Location location) {
+                                            if(location != null && location.getTime() >
+                                                    Calendar.getInstance().getTimeInMillis() - 2 * 60 * 1000) {
+
+                                                restEditorFragment.geoTagRestaurant(location);
+                                            }
+                                            else {
+                                                Snackbar snack = Snackbar.make(myLayout,
+                                                        "Location Update Timed Out.",
+                                                        Snackbar.LENGTH_SHORT);
+                                                snack.setActionTextColor(getResources().getColor(R.color.colorPrimaryDark));
+                                                snack.setAction("Try Again", new View.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(View v) {
+                                                        geoTagCurrentRestaurant();
+                                                    }
+                                                });
+                                                snack.show();
+                                                restEditorFragment.onEndGeoTagAttempt();
+                                            }
+                                        }
+                                    });
+                        }
+                    }, 3000);
+                }
+            }
+        });
+
+        task.addOnFailureListener(this, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                if (e instanceof ResolvableApiException) {
+                    // Location settings are not satisfied, but this can be fixed
+                    // by showing the user a dialog.
+                    try {
+                        // Show the dialog by calling startResolutionForResult(),
+                        // and check the result in onActivityResult().
+                        Snackbar.make(myLayout, "Failed. Turn on your location services and try again.",
+                                Snackbar.LENGTH_SHORT).show();
+
+                        ResolvableApiException resolvable = (ResolvableApiException) e;
+                        resolvable.startResolutionForResult(ManagerActivity.this,
+                                REQUEST_CHECK_SETTINGS);
+                    } catch (IntentSender.SendIntentException sendEx) {
+                        // Ignore the error.
+                    }
+                }
+
+                restEditorFragment.onEndGeoTagAttempt();
+            }
+        });
+    }
+
+    private void showPermissionReason(){
+        MessageDialog reasonDialog = new MessageDialog(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            RC_PERMISSION_LOCATION);
+                }
+            }
+        }, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Snackbar.make(myLayout,
+                        R.string.location_permission_consequence, Snackbar.LENGTH_SHORT).show();
+            }
+        }, getResources().getString(R.string.location_permission_rationale), this);
+        reasonDialog.show(fragmentManager, "Dialog");
+    }
+
 }

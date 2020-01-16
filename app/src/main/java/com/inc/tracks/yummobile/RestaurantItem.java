@@ -1,6 +1,9 @@
 package com.inc.tracks.yummobile;
 
 import android.net.Uri;
+import android.util.Log;
+
+import androidx.annotation.Nullable;
 
 import com.google.firebase.firestore.GeoPoint;
 
@@ -10,14 +13,15 @@ public class RestaurantItem implements Serializable {
 
     public RestaurantItem(){}
 
+
     private String id;
     private String name;
     private String description;
     private String address;
     private String imgRef;
 
-    private double latitude;
-    private double longitude;
+    private Double latitude;
+    private Double longitude;
 
     public String getId() {
         return id;
@@ -59,13 +63,22 @@ public class RestaurantItem implements Serializable {
         this.imgRef = imgRef;
     }
 
-    public void setLocation(double latitude, double longitude){
-        this.latitude = latitude;
-        this.longitude = longitude;
+    public void setLocation(@Nullable GeoPoint location){
+        if(location != null){
+            this.latitude = location.getLatitude();
+            this.longitude = location.getLongitude();
+        }
+        else{
+            latitude = longitude = null;
+        }
     }
 
     public GeoPoint getLocation(){
-        return new GeoPoint(latitude, longitude);
+        if(latitude != null && longitude != null){
+            return new GeoPoint(latitude, longitude);
+        }
+        else{
+            return null;
+        }
     }
-
 }

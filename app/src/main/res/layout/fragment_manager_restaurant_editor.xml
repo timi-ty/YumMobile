@@ -56,13 +56,13 @@
             android:hint="@string/hint_restaurant_address"
             android:inputType="textPostalAddress"
             android:padding="4dp"
-            app:layout_constraintEnd_toStartOf="@+id/btn_autoAddress"
+            app:layout_constraintEnd_toStartOf="@+id/btn_geoTagRestaurant"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/txt_restaurantDesc"
             tools:ignore="Autofill" />
 
         <ImageButton
-            android:id="@+id/btn_autoAddress"
+            android:id="@+id/btn_geoTagRestaurant"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_marginEnd="32dp"

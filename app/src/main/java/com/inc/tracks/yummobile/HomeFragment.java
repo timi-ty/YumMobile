@@ -1,6 +1,8 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,17 +18,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Objects;
 
 
@@ -39,6 +44,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
     private RestaurantsRVAdapter restaurantsAdapter;
 
     private TextView txtUserGreeting;
+
+    private View myLayout;
 
     public HomeFragment() {
       // Required empty public constructor
@@ -61,6 +68,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                              @Nullable Bundle savedInstanceState) {
         View fragView = inflater.inflate(R.layout.fragment_home,
                 container, false);
+
+        myLayout = fragView;
 
         txtUserGreeting = fragView.findViewById(R.id.txt_userGreeting);
 
@@ -261,6 +270,15 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                 tvDesc.setText(restaurantItem.getDescription());
                 tvAddress.setText(restaurantItem.getAddress());
 
+                if(restaurantItem.getLocation() != null){
+                    tvAddress.setOnClickListener(this);
+
+                }
+                else{
+                    tvAddress.setCompoundDrawablesRelative(null, null,
+                            null, null);
+                }
+
                 refreshThumbnail(restaurantItem);
             }
 
@@ -280,11 +298,32 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
             @Override
             public void onClick(View v) {
-                if (v.getId() == R.id.item_nearRestaurant) {
-                    int position = getAdapterPosition();
-                    RestaurantItem restaurantItem = restaurantItems.get(position);
+                int position = getAdapterPosition();
+                RestaurantItem restaurantItem = restaurantItems.get(position);
+                switch (v.getId()) {
+                    case R.id.item_nearRestaurant:
+                        onButtonPressed(v.getId(), restaurantItem);
+                        break;
+                    case R.id.tv_restaurantAddress:
+                        findInGMaps(restaurantItem);
+                        break;
+                }
+            }
 
-                    onButtonPressed(v.getId(), restaurantItem);
+            private void findInGMaps(RestaurantItem restaurantItem){
+                String latitude = "" + restaurantItem.getLocation().getLatitude();
+                String longitude = "" + restaurantItem.getLocation().getLongitude();
+
+                Uri gmmIntentUri = Uri.parse("geo:"+latitude+","+longitude);
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                mapIntent.setPackage("com.google.android.apps.maps");
+                if (mapIntent.resolveActivity(Objects.requireNonNull(getActivity())
+                        .getPackageManager()) != null) {
+                    startActivity(mapIntent);
+                }
+                else{
+                    Snackbar.make(myLayout, "Install Google Maps to see this restaurant on the map.",
+                            Snackbar.LENGTH_SHORT).show();
                 }
             }
         }
