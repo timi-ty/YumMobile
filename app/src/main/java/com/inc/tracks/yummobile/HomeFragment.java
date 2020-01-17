@@ -2,12 +2,6 @@ package com.inc.tracks.yummobile;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -20,6 +14,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -31,14 +27,13 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -48,7 +43,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
     private FirebaseFirestore fireDB;
 
-    private RestaurantsRVAdapter restaurantsAdapter;
+    private RestaurantsRVAdapter restaurantsRVAdapter;
 
     private TextView txtUserGreeting;
 
@@ -84,12 +79,13 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         RecyclerView rvRecentOrders = fragView.findViewById(R.id.rv_recentOrders);
 
         rvRestaurantList.setLayoutManager(new LinearLayoutManager(fragView.getContext()));
-        if(restaurantsAdapter == null){
-            restaurantsAdapter = new RestaurantsRVAdapter();
+        if(restaurantsRVAdapter == null){
+            restaurantsRVAdapter = new RestaurantsRVAdapter();
         }
         if(rvRestaurantList.getAdapter() == null){
-            rvRestaurantList.setAdapter(restaurantsAdapter);
+            rvRestaurantList.setAdapter(restaurantsRVAdapter);
         }
+        restaurantsRVAdapter.getFilter().filter("");
 
         if(fragView.getId() == R.id.layout_landHome){
             rvRecentOrders.setLayoutManager(new LinearLayoutManager(fragView.getContext(),
@@ -157,15 +153,23 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         }
     }
 
-    public void onLocationUpdate(){
-        Collections.sort(restaurantsAdapter.restaurantItems, new SortRestaurants(UserAuth.mCurrentLocation));
-        restaurantsAdapter.notifyDataSetChanged();
+    void onLocationUpdate(){
+        Collections.sort(restaurantsRVAdapter.restaurantList, new SortRestaurants(UserAuth.mCurrentLocation));
+        restaurantsRVAdapter.notifyDataSetChanged();
     }
 
-    public class RestaurantsRVAdapter extends RecyclerView.Adapter<RestaurantsRVAdapter.RstViewHolder>{
+    void onSearchQuery(String newText){
+        if(isVisible()){
+            restaurantsRVAdapter.getFilter().filter(newText);
+        }
+    }
+
+    public class RestaurantsRVAdapter extends
+            RecyclerView.Adapter<RestaurantsRVAdapter.RstViewHolder> implements Filterable {
 
         private final String TAG = "FireStore";
-        private ArrayList<RestaurantItem> restaurantItems = new ArrayList<>();
+        private ArrayList<RestaurantItem> restaurantList = new ArrayList<>();
+        List<RestaurantItem> restaurantListFiltered = new ArrayList<>();
 
         RestaurantsRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
@@ -196,18 +200,18 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
                                         restaurantItem.setId(dc.getDocument().getId());
 
-                                        restaurantItems.add(restaurantItem);
+                                        restaurantList.add(restaurantItem);
 
-                                        notifyItemInserted(restaurantItems.size() - 1);
+                                        notifyItemInserted(restaurantList.size() - 1);
                                         break;
                                     case MODIFIED:
                                         Log.d(TAG, "Modified Restaurant: " + dc.getDocument().getData());
 
                                         restaurantItem = dc.getDocument().toObject(RestaurantItem.class);
 
-                                        for(RestaurantItem item : restaurantItems){
+                                        for(RestaurantItem item : restaurantList){
                                             if(item.getId().equals(restaurantItem.getId())){
-                                                position = restaurantItems.indexOf(item);
+                                                position = restaurantList.indexOf(item);
                                             }
                                         }
                                         if(position >= 0){
@@ -219,16 +223,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
                                         restaurantItem = dc.getDocument().toObject(RestaurantItem.class);
 
-                                        for(RestaurantItem item : restaurantItems){
+                                        for(RestaurantItem item : restaurantList){
                                             if(item.getId().equals(restaurantItem.getId())){
-                                                position = restaurantItems.indexOf(item);
+                                                position = restaurantList.indexOf(item);
                                                 Log.d(TAG, "Removed Restaurant Notified!: " + item.getId()
-                                                        + " => " + restaurantItem.getId() + " => " + restaurantItems.indexOf(item));
+                                                        + " => " + restaurantItem.getId() + " => " + restaurantList.indexOf(item));
                                             }
                                         }
 
                                         if(position >= 0){
-                                            restaurantItems.remove(position);
+                                            restaurantList.remove(position);
                                             notifyItemRemoved(position);
                                         }
                                         break;
@@ -252,14 +256,50 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
         @Override
         public void onBindViewHolder(@NonNull RstViewHolder viewHolder, int position) {
-            RestaurantItem restaurantItem = restaurantItems.get(position);
+            RestaurantItem restaurantItem = restaurantListFiltered.get(position);
             viewHolder.bindView(restaurantItem);
         }
 
         @Override
         public int getItemCount() {
-            return restaurantItems.size();
+            return restaurantListFiltered.size();
         }
+
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence charSequence) {
+                    String charString = charSequence.toString();
+
+                    if (charString.isEmpty()) {
+                        restaurantListFiltered = restaurantList;
+                    } else {
+                        List<RestaurantItem> filteredList = new ArrayList<>();
+                        for (RestaurantItem item : restaurantList) {
+                            if (item.getName().toLowerCase().contains(charString.toLowerCase())) {
+                                filteredList.add(item);
+                            }
+                        }
+
+                        restaurantListFiltered = filteredList;
+                    }
+
+                    FilterResults filterResults = new FilterResults();
+                    filterResults.values = restaurantListFiltered;
+                    return filterResults;
+                }
+
+                @SuppressWarnings("unchecked")
+                @Override
+                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+                    restaurantListFiltered = (ArrayList<RestaurantItem>) filterResults.values;
+
+                    notifyDataSetChanged();
+                }
+            };
+        }
+
 
         class RstViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
             TextView tvName;
@@ -313,7 +353,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
             @Override
             public void onClick(View v) {
                 int position = getAdapterPosition();
-                RestaurantItem restaurantItem = restaurantItems.get(position);
+                RestaurantItem restaurantItem = restaurantListFiltered.get(position);
                 switch (v.getId()) {
                     case R.id.item_nearRestaurant:
                         onButtonPressed(v.getId(), restaurantItem);

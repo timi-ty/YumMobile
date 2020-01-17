@@ -7,12 +7,12 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.util.SparseArray;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -43,6 +43,7 @@ import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 import static android.app.Activity.RESULT_OK;
@@ -67,9 +68,9 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
 
     private ImageView tempImageView;
 
-    private int tempAdapterPosition;
+    private String tempItemId;
 
-    private SparseArray<Uri> uriPool = new SparseArray<>();
+    private HashMap<String, Uri> uriPool = new HashMap<>();
 
     public ManagerMenuFragment() {
         // Required empty public constructor
@@ -105,6 +106,7 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
         rvMenu.setLayoutManager(new LinearLayoutManager(getContext()));
         if(menuRVAdapter == null){
             menuRVAdapter = new MenuRVAdapter();
+            menuRVAdapter.getFilter().filter("");
         }
         if(rvMenu.getAdapter() == null){
             rvMenu.setAdapter(menuRVAdapter);
@@ -120,14 +122,8 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
         return fragView;
     }
 
-    public void onButtonPressed(int buttonId) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(buttonId);
-        }
-    }
-
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
@@ -154,9 +150,9 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if(requestCode == RC_GET_IMAGE && resultCode == RESULT_OK && data != null){
 
-            uriPool.put(tempAdapterPosition, data.getData());
+            uriPool.put(tempItemId, data.getData());
 
-            Log.d("SparseArray",  "key =  " + tempAdapterPosition);
+            Log.d("SparseArray",  "key =  " + tempItemId);
 
             GlideApp.with(Objects.requireNonNull(getActivity()))
                     .load(data.getData()).into(tempImageView);
@@ -168,8 +164,24 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
         void onFragmentInteraction(int interactionId);
     }
 
+    void onSearchQuery(String newText){
+        if(isVisible()){
+            menuRVAdapter.getFilter().filter(newText);
+        }
+    }
+
     private void addNewMenuItem(){
-        menuRVAdapter.menuItems.add(new MenuItem());
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        DocumentReference docRef = db.collection("restaurants")
+                                        .document(restaurantItem.getId())
+                                        .collection("menuItems")
+                                        .document();
+
+        MenuItem menuItem = new MenuItem();
+        menuItem.setId(docRef.getId());
+
+        menuRVAdapter.menuItems.add(menuItem);
 
         int position = menuRVAdapter.menuItems.size() - 1;
 
@@ -190,13 +202,15 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
         notify.show();
     }
 
-    public class MenuRVAdapter extends RecyclerView.Adapter<MenuRVAdapter.MenuItemViewHolder>{
+    public class MenuRVAdapter extends RecyclerView.Adapter<MenuRVAdapter.MenuItemViewHolder>
+            implements Filterable {
 
         private final String TAG = "FireStore";
         private ArrayList<MenuItem> menuItems = new ArrayList<>();
+        List<MenuItem> menuItemsFiltered = new ArrayList<>();
         FirebaseFirestore fireDB;
 
-        public MenuRVAdapter() {
+        MenuRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
 
             EventListener<QuerySnapshot> dataChangedListener =
@@ -296,13 +310,48 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
 
         @Override
         public void onBindViewHolder(@NonNull MenuItemViewHolder viewHolder, int position) {
-            MenuItem menuItem = menuItems.get(position);
+            MenuItem menuItem = menuItemsFiltered.get(position);
             viewHolder.bindView(menuItem);
         }
 
         @Override
         public int getItemCount() {
-            return menuItems.size();
+            return menuItemsFiltered.size();
+        }
+
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence charSequence) {
+                    String charString = charSequence.toString();
+
+                    if (charString.isEmpty()) {
+                        menuItemsFiltered = menuItems;
+                    } else {
+                        List<MenuItem> filteredList = new ArrayList<>();
+                        for (MenuItem item : menuItems) {
+                            if (item.getName().toLowerCase().contains(charString.toLowerCase())) {
+                                filteredList.add(item);
+                            }
+                        }
+
+                        menuItemsFiltered = filteredList;
+                    }
+
+                    FilterResults filterResults = new FilterResults();
+                    filterResults.values = menuItemsFiltered;
+                    return filterResults;
+                }
+
+                @SuppressWarnings("unchecked")
+                @Override
+                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+                    menuItemsFiltered = (ArrayList<MenuItem>) filterResults.values;
+
+                    notifyDataSetChanged();
+                }
+            };
         }
 
         class MenuItemViewHolder extends RecyclerView.ViewHolder implements
@@ -384,7 +433,8 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
             private void determineSaveState(){
                 boolean check1 = txtName.getText().toString().equals(menuItem.getName());
                 boolean check2 = txtDesc.getText().toString().equals(menuItem.getDescription());
-                boolean check3 = txtPrice.getText().toString().equals(menuItem.getPrice());
+                boolean check3 = txtPrice.getText().toString().equals(Integer.toString(menuItem.getPrice()));
+
 
                 if(!(check1 && check2 && check3)){
                     btnSave.setVisibility(View.VISIBLE);
@@ -417,7 +467,7 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
                             "Choose Restaurant Image"), RC_GET_IMAGE);
 
                     tempImageView = imgLogo;
-                    tempAdapterPosition = getAdapterPosition();
+                    tempItemId = menuItem.getId();
 
                     btnSave.setVisibility(View.VISIBLE);
                 }
@@ -430,7 +480,7 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
             private void saveMenuItem(){
                 setSavingUi(true);
 
-                Uri imgUri = uriPool.get(getAdapterPosition());
+                Uri imgUri = uriPool.get(menuItem.getId());
 
                 menuItem.setName(txtName.getText().toString());
                 menuItem.setDescription(txtDesc.getText().toString());

@@ -15,6 +15,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -37,6 +39,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -77,6 +80,7 @@ public class ActiveOrdersFragment extends Fragment {
         if(activeOrdersRVAdapter == null){
             activeOrdersRVAdapter = new ActiveOrdersRVAdapter();
         }
+        activeOrdersRVAdapter.getFilter().filter("");
 
         activeOrders.setAdapter(activeOrdersRVAdapter);
 
@@ -113,12 +117,21 @@ public class ActiveOrdersFragment extends Fragment {
         batch.commit();
     }
 
+    void onSearchQuery(String newText){
+        if(isVisible()){
+            activeOrdersRVAdapter.getFilter().filter(newText);
+        }
+    }
 
-    public class ActiveOrdersRVAdapter extends RecyclerView.Adapter<ActiveOrdersRVAdapter.MenuItemViewHolder>{
+
+
+    public class ActiveOrdersRVAdapter extends
+            RecyclerView.Adapter<ActiveOrdersRVAdapter.ActiveOrderViewHolder> implements Filterable {
 
         private final String TAG = "FireStore";
 
         private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
+        List<ActiveOrder> activeOrdersFiltered = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
         private HashMap<String, UserPrefs> transporters = new HashMap<>();
 
@@ -196,24 +209,63 @@ public class ActiveOrdersFragment extends Fragment {
 
         @NonNull
         @Override
-        public MenuItemViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        public ActiveOrderViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
             View restaurantView = LayoutInflater.from(getContext())
                     .inflate(R.layout.item_active_order, viewGroup, false);
-            return new MenuItemViewHolder(restaurantView);
+            return new ActiveOrderViewHolder(restaurantView);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull MenuItemViewHolder viewHolder, int i) {
-            viewHolder.bindView(activeOrders.get(i));
+        public void onBindViewHolder(@NonNull ActiveOrderViewHolder viewHolder, int i) {
+            viewHolder.bindView(activeOrdersFiltered.get(i));
         }
 
         @Override
         public int getItemCount() {
-            return activeOrders.size();
+            return activeOrdersFiltered.size();
         }
 
-        class MenuItemViewHolder extends RecyclerView.ViewHolder implements  View.OnClickListener{
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence charSequence) {
+                    String charString = charSequence.toString();
+
+                    if (charString.isEmpty()) {
+                        activeOrdersFiltered = activeOrders;
+                    } else {
+                        List<ActiveOrder> filteredList = new ArrayList<>();
+                        for (ActiveOrder order : activeOrders) {
+                            RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
+                            assert  restaurantItem != null;
+                            String restaurantName = restaurantItem.getName();
+                            if (order.getDescription().toLowerCase().contains(charString.toLowerCase())
+                                || restaurantName.toLowerCase().contains(charString.toLowerCase())) {
+                                filteredList.add(order);
+                            }
+                        }
+
+                        activeOrdersFiltered = filteredList;
+                    }
+
+                    FilterResults filterResults = new FilterResults();
+                    filterResults.values = activeOrdersFiltered;
+                    return filterResults;
+                }
+
+                @SuppressWarnings("unchecked")
+                @Override
+                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+                    activeOrdersFiltered = (ArrayList<ActiveOrder>) filterResults.values;
+
+                    notifyDataSetChanged();
+                }
+            };
+        }
+
+        class ActiveOrderViewHolder extends RecyclerView.ViewHolder implements  View.OnClickListener{
 
             TextView tvDescription;
             TextView tvOrderPrice;
@@ -222,7 +274,7 @@ public class ActiveOrdersFragment extends Fragment {
             Button btnConfirmReceived;
             ImageView imgLogo;
 
-            MenuItemViewHolder(@NonNull View itemView) {
+            ActiveOrderViewHolder(@NonNull View itemView) {
                 super(itemView);
 
                 tvDescription = itemView.findViewById(R.id.tv_orderDesc);
@@ -345,7 +397,7 @@ public class ActiveOrdersFragment extends Fragment {
                     case R.id.tv_orderDesc:
                         break;
                     case R.id.btn_confirmReceived:
-                        confirmOrderReceived(activeOrders.get(getAdapterPosition()));
+                        confirmOrderReceived(activeOrdersFiltered.get(getAdapterPosition()));
                         break;
                 }
             }

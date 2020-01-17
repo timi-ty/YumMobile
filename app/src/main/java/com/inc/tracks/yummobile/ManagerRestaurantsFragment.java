@@ -6,6 +6,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -30,6 +32,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class ManagerRestaurantsFragment extends Fragment implements View.OnClickListener{
@@ -37,6 +40,8 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
     private OnFragmentInteractionListener mListener;
 
     private ConstraintLayout myLayout;
+
+    private RestaurantsRVAdapter restaurantsRVAdapter;
 
     public ManagerRestaurantsFragment() {
         // Required empty public constructor
@@ -64,7 +69,11 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
         FloatingActionButton fab_addRestaurant = fragView.findViewById(R.id.fab_addRestaurant);
 
         rvRestaurants.setLayoutManager(new LinearLayoutManager(getContext()));
-        rvRestaurants.setAdapter(new RestaurantsRVAdapter());
+        if(restaurantsRVAdapter == null){
+            restaurantsRVAdapter = new RestaurantsRVAdapter();
+        }
+        restaurantsRVAdapter.getFilter().filter("");
+        rvRestaurants.setAdapter(restaurantsRVAdapter);
 
         fab_addRestaurant.setOnClickListener(this);
 
@@ -110,10 +119,18 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
         void onFragmentInteraction(int interactionId, RestaurantItem restaurantItem);
     }
 
-    public class RestaurantsRVAdapter extends RecyclerView.Adapter<RestaurantsRVAdapter.RstViewHolder>{
+    void onSearchQuery(String newText){
+        if(isVisible()){
+            restaurantsRVAdapter.getFilter().filter(newText);
+        }
+    }
+
+    public class RestaurantsRVAdapter extends
+            RecyclerView.Adapter<RestaurantsRVAdapter.RstViewHolder> implements Filterable {
 
         private final String TAG = "FireStore";
-        private ArrayList<RestaurantItem> restaurantItems = new ArrayList<>();
+        private ArrayList<RestaurantItem> restaurantList = new ArrayList<>();
+        List<RestaurantItem> restaurantListFiltered = new ArrayList<>();
         FirebaseFirestore fireDB;
 
         RestaurantsRVAdapter() {
@@ -145,18 +162,18 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
 
                                         restaurantItem.setId(dc.getDocument().getId());
 
-                                        restaurantItems.add(restaurantItem);
+                                        restaurantList.add(restaurantItem);
 
-                                        notifyItemInserted(restaurantItems.size() - 1);
+                                        notifyItemInserted(restaurantList.size() - 1);
                                         break;
                                     case MODIFIED:
                                         Log.d(TAG, "Modified Restaurant: " + dc.getDocument().getData());
 
                                         restaurantItem = dc.getDocument().toObject(RestaurantItem.class);
 
-                                        for(RestaurantItem item : restaurantItems){
+                                        for(RestaurantItem item : restaurantList){
                                             if(item.getId().equals(restaurantItem.getId())){
-                                                position = restaurantItems.indexOf(item);
+                                                position = restaurantList.indexOf(item);
                                             }
                                         }
                                         if(position >= 0){
@@ -168,16 +185,16 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
 
                                         restaurantItem = dc.getDocument().toObject(RestaurantItem.class);
 
-                                        for(RestaurantItem item : restaurantItems){
+                                        for(RestaurantItem item : restaurantList){
                                             if(item.getId().equals(restaurantItem.getId())){
-                                                position = restaurantItems.indexOf(item);
+                                                position = restaurantList.indexOf(item);
                                                 Log.d(TAG, "Removed Restaurant Notified!: " + item.getId()
-                                                        + " => " + restaurantItem.getId() + " => " + restaurantItems.indexOf(item));
+                                                        + " => " + restaurantItem.getId() + " => " + restaurantList.indexOf(item));
                                             }
                                         }
 
                                         if(position >= 0){
-                                            restaurantItems.remove(position);
+                                            restaurantList.remove(position);
                                             notifyItemRemoved(position);
                                         }
                                         break;
@@ -201,13 +218,48 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
 
         @Override
         public void onBindViewHolder(@NonNull RstViewHolder viewHolder, int position) {
-            RestaurantItem restaurantItem = restaurantItems.get(position);
+            RestaurantItem restaurantItem = restaurantListFiltered.get(position);
             viewHolder.bindView(restaurantItem);
         }
 
         @Override
         public int getItemCount() {
-            return restaurantItems.size();
+            return restaurantListFiltered.size();
+        }
+
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence charSequence) {
+                    String charString = charSequence.toString();
+
+                    if (charString.isEmpty()) {
+                        restaurantListFiltered = restaurantList;
+                    } else {
+                        List<RestaurantItem> filteredList = new ArrayList<>();
+                        for (RestaurantItem item : restaurantList) {
+                            if (item.getName().toLowerCase().contains(charString.toLowerCase())) {
+                                filteredList.add(item);
+                            }
+                        }
+
+                        restaurantListFiltered = filteredList;
+                    }
+
+                    FilterResults filterResults = new FilterResults();
+                    filterResults.values = restaurantListFiltered;
+                    return filterResults;
+                }
+
+                @SuppressWarnings("unchecked")
+                @Override
+                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+                    restaurantListFiltered = (ArrayList<RestaurantItem>) filterResults.values;
+
+                    notifyDataSetChanged();
+                }
+            };
         }
 
         class RstViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
@@ -258,7 +310,7 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
                         deleteRestaurant();
                         break;
                     case R.id.item_manageRestaurant:
-                        onButtonPressed(v.getId(), restaurantItems.get(getAdapterPosition()));
+                        onButtonPressed(v.getId(), restaurantListFiltered.get(getAdapterPosition()));
                 }
             }
 
@@ -269,7 +321,7 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
                             @Override
                             public void onClick(View v) {
                                 int position = getAdapterPosition();
-                                String docId = restaurantItems.get(position).getId();
+                                String docId = restaurantList.get(position).getId();
                                 fireDB.collection("restaurants")
                                         .document(docId)
                                         .delete()

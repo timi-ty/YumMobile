@@ -32,7 +32,7 @@
         6. Description item six</string>
     <string name="title_close_restaurants">Restaurants Close To You</string>
     <string name="title_food_menu">Menu</string>
-    <string name="search_prompt">Search For Restaurants</string>
+    <string name="prompt_restaurant_search">Search For Restaurants</string>
     <string name="my_account">My Account</string>
     <string name="settings">Settings</string>
     <string name="my_cart">My Cart</string>
@@ -92,4 +92,6 @@
     <string name="location_permission_consequence">Cannot set the location automatically without this permission.</string>
     <string name="whine_about_location_permission">Shopping Will Experience Will Decline Without This Permission</string>
     <string name="location_permission_encouragement">Grant Location Permission For The Maximum Shopping Experience</string>
+    <string name="prompt_menu_search">Search For Menu Item</string>
+    <string name="prompt_order_search">Search Active Orders</string>
 </resources>

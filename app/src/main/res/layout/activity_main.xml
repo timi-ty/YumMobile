@@ -51,7 +51,8 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-            app:title="@string/search_prompt"
+            app:actionViewClass="androidx.appcompat.widget.SearchView"
+            app:title="@string/prompt_restaurant_search"
             app:titleTextColor="@android:color/tertiary_text_light" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

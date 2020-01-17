@@ -9,6 +9,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -20,10 +22,8 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentChange;
@@ -41,6 +41,7 @@ import com.google.firebase.storage.StorageReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -96,6 +97,9 @@ public class ManagerOrdersFragment extends Fragment{
 
             rvOrders.setLayoutManager(new LinearLayoutManager(getContext()));
             rvOrders.setAdapter(activeOrdersRVAdapter);
+
+            activeOrdersRVAdapter.getFilter().filter("");
+            acceptedOrdersRVAdapter.getFilter().filter("");
         }
 
         BottomNavigationView bottomNavView = fragView.findViewById(R.id.bottom_nav_view);
@@ -193,11 +197,20 @@ public class ManagerOrdersFragment extends Fragment{
         }
     }
 
-    public class ActiveOrdersRVAdapter extends RecyclerView.Adapter<ActiveOrdersRVAdapter.RstViewHolder>{
+    void onSearchQuery(String newText){
+        if(isVisible()){
+            activeOrdersRVAdapter.getFilter().filter(newText);
+            acceptedOrdersRVAdapter.getFilter().filter(newText);
+        }
+    }
+
+    public class ActiveOrdersRVAdapter extends
+            RecyclerView.Adapter<ActiveOrdersRVAdapter.RstViewHolder> implements Filterable {
 
         private final String TAG = "FireStore";
 
         private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
+        List<ActiveOrder> activeOrdersFiltered = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
         private HashMap<String, UserPrefs> buyers = new HashMap<>();
 
@@ -282,13 +295,52 @@ public class ManagerOrdersFragment extends Fragment{
 
         @Override
         public void onBindViewHolder(@NonNull RstViewHolder viewHolder, int position) {
-            ActiveOrder activeOrder = activeOrders.get(position);
+            ActiveOrder activeOrder = activeOrdersFiltered.get(position);
             viewHolder.bindView(activeOrder);
         }
 
         @Override
         public int getItemCount() {
-            return activeOrders.size();
+            return activeOrdersFiltered.size();
+        }
+
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence charSequence) {
+                    String charString = charSequence.toString();
+
+                    if (charString.isEmpty()) {
+                        activeOrdersFiltered = activeOrders;
+                    } else {
+                        List<ActiveOrder> filteredList = new ArrayList<>();
+                        for (ActiveOrder order : activeOrders) {
+                            RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
+                            assert  restaurantItem != null;
+                            String restaurantName = restaurantItem.getName();
+                            if (order.getDescription().toLowerCase().contains(charString.toLowerCase())
+                                    || restaurantName.toLowerCase().contains(charString.toLowerCase())) {
+                                filteredList.add(order);
+                            }
+                        }
+
+                        activeOrdersFiltered = filteredList;
+                    }
+
+                    FilterResults filterResults = new FilterResults();
+                    filterResults.values = activeOrdersFiltered;
+                    return filterResults;
+                }
+
+                @SuppressWarnings("unchecked")
+                @Override
+                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+                    activeOrdersFiltered = (ArrayList<ActiveOrder>) filterResults.values;
+
+                    notifyDataSetChanged();
+                }
+            };
         }
 
         class RstViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
@@ -387,7 +439,7 @@ public class ManagerOrdersFragment extends Fragment{
             public void onClick(View v) {
                 switch (v.getId()){
                     case R.id.item_activeOrder:
-                        onButtonPressed(v.getId(), activeOrders.get(getAdapterPosition()));
+                        onButtonPressed(v.getId(), activeOrdersFiltered.get(getAdapterPosition()));
                         break;
                     case R.id.btn_orderInteraction:
                         acceptOrder();
@@ -458,12 +510,14 @@ public class ManagerOrdersFragment extends Fragment{
         }
     }
 
-    public class AcceptedOrdersRVAdapter extends RecyclerView.Adapter<AcceptedOrdersRVAdapter.RstViewHolder>{
+    public class AcceptedOrdersRVAdapter extends
+            RecyclerView.Adapter<AcceptedOrdersRVAdapter.ActiveOrderViewHolder> implements Filterable{
 
         private final String TAG = "FireStore";
         FirebaseFirestore fireDB;
 
         private ArrayList<ActiveOrder> acceptedOrders = new ArrayList<>();
+        List<ActiveOrder> acceptedOrdersFiltered = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
         private HashMap<String, UserPrefs> buyers = new HashMap<>();
 
@@ -541,25 +595,64 @@ public class ManagerOrdersFragment extends Fragment{
 
         @NonNull
         @Override
-        public RstViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        public ActiveOrderViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
             View restaurantView = LayoutInflater.from(viewGroup.getContext())
                     .inflate(R.layout.item_manage_active_order, viewGroup, false);
-            return new RstViewHolder(restaurantView);
+            return new ActiveOrderViewHolder(restaurantView);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull RstViewHolder viewHolder, int position) {
-            ActiveOrder activeOrder = acceptedOrders.get(position);
+        public void onBindViewHolder(@NonNull ActiveOrderViewHolder viewHolder, int position) {
+            ActiveOrder activeOrder = acceptedOrdersFiltered.get(position);
             viewHolder.bindView(activeOrder);
         }
 
         @Override
         public int getItemCount() {
-            return acceptedOrders.size();
+            return acceptedOrdersFiltered.size();
         }
 
-        class RstViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence charSequence) {
+                    String charString = charSequence.toString();
+
+                    if (charString.isEmpty()) {
+                        acceptedOrdersFiltered = acceptedOrders;
+                    } else {
+                        List<ActiveOrder> filteredList = new ArrayList<>();
+                        for (ActiveOrder order : acceptedOrders) {
+                            RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
+                            assert  restaurantItem != null;
+                            String restaurantName = restaurantItem.getName();
+                            if (order.getDescription().toLowerCase().contains(charString.toLowerCase())
+                                    || restaurantName.toLowerCase().contains(charString.toLowerCase())) {
+                                filteredList.add(order);
+                            }
+                        }
+
+                        acceptedOrdersFiltered = filteredList;
+                    }
+
+                    FilterResults filterResults = new FilterResults();
+                    filterResults.values = acceptedOrdersFiltered;
+                    return filterResults;
+                }
+
+                @SuppressWarnings("unchecked")
+                @Override
+                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+                    acceptedOrdersFiltered = (ArrayList<ActiveOrder>) filterResults.values;
+
+                    notifyDataSetChanged();
+                }
+            };
+        }
+
+        class ActiveOrderViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
             TextView tvDesc;
             TextView tvTimestamp;
             TextView tvPrice;
@@ -567,7 +660,7 @@ public class ManagerOrdersFragment extends Fragment{
             ProgressBar pbLoading;
             ImageView imgLogo;
 
-            RstViewHolder(@NonNull View itemView) {
+            ActiveOrderViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvDesc = itemView.findViewById(R.id.tv_orderDesc);
                 tvTimestamp = itemView.findViewById(R.id.tv_timeStamp);
@@ -659,7 +752,7 @@ public class ManagerOrdersFragment extends Fragment{
                     fulfillOrder();
                 }
                 else{
-                    onButtonPressed(v.getId(), acceptedOrders.get(getAdapterPosition()));
+                    onButtonPressed(v.getId(), acceptedOrdersFiltered.get(getAdapterPosition()));
                 }
             }
 

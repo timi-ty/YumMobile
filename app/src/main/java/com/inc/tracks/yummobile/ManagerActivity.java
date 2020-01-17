@@ -2,6 +2,7 @@ package com.inc.tracks.yummobile;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
@@ -20,6 +21,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -60,9 +63,13 @@ public class ManagerActivity extends AppCompatActivity implements
 
     ManagerRestaurantsEditorFragment restEditorFragment;
 
+    ManagerRestaurantsFragment managerRestaurantsFragment;
+
+    ManagerMenuFragment managerMenuFragment;
+
     ManagerOrdersFragment managerOrdersFragment;
 
-    ManagerMenuFragment menuFragment;
+    ManagerOrdersAdminFragment managerOrdersAdminFragment;
 
     Toolbar myToolbar;
 
@@ -71,6 +78,8 @@ public class ManagerActivity extends AppCompatActivity implements
     private LocationRequest locationRequest;
 
     private LocationCallback locationCallback;
+
+    private SearchView mSearchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,6 +156,37 @@ public class ManagerActivity extends AppCompatActivity implements
         stopLocationUpdates();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.search_menu, menu);
+        MenuItem mSearch = menu.findItem(R.id.appSearchBar);
+        mSearchView = (SearchView) mSearch.getActionView();
+        mSearchView.setQueryHint(getResources().getString(R.string.prompt_restaurant_search));
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if(managerRestaurantsFragment != null){
+                    managerRestaurantsFragment.onSearchQuery(newText);
+                }
+                if(managerMenuFragment != null){
+                    managerMenuFragment.onSearchQuery(newText);
+                }
+                if(managerOrdersFragment != null){
+                    managerOrdersFragment.onSearchQuery(newText);
+                }
+                if(managerOrdersAdminFragment != null){
+                    managerOrdersAdminFragment.onSearchQuery(newText);
+                }
+                return true;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
+    }
+
     private void goToHomeFragment(){
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
@@ -156,11 +196,14 @@ public class ManagerActivity extends AppCompatActivity implements
     }
 
     private void goToManageRestaurantsFragment(){
+        if(managerRestaurantsFragment == null){
+            managerRestaurantsFragment = ManagerRestaurantsFragment.newInstance();
+        }
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction
                 .replace(R.id.manager_frag_container,
-                        ManagerRestaurantsFragment.newInstance())
+                        managerRestaurantsFragment)
                 .addToBackStack(null);
         fragmentTransaction.commit();
     }
@@ -182,12 +225,12 @@ public class ManagerActivity extends AppCompatActivity implements
 
     private void goToMenuEditorFragment(RestaurantItem restaurantItem){
         if(restaurantItem != null){
-            menuFragment = ManagerMenuFragment.newInstance(restaurantItem);
+            managerMenuFragment = ManagerMenuFragment.newInstance(restaurantItem);
 
             FragmentTransaction fragmentTransaction;
             fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction
-                    .replace(R.id.manager_frag_container, menuFragment)
+                    .replace(R.id.manager_frag_container, managerMenuFragment)
                     .addToBackStack(null);
             fragmentTransaction.commit();
         }
@@ -211,11 +254,14 @@ public class ManagerActivity extends AppCompatActivity implements
     }
 
     private void goToManageOrdersAdminFragment(){
+        if(managerOrdersAdminFragment == null){
+            managerOrdersAdminFragment = ManagerOrdersAdminFragment.newInstance();
+        }
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction
                 .replace(R.id.manager_frag_container,
-                        ManagerOrdersAdminFragment.newInstance())
+                        managerOrdersAdminFragment)
                 .addToBackStack(null);
         fragmentTransaction.commit();
     }
@@ -245,8 +291,19 @@ public class ManagerActivity extends AppCompatActivity implements
                 myToolbar.setVisibility(View.GONE);
                 break;
             case R.layout.fragment_manager_restaurants:
+                mSearchView.setQueryHint(getResources().getString(R.string.prompt_restaurant_search));
+                myToolbar.setTitle(R.string.prompt_restaurant_search);
+                myToolbar.setVisibility(View.VISIBLE);
+                break;
             case R.layout.fragment_manager_menu:
+                mSearchView.setQueryHint(getResources().getString(R.string.prompt_menu_search));
+                myToolbar.setTitle(R.string.prompt_menu_search);
+                myToolbar.setVisibility(View.VISIBLE);
+                break;
             case R.layout.fragment_manager_active_orders:
+            case R.layout.fragment_manager_active_orders_admin:
+                mSearchView.setQueryHint(getResources().getString(R.string.prompt_order_search));
+                myToolbar.setTitle(R.string.prompt_order_search);
                 myToolbar.setVisibility(View.VISIBLE);
                 break;
         }

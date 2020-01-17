@@ -11,6 +11,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -19,7 +20,6 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -148,6 +148,34 @@ public class MainActivity extends AppCompatActivity implements
     protected void onPause() {
         super.onPause();
         stopLocationUpdates();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.search_menu, menu);
+        MenuItem mSearch = menu.findItem(R.id.appSearchBar);
+        SearchView mSearchView = (SearchView) mSearch.getActionView();
+        mSearchView.setQueryHint(getResources().getString(R.string.prompt_restaurant_search));
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if(homeFragment != null){
+                    homeFragment.onSearchQuery(newText);
+                }
+                if(catalogueFragment != null){
+                    catalogueFragment.onSearchQuery(newText);
+                }
+                if(activeOrdersFragment != null){
+                    activeOrdersFragment.onSearchQuery(newText);
+                }
+                return true;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override

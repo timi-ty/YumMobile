@@ -16,6 +16,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -31,6 +33,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -49,7 +52,7 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
 
     private TextView tvRestaurantName;
 
-    private RestaurantsRVAdapter restaurantsAdapter;
+    private RestaurantsRVAdapter restaurantsRVAdapter;
     private FoodMenuRVAdapter menuItemsAdapter;
 
     private FirebaseFirestore fireDB;
@@ -107,12 +110,13 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
         tvRestaurantName = fragView.findViewById(R.id.tv_restaurantName);
 
         rvRestaurantList.setLayoutManager(new LinearLayoutManager(fragView.getContext()));
-        if(restaurantsAdapter == null){
-            restaurantsAdapter = new RestaurantsRVAdapter();
+        if(restaurantsRVAdapter == null){
+            restaurantsRVAdapter = new RestaurantsRVAdapter();
         }
         if(rvRestaurantList.getAdapter() == null){
-            rvRestaurantList.setAdapter(restaurantsAdapter);
+            rvRestaurantList.setAdapter(restaurantsRVAdapter);
         }
+        restaurantsRVAdapter.getFilter().filter("");
 
         rvFoodMenu.setLayoutManager(new LinearLayoutManager(fragView.getContext()));
         if(menuItemsAdapter == null){
@@ -147,6 +151,11 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
         }
     }
 
+    void onSearchQuery(String newText){
+        if(isVisible()){
+            restaurantsRVAdapter.getFilter().filter(newText);
+        }
+    }
 
     private void goToCart(){
         Intent orderIntent = new Intent(getActivity(), OrderActivity.class);
@@ -178,9 +187,9 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
                 @Override
                 public void run() {
                     boolean foundRestaurant = false;
-                    for (RestaurantItem item : restaurantsAdapter.restaurantItems){
+                    for (RestaurantItem item : restaurantsRVAdapter.restaurantList){
                         if(item.getId().equals(activeRestItem.getId())){
-                            int selectedPosition = restaurantsAdapter.restaurantItems
+                            int selectedPosition = restaurantsRVAdapter.restaurantListFiltered
                                     .indexOf(item);
 
                             selectActiveRestaurantFromPosition(selectedPosition);
@@ -205,10 +214,9 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
 
         activeRestPosition = position;
 
-        restaurantsAdapter.notifyItemChanged(formerActive);
+        restaurantsRVAdapter.notifyItemChanged(formerActive);
 
-
-        restaurantsAdapter.notifyItemChanged(activeRestPosition);
+        restaurantsRVAdapter.notifyItemChanged(activeRestPosition);
 
         tvRestaurantName.setText(activeRestItem.getName());
 
@@ -250,10 +258,12 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
     }
 
 
-    public class RestaurantsRVAdapter extends RecyclerView.Adapter<RestaurantsRVAdapter.RstViewHolder>{
+    public class RestaurantsRVAdapter extends
+            RecyclerView.Adapter<RestaurantsRVAdapter.RstViewHolder> implements Filterable {
 
         private final String TAG = "FireStore";
-        private ArrayList<RestaurantItem> restaurantItems = new ArrayList<>();
+        private ArrayList<RestaurantItem> restaurantList = new ArrayList<>();
+        List<RestaurantItem> restaurantListFiltered = new ArrayList<>();
 
         RestaurantsRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
@@ -284,18 +294,18 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
 
                                         restaurantItem.setId(dc.getDocument().getId());
 
-                                        restaurantItems.add(restaurantItem);
+                                        restaurantList.add(restaurantItem);
 
-                                        notifyItemInserted(restaurantItems.size() - 1);
+                                        notifyItemInserted(restaurantList.size() - 1);
                                         break;
                                     case MODIFIED:
                                         Log.d(TAG, "Modified Restaurant: " + dc.getDocument().getData());
 
                                         restaurantItem = dc.getDocument().toObject(RestaurantItem.class);
 
-                                        for(RestaurantItem item : restaurantItems){
+                                        for(RestaurantItem item : restaurantList){
                                             if(item.getId().equals(restaurantItem.getId())){
-                                                position = restaurantItems.indexOf(item);
+                                                position = restaurantList.indexOf(item);
                                             }
                                         }
                                         if(position >= 0){
@@ -307,16 +317,16 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
 
                                         restaurantItem = dc.getDocument().toObject(RestaurantItem.class);
 
-                                        for(RestaurantItem item : restaurantItems){
+                                        for(RestaurantItem item : restaurantList){
                                             if(item.getId().equals(restaurantItem.getId())){
-                                                position = restaurantItems.indexOf(item);
+                                                position = restaurantList.indexOf(item);
                                                 Log.d(TAG, "Removed Restaurant Notified!: " + item.getId()
-                                                        + " => " + restaurantItem.getId() + " => " + restaurantItems.indexOf(item));
+                                                        + " => " + restaurantItem.getId() + " => " + restaurantList.indexOf(item));
                                             }
                                         }
 
                                         if(position >= 0){
-                                            restaurantItems.remove(position);
+                                            restaurantList.remove(position);
                                             notifyItemRemoved(position);
                                         }
                                         break;
@@ -340,13 +350,48 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
 
         @Override
         public void onBindViewHolder(@NonNull RstViewHolder viewHolder, int position) {
-            RestaurantItem restaurantItem = restaurantItems.get(position);
+            RestaurantItem restaurantItem = restaurantListFiltered.get(position);
             viewHolder.bindView(restaurantItem);
         }
 
         @Override
         public int getItemCount() {
-            return restaurantItems.size();
+            return restaurantListFiltered.size();
+        }
+
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence charSequence) {
+                    String charString = charSequence.toString();
+
+                    if (charString.isEmpty()) {
+                        restaurantListFiltered = restaurantList;
+                    } else {
+                        List<RestaurantItem> filteredList = new ArrayList<>();
+                        for (RestaurantItem item : restaurantList) {
+                            if (item.getName().toLowerCase().contains(charString.toLowerCase())) {
+                                filteredList.add(item);
+                            }
+                        }
+
+                        restaurantListFiltered = filteredList;
+                    }
+
+                    FilterResults filterResults = new FilterResults();
+                    filterResults.values = restaurantListFiltered;
+                    return filterResults;
+                }
+
+                @SuppressWarnings("unchecked")
+                @Override
+                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+                    restaurantListFiltered = (ArrayList<RestaurantItem>) filterResults.values;
+
+                    notifyDataSetChanged();
+                }
+            };
         }
 
         class RstViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
@@ -367,7 +412,7 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
             public void onClick(View v) {
                 int position = getAdapterPosition();
 
-                updateActiveRestaurantItem(restaurantItems.get(position));
+                updateActiveRestaurantItem(restaurantListFiltered.get(position));
 
                 selectActiveRestaurantFromPosition(position);
             }

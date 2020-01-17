@@ -174,6 +174,7 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
                 break;
             case R.id.btn_manageMenu:
                 onButtonPressed(v.getId());
+                break;
             case R.id.btn_geoTagRestaurant:
                 if(currentRestItem.getLocation() == null){
                     geoTagRestaurant();

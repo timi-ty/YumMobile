@@ -6,6 +6,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -26,12 +28,15 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 
 
 public class ManagerOrdersAdminFragment extends Fragment{
 
     private OnFragmentInteractionListener mListener;
+
+    private ActiveOrdersRVAdapter activeOrdersRVAdapter;
 
     public ManagerOrdersAdminFragment() {
         // Required empty public constructor
@@ -59,9 +64,13 @@ public class ManagerOrdersAdminFragment extends Fragment{
         RecyclerView rvActiveOrders = fragView.findViewById(R.id.rv_activeOrders);
 
         rvActiveOrders.setLayoutManager(new LinearLayoutManager(getContext()));
-        rvActiveOrders.setAdapter(new ActiveOrdersRVAdapter());
+        if(activeOrdersRVAdapter == null){
+            activeOrdersRVAdapter = new ActiveOrdersRVAdapter();
+            activeOrdersRVAdapter.getFilter().filter("");
+        }
+        rvActiveOrders.setAdapter(activeOrdersRVAdapter);
 
-        mListener.onFragmentInteraction(R.layout.fragment_manager_active_orders);
+        mListener.onFragmentInteraction(R.layout.fragment_manager_active_orders_admin);
 
         return fragView;
     }
@@ -90,19 +99,25 @@ public class ManagerOrdersAdminFragment extends Fragment{
         mListener = null;
     }
 
-
-
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction(int interactionId);
         void onFragmentInteraction(int interactionId, ActiveOrder activeOrder);
     }
 
-    public class ActiveOrdersRVAdapter extends RecyclerView.Adapter<ActiveOrdersRVAdapter.RstViewHolder>{
+    void onSearchQuery(String newText){
+        if(isVisible()){
+            activeOrdersRVAdapter.getFilter().filter(newText);
+        }
+    }
+
+    public class ActiveOrdersRVAdapter extends
+            RecyclerView.Adapter<ActiveOrdersRVAdapter.ActiveOrderViewHolder> implements Filterable {
 
         private final String TAG = "FireStore";
         FirebaseFirestore fireDB;
 
         private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
+        List<ActiveOrder> activeOrdersFiltered = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
         private HashMap<String, UserPrefs> buyers = new HashMap<>();
         private HashMap<String, UserPrefs> transporters = new HashMap<>();
@@ -178,31 +193,70 @@ public class ManagerOrdersAdminFragment extends Fragment{
 
         @NonNull
         @Override
-        public RstViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        public ActiveOrderViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
-            View restaurantView = LayoutInflater.from(viewGroup.getContext())
+            View orderView = LayoutInflater.from(viewGroup.getContext())
                     .inflate(R.layout.item_manage_active_order, viewGroup, false);
-            return new RstViewHolder(restaurantView);
+            return new ActiveOrderViewHolder(orderView);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull RstViewHolder viewHolder, int position) {
-            ActiveOrder activeOrder = activeOrders.get(position);
+        public void onBindViewHolder(@NonNull ActiveOrderViewHolder viewHolder, int position) {
+            ActiveOrder activeOrder = activeOrdersFiltered.get(position);
             viewHolder.bindView(activeOrder);
         }
 
         @Override
         public int getItemCount() {
-            return activeOrders.size();
+            return activeOrdersFiltered.size();
         }
 
-        class RstViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence charSequence) {
+                    String charString = charSequence.toString();
+
+                    if (charString.isEmpty()) {
+                        activeOrdersFiltered = activeOrders;
+                    } else {
+                        List<ActiveOrder> filteredList = new ArrayList<>();
+                        for (ActiveOrder order : activeOrders) {
+                            RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
+                            assert  restaurantItem != null;
+                            String restaurantName = restaurantItem.getName();
+                            if (order.getDescription().toLowerCase().contains(charString.toLowerCase())
+                                    || restaurantName.toLowerCase().contains(charString.toLowerCase())) {
+                                filteredList.add(order);
+                            }
+                        }
+
+                        activeOrdersFiltered = filteredList;
+                    }
+
+                    FilterResults filterResults = new FilterResults();
+                    filterResults.values = activeOrdersFiltered;
+                    return filterResults;
+                }
+
+                @SuppressWarnings("unchecked")
+                @Override
+                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+                    activeOrdersFiltered = (ArrayList<ActiveOrder>) filterResults.values;
+
+                    notifyDataSetChanged();
+                }
+            };
+        }
+
+        class ActiveOrderViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
             TextView tvDesc;
             TextView tvTimestamp;
             TextView tvPrice;
             ImageView imgLogo;
 
-            RstViewHolder(@NonNull View itemView) {
+            ActiveOrderViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvDesc = itemView.findViewById(R.id.tv_orderDesc);
                 tvTimestamp = itemView.findViewById(R.id.tv_timeStamp);
@@ -312,7 +366,7 @@ public class ManagerOrdersAdminFragment extends Fragment{
 
             @Override
             public void onClick(View v) {
-                onButtonPressed(v.getId(), activeOrders.get(getAdapterPosition()));
+                onButtonPressed(v.getId(), activeOrdersFiltered.get(getAdapterPosition()));
             }
         }
     }
