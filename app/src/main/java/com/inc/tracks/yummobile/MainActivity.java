@@ -18,6 +18,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -64,9 +66,9 @@ public class MainActivity extends AppCompatActivity implements
 
     private FusedLocationProviderClient fusedLocationClient;
 
-    private LocationCallback locationCallback;
+    private LocationRequest locationRequest;
 
-    private Location mCurrentLocation;
+    private LocationCallback locationCallback;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -123,11 +125,49 @@ public class MainActivity extends AppCompatActivity implements
                 if (locationResult == null) {
                     return;
                 }
-                mCurrentLocation = locationResult.getLastLocation();
+                UserAuth.mCurrentLocation = locationResult.getLastLocation();
+
+                if(homeFragment != null)
+                    homeFragment.onLocationUpdate();
+
+                if(activeOrdersFragment != null)
+                    activeOrdersFragment.onLocationUpdate();
             }
         };
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (hasLocationPermission()) {
+            startLocationUpdates();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopLocationUpdates();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == RC_PERMISSION_LOCATION){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                Snackbar.make(myLayout, "Location Permission Granted.",
+                        Snackbar.LENGTH_SHORT).show();
+
+                createLocationRequest();
+
+                startLocationUpdates();
+            }
+            else{
+                Snackbar.make(myLayout, "You Must Grant Location Permission " +
+                        "For Convenient Shopping And Delivery.", Snackbar.LENGTH_SHORT).show();
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
 
     @Override
     public void onFragmentInteraction(int interactionId, RestaurantItem restaurantItem) {
@@ -142,6 +182,16 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onFragmentInteraction(int interactionId, HashMap orderSummary) {
         goToCatalogueFragment(orderSummary);
+    }
+
+    private void startLocationUpdates() {
+        fusedLocationClient.requestLocationUpdates(locationRequest,
+                locationCallback,
+                Looper.getMainLooper());
+    }
+
+    private void stopLocationUpdates() {
+        fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
     private void goToHomeFragment(){
@@ -173,7 +223,6 @@ public class MainActivity extends AppCompatActivity implements
         bottomMenu.getItem(0).setChecked(true);
     }
 
-
     @SuppressWarnings("unchecked")
     private void goToCatalogueFragment(HashMap orderGroups){
         if(catalogueFragment == null){
@@ -191,7 +240,6 @@ public class MainActivity extends AppCompatActivity implements
         bottomMenu.getItem(0).setChecked(true);
     }
 
-
     private void goToOrdersFragment(){
         if(activeOrdersFragment == null){
             activeOrdersFragment = ActiveOrdersFragment.newInstance();
@@ -203,6 +251,18 @@ public class MainActivity extends AppCompatActivity implements
         fragmentTransaction.commit();
 
         bottomMenu.getItem(2).setChecked(true);
+    }
+
+    private void startManagingServices(){
+        Intent managerIntent = new Intent(MainActivity.this, ManagerActivity.class);
+        managerIntent.putExtra("mode", "manage");
+        startActivity(managerIntent);
+    }
+
+    private void startTransportingOrders(){
+        Intent managerIntent = new Intent(MainActivity.this, ManagerActivity.class);
+        managerIntent.putExtra("mode", "transport");
+        startActivity(managerIntent);
     }
 
     private void initializeSideNav(Toolbar mToolbar){
@@ -280,59 +340,10 @@ public class MainActivity extends AppCompatActivity implements
          MainActivity.this.finish();
     }
 
-    private void startManagingServices(){
-        Intent managerIntent = new Intent(MainActivity.this, ManagerActivity.class);
-        managerIntent.putExtra("mode", "manage");
-        startActivity(managerIntent);
-    }
-
-    private void startTransportingOrders(){
-        Intent managerIntent = new Intent(MainActivity.this, ManagerActivity.class);
-        managerIntent.putExtra("mode", "transport");
-        startActivity(managerIntent);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if(requestCode == RC_PERMISSION_LOCATION){
-            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                Snackbar.make(myLayout, "Location Permission Granted.",
-                        Snackbar.LENGTH_SHORT).show();
-            }
-            else{
-                Snackbar.make(myLayout, "You Must Grant Location Permission " +
-                        "For Convenient Shopping And Delivery.", Snackbar.LENGTH_SHORT).show();
-            }
-        }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
-    private boolean hasLocationPermission(){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) !=
-                    PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !=
-                            PackageManager.PERMISSION_GRANTED) {
-                if(ActivityCompat.shouldShowRequestPermissionRationale(this,
-                        Manifest.permission.ACCESS_FINE_LOCATION)){
-                    showPermissionReason();
-                }
-                else {
-                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                            RC_PERMISSION_LOCATION);
-                }
-                return false;
-            }
-            else{
-                return true;
-            }
-        }
-        return true;
-    }
-
     protected void createLocationRequest() {
-        final LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setInterval(100000);
+        locationRequest = LocationRequest.create();
+        locationRequest.setInterval(10 * 1000);
+        locationRequest.setFastestInterval(10 * 1000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
@@ -344,9 +355,7 @@ public class MainActivity extends AppCompatActivity implements
         task.addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
             @Override
             public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-                // All location settings are satisfied. The client can initialize
-                // location requests here.
-                // ...
+
                 Snackbar.make(myLayout, "Waiting For Location Update...",
                         Snackbar.LENGTH_SHORT).show();
 
@@ -359,7 +368,14 @@ public class MainActivity extends AppCompatActivity implements
                                     public void onSuccess(Location location) {
                                         if(location != null && location.getTime() >
                                                 Calendar.getInstance().getTimeInMillis() - 2 * 60 * 1000) {
-                                            mCurrentLocation = location;
+
+                                            UserAuth.mCurrentLocation = location;
+
+                                            if(homeFragment != null)
+                                                homeFragment.onLocationUpdate();
+
+                                            if(activeOrdersFragment != null)
+                                                activeOrdersFragment.onLocationUpdate();
                                         }
                                         else {
                                             Snackbar snack = Snackbar.make(myLayout,
@@ -385,11 +401,7 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onFailure(@NonNull Exception e) {
                 if (e instanceof ResolvableApiException) {
-                    // Location settings are not satisfied, but this can be fixed
-                    // by showing the user a dialog.
                     try {
-                        // Show the dialog by calling startResolutionForResult(),
-                        // and check the result in onActivityResult().
                         Snackbar.make(myLayout, "Failed. Turn on your location services and try again.",
                                 Snackbar.LENGTH_SHORT).show();
 
@@ -397,7 +409,7 @@ public class MainActivity extends AppCompatActivity implements
                         resolvable.startResolutionForResult(MainActivity.this,
                                 REQUEST_CHECK_SETTINGS);
                     } catch (IntentSender.SendIntentException sendEx) {
-                        // Ignore the error.
+                        sendEx.printStackTrace();
                     }
                 }
             }
@@ -421,5 +433,29 @@ public class MainActivity extends AppCompatActivity implements
             }
         }, getResources().getString(R.string.location_permission_encouragement), this);
         reasonDialog.show(fragmentManager, "Dialog");
+    }
+
+    private boolean hasLocationPermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) !=
+                    PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                            PackageManager.PERMISSION_GRANTED) {
+                if(ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)){
+                    showPermissionReason();
+                }
+                else {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            RC_PERMISSION_LOCATION);
+                }
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+        return true;
     }
 }

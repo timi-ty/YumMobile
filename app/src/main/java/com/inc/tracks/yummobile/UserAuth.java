@@ -1,6 +1,7 @@
 package com.inc.tracks.yummobile;
 
 import android.app.Activity;
+import android.location.Location;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -37,6 +38,9 @@ class UserAuth {
     static Boolean isAdmin = null;
 
     static Boolean isTransporter = null;
+
+
+    static Location mCurrentLocation;
 
     private UserAuth(){}
 

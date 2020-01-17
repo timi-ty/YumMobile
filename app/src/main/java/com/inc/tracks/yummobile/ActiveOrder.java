@@ -1,6 +1,9 @@
 package com.inc.tracks.yummobile;
 
+import androidx.annotation.Nullable;
+
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.GeoPoint;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -39,11 +42,20 @@ public class ActiveOrder implements Serializable {
     private boolean accepted;
 
     private boolean transporterConfirmed;
+
     private boolean clientConfirmed;
 
     private String transporterId;
 
     private Timestamp timestamp;
+
+    private Double clientLat;
+    private Double clientLong;
+
+    private Double transLat;
+    private Double transLong;
+
+    private int initialDistance;
 
 
     public String getClientId() {
@@ -130,5 +142,51 @@ public class ActiveOrder implements Serializable {
 
     public void setClientConfirmed(boolean clientConfirmed) {
         this.clientConfirmed = clientConfirmed;
+    }
+
+    public void setClientLocation(@Nullable GeoPoint location){
+        if(location != null){
+            this.clientLat = location.getLatitude();
+            this.clientLong = location.getLongitude();
+        }
+        else{
+            clientLat = clientLong = null;
+        }
+    }
+
+    public GeoPoint getClientLocation(){
+        if(clientLat != null && clientLong != null){
+            return new GeoPoint(clientLat, clientLong);
+        }
+        else{
+            return null;
+        }
+    }
+
+    public void setTransLocation(@Nullable GeoPoint location){
+        if(location != null){
+            this.transLat = location.getLatitude();
+            this.transLong = location.getLongitude();
+        }
+        else{
+            transLat = transLong = null;
+        }
+    }
+
+    public GeoPoint getTransLocation(){
+        if(transLat != null && transLong != null){
+            return new GeoPoint(transLat, transLong);
+        }
+        else{
+            return null;
+        }
+    }
+
+    public int getInitialDistance() {
+        return initialDistance;
+    }
+
+    public void setInitialDistance(int initialDistance) {
+        this.initialDistance = initialDistance;
     }
 }

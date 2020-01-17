@@ -2,6 +2,12 @@ package com.inc.tracks.yummobile;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -30,6 +36,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
@@ -148,6 +155,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         if (txtUserGreeting != null) {
             txtUserGreeting.setText(userGreeting);
         }
+    }
+
+    public void onLocationUpdate(){
+        Collections.sort(restaurantsAdapter.restaurantItems, new SortRestaurants(UserAuth.mCurrentLocation));
+        restaurantsAdapter.notifyDataSetChanged();
     }
 
     public class RestaurantsRVAdapter extends RecyclerView.Adapter<RestaurantsRVAdapter.RstViewHolder>{
@@ -273,10 +285,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                 if(restaurantItem.getLocation() != null){
                     tvAddress.setOnClickListener(this);
 
+                    tvAddress.setCompoundDrawablesRelativeWithIntrinsicBounds
+                            (0, 0, R.drawable.ic_pin, 0);
                 }
                 else{
-                    tvAddress.setCompoundDrawablesRelative(null, null,
-                            null, null);
+                    tvAddress.setCompoundDrawablesRelativeWithIntrinsicBounds
+                            (0, 0, 0, 0);
                 }
 
                 refreshThumbnail(restaurantItem);

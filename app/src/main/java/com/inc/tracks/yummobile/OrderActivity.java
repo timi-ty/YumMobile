@@ -17,6 +17,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -129,6 +130,12 @@ public class OrderActivity extends AppCompatActivity implements
 
             ActiveOrder activeOrder = new ActiveOrder(clientId, restaurantId, orderItems,
                     cost, description, Timestamp.now());
+
+            if(UserAuth.mCurrentLocation != null){
+                activeOrder.setClientLocation(new GeoPoint
+                        (UserAuth.mCurrentLocation.getLatitude(),
+                                UserAuth.mCurrentLocation.getLongitude()));
+            }
 
             String uniqueOrderId = activeOrder.getClientId() + activeOrder.getRestaurantId()
                     + activeOrder.getTimestamp().hashCode();

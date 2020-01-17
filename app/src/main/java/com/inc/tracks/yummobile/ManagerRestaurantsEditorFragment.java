@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -174,7 +176,7 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
                 onButtonPressed(v.getId());
             case R.id.btn_geoTagRestaurant:
                 if(currentRestItem.getLocation() == null){
-                    onButtonPressed(v.getId());
+                    geoTagRestaurant();
                 }
                 else {
                     removeGeoTag();
@@ -206,27 +208,40 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
 
     /* Worker methods below */
 
-    public void geoTagRestaurant(Location location){
-        btnGeoTagRestaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_minus));
+    private void geoTagRestaurant(){
+        onStartGeoTagAttempt();
+        if(UserAuth.mCurrentLocation != null){
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    btnGeoTagRestaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_minus));
 
-        GeoPoint geoPoint = new GeoPoint(location.getLatitude(),
-                location.getLongitude());
-        currentRestItem.setLocation(geoPoint);
+                    GeoPoint geoPoint = new GeoPoint(UserAuth.mCurrentLocation.getLatitude(),
+                            UserAuth.mCurrentLocation.getLongitude());
+                    currentRestItem.setLocation(geoPoint);
 
-        Snackbar.make(myLayout, "Successfully Geo Tagged This Restaurant.",
-                Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(myLayout, "Successfully Geo Tagged This Restaurant.",
+                            Snackbar.LENGTH_SHORT).show();
 
-        onEndGeoTagAttempt();
+                    onEndGeoTagAttempt();
 
-        updateEditorUi(true);
+                    updateEditorUi(true);
+                }
+            }, 3000);
+        }
+        else{
+            Snackbar.make(myLayout, "Failed To Geo Tag. " +
+                            "Ensure That You Granted Access To All Location Requests",
+                    Snackbar.LENGTH_SHORT).show();
+        }
     }
 
-    public void onStartGeoTagAttempt(){
+    private void onStartGeoTagAttempt(){
         setLoadingUi(true);
         btnGeoTagRestaurant.setVisibility(View.INVISIBLE);
     }
 
-    public void onEndGeoTagAttempt(){
+    private void onEndGeoTagAttempt(){
         setLoadingUi(false);
         btnGeoTagRestaurant.setVisibility(View.VISIBLE);
     }

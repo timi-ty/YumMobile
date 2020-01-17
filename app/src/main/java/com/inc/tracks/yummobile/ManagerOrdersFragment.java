@@ -20,20 +20,26 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -49,6 +55,12 @@ public class ManagerOrdersFragment extends Fragment{
     private Menu bottomMenu;
 
     private ConstraintLayout myLayout;
+
+    private AcceptedOrdersRVAdapter acceptedOrdersRVAdapter;
+
+    private ActiveOrdersRVAdapter activeOrdersRVAdapter;
+
+    FirebaseFirestore fireDB;
 
     public ManagerOrdersFragment() {
         // Required empty public constructor
@@ -79,8 +91,11 @@ public class ManagerOrdersFragment extends Fragment{
         rvOrders = fragView.findViewById(R.id.rv_activeOrders);
 
         if(savedInstanceState == null){
+            activeOrdersRVAdapter = new ActiveOrdersRVAdapter();
+            acceptedOrdersRVAdapter = new AcceptedOrdersRVAdapter();
+
             rvOrders.setLayoutManager(new LinearLayoutManager(getContext()));
-            rvOrders.setAdapter(new ActiveOrdersRVAdapter());
+            rvOrders.setAdapter(activeOrdersRVAdapter);
         }
 
         BottomNavigationView bottomNavView = fragView.findViewById(R.id.bottom_nav_view);
@@ -102,12 +117,18 @@ public class ManagerOrdersFragment extends Fragment{
 
             switch (item.getItemId()) {
                 case R.id.navigation_pending_orders:
-                    rvOrders.setAdapter(new ActiveOrdersRVAdapter());
+                    if(activeOrdersRVAdapter == null){
+                        activeOrdersRVAdapter = new ActiveOrdersRVAdapter();
+                    }
+                    rvOrders.setAdapter(activeOrdersRVAdapter);
                     tvTitle.setText(R.string.title_pending_orders);
                     bottomMenu.getItem(0).setChecked(true);
                     return true;
                 case R.id.navigation_accepted_orders:
-                    rvOrders.setAdapter(new AcceptedOrdersRVAdapter());
+                    if(acceptedOrdersRVAdapter == null){
+                        acceptedOrdersRVAdapter = new AcceptedOrdersRVAdapter();
+                    }
+                    rvOrders.setAdapter(acceptedOrdersRVAdapter);
                     tvTitle.setText(R.string.title_your_deliveries);
                     bottomMenu.getItem(1).setChecked(true);
                     return true;
@@ -147,10 +168,34 @@ public class ManagerOrdersFragment extends Fragment{
         void onFragmentInteraction(int interactionId, ActiveOrder activeOrder);
     }
 
+    void onLocationUpdate(){
+        if(activeOrdersRVAdapter.activeOrders != null){
+            Collections.sort(activeOrdersRVAdapter.activeOrders, new SortActiveOrders(UserAuth.mCurrentLocation));
+            activeOrdersRVAdapter.notifyDataSetChanged();
+        }
+
+        if(acceptedOrdersRVAdapter.acceptedOrders != null){
+            WriteBatch batch = fireDB.batch();
+
+            for(ActiveOrder acceptedOrder : acceptedOrdersRVAdapter.acceptedOrders){
+                acceptedOrder.setTransLocation(new GeoPoint
+                        (UserAuth.mCurrentLocation.getLatitude(),
+                                UserAuth.mCurrentLocation.getLongitude()));
+
+                DocumentReference acceptedOrderRef = fireDB.collection("activeOrders")
+                        .document(acceptedOrder.getId());
+
+                batch.set(acceptedOrderRef, acceptedOrder);
+            }
+
+
+            batch.commit();
+        }
+    }
+
     public class ActiveOrdersRVAdapter extends RecyclerView.Adapter<ActiveOrdersRVAdapter.RstViewHolder>{
 
         private final String TAG = "FireStore";
-        FirebaseFirestore fireDB;
 
         private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
@@ -358,6 +403,15 @@ public class ManagerOrdersFragment extends Fragment{
 
                 activeOrder.setTransporter(UserAuth.currentUser.getUid());
 
+                if(UserAuth.mCurrentLocation != null){
+                    activeOrder.setTransLocation(new GeoPoint
+                            (UserAuth.mCurrentLocation.getLatitude(),
+                                    UserAuth.mCurrentLocation.getLongitude()));
+                }
+
+                activeOrder.setInitialDistance(computeInitialDistance(
+                        activeOrder.getTransLocation(), activeOrder.getClientLocation()));
+
                 fireDB.collection("activeOrders")
                         .document(activeOrder.getId())
                         .set(activeOrder, SetOptions.merge())
@@ -378,6 +432,28 @@ public class ManagerOrdersFragment extends Fragment{
                                 pbLoading.setVisibility(View.INVISIBLE);
                             }
                         });
+            }
+
+            private int computeInitialDistance(GeoPoint transLocation, GeoPoint clientLocation) {
+                final int EARTH_RADIUS = 6378137;
+
+                if(transLocation == null || clientLocation == null){
+                    return EARTH_RADIUS;
+                }
+
+                double fromLat = transLocation.getLatitude();
+                double fromLon = transLocation.getLongitude();
+                double toLat = clientLocation.getLatitude();
+                double toLon = clientLocation.getLongitude();
+
+                double deltaLat = toLat - fromLat;
+                double deltaLon = toLon - fromLon;
+                double angle = 2 * Math.asin( Math.sqrt(
+                        Math.pow(Math.sin(deltaLat/2), 2) +
+                                Math.cos(fromLat) * Math.cos(toLat) *
+                                        Math.pow(Math.sin(deltaLon/2), 2) ) );
+
+                return (int) (EARTH_RADIUS * angle);
             }
         }
     }

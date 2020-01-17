@@ -6,45 +6,45 @@ import com.google.firebase.firestore.GeoPoint;
 
 import java.util.Comparator;
 
-public class SortRestaurants implements Comparator<RestaurantItem> {
+public class SortActiveOrders implements Comparator<ActiveOrder> {
 
     private final int EARTH_RADIUS = 6378137; // approximate Earth radius, *in meters*
 
     private Location currentLoc;
 
-    SortRestaurants(Location current){
+    SortActiveOrders(Location current){
         currentLoc = current;
     }
 
     @Override
-    public int compare(final RestaurantItem restaurant1, final RestaurantItem restaurant2) {
-        GeoPoint location1 = restaurant1.getLocation();
-        GeoPoint location2 = restaurant2.getLocation();
+    public int compare(final ActiveOrder activeOrder1, final ActiveOrder activeOrder2) {
+        GeoPoint location1 = activeOrder1.getClientLocation();
+        GeoPoint location2 = activeOrder2.getClientLocation();
 
-        double distanceToRestaurant1;
-        double distanceToRestaurant2;
+        double distanceToClient1;
+        double distanceToClient2;
 
         if(location1 != null){
             double lat1 = location1.getLatitude();
             double lon1 = location1.getLongitude();
-            distanceToRestaurant1 = distance(currentLoc.getLatitude(), currentLoc.getLongitude(), lat1, lon1);
+            distanceToClient1 = distance(currentLoc.getLatitude(), currentLoc.getLongitude(), lat1, lon1);
         }
         else {
             // since geo tag is null, assume greatest distance possible.
-            distanceToRestaurant1 = EARTH_RADIUS * 2 * Math.PI;
+            distanceToClient1 = EARTH_RADIUS * 2 * Math.PI;
         }
 
         if(location2 != null){
             double lat2 = location2.getLatitude();
             double lon2 = location2.getLongitude();
-            distanceToRestaurant2 = distance(currentLoc.getLatitude(), currentLoc.getLongitude(), lat2, lon2);
+            distanceToClient2 = distance(currentLoc.getLatitude(), currentLoc.getLongitude(), lat2, lon2);
         }
         else {
             // since geo tag is null, assume greatest distance possible.
-            distanceToRestaurant2 = EARTH_RADIUS * 2 * Math.PI;
+            distanceToClient2 = EARTH_RADIUS * 2 * Math.PI;
         }
 
-        return (int) (distanceToRestaurant1 - distanceToRestaurant2);
+        return (int) (distanceToClient1 - distanceToClient2);
     }
 
     private double distance(double fromLat, double fromLon, double toLat, double toLon) {

@@ -1,10 +1,11 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
+import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.fragment.app.Fragment;
@@ -24,11 +25,14 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
@@ -39,6 +43,10 @@ import java.util.Locale;
 public class ActiveOrdersFragment extends Fragment {
 
     private View myLayout;
+
+    private ActiveOrdersRVAdapter activeOrdersRVAdapter;
+
+    FirebaseFirestore fireDB;
 
     public ActiveOrdersFragment() {
         // Required empty public constructor
@@ -65,7 +73,12 @@ public class ActiveOrdersFragment extends Fragment {
         RecyclerView activeOrders = fragView.findViewById(R.id.rv_activeOrders);
 
         activeOrders.setLayoutManager(new LinearLayoutManager(getContext()));
-        activeOrders.setAdapter(new ActiveOrdersRVAdapter());
+
+        if(activeOrdersRVAdapter == null){
+            activeOrdersRVAdapter = new ActiveOrdersRVAdapter();
+        }
+
+        activeOrders.setAdapter(activeOrdersRVAdapter);
 
         myLayout = (View) activeOrders.getParent();
 
@@ -83,11 +96,27 @@ public class ActiveOrdersFragment extends Fragment {
         super.onDetach();
     }
 
+    void onLocationUpdate(){
+        WriteBatch batch = fireDB.batch();
+
+        for(ActiveOrder activeOrder : activeOrdersRVAdapter.activeOrders){
+            activeOrder.setClientLocation(new GeoPoint
+                    (UserAuth.mCurrentLocation.getLatitude(),
+                            UserAuth.mCurrentLocation.getLongitude()));
+
+            DocumentReference activeOrderRef = fireDB.collection("activeOrders")
+                    .document(activeOrder.getId());
+
+            batch.set(activeOrderRef, activeOrder);
+        }
+
+        batch.commit();
+    }
+
 
     public class ActiveOrdersRVAdapter extends RecyclerView.Adapter<ActiveOrdersRVAdapter.MenuItemViewHolder>{
 
         private final String TAG = "FireStore";
-        FirebaseFirestore fireDB;
 
         private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
@@ -217,8 +246,20 @@ public class ActiveOrdersFragment extends Fragment {
                                 ") to track your delivery of " + activeOrder.getDescription() +
                                 " from " + restaurantItem.getName();
 
-                        pbOrderProgress.setProgressDrawable(getResources()
-                                .getDrawable(R.drawable.rounded_background_primary_dark_8));
+                        int orderProgress = activeOrder.getInitialDistance() - computeOrderDistance
+                                (activeOrder.getTransLocation(), UserAuth.mCurrentLocation);
+
+                        Log.d("OrderDistance", ": " + computeOrderDistance
+                                (activeOrder.getTransLocation(), UserAuth.mCurrentLocation));
+
+                        pbOrderProgress.setMax(activeOrder.getInitialDistance());
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                            pbOrderProgress.setProgress(orderProgress, true);
+                        }
+                        else{
+                            pbOrderProgress.setProgress(orderProgress);
+                        }
 
                         if(activeOrder.isTransporterConfirmed()){
                             pbOrderProgress.setVisibility(View.INVISIBLE);
@@ -307,6 +348,28 @@ public class ActiveOrdersFragment extends Fragment {
                         confirmOrderReceived(activeOrders.get(getAdapterPosition()));
                         break;
                 }
+            }
+
+            private int computeOrderDistance(GeoPoint transLocation, Location clientLocation) {
+                if (clientLocation == null || transLocation == null){
+                    return pbOrderProgress.getMax()/2;
+                }
+
+                final int EARTH_RADIUS = 6378137;
+
+                double fromLat = transLocation.getLatitude();
+                double fromLon = transLocation.getLongitude();
+                double toLat = clientLocation.getLatitude();
+                double toLon = clientLocation.getLongitude();
+
+                double deltaLat = toLat - fromLat;
+                double deltaLon = toLon - fromLon;
+                double angle = 2 * Math.asin( Math.sqrt(
+                        Math.pow(Math.sin(deltaLat/2), 2) +
+                                Math.cos(fromLat) * Math.cos(toLat) *
+                                        Math.pow(Math.sin(deltaLon/2), 2) ) );
+
+                return (int) (EARTH_RADIUS * angle);
             }
 
             private void confirmOrderReceived(final ActiveOrder activeOrder){
