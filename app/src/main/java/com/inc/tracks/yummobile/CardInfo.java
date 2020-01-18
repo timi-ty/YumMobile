@@ -4,9 +4,7 @@ import java.io.Serializable;
 
 public class CardInfo implements Serializable {
 
-    public CardInfo(){}
-
-    public CardInfo(String cardNumber, int cvv, int expiryMonth, int expiryYear) {
+    public CardInfo(String cardNumber, String cvv, int expiryMonth, int expiryYear) {
         this.cardNumber = cardNumber;
         this.cvv = cvv;
         this.expiryMonth = expiryMonth;
@@ -14,7 +12,7 @@ public class CardInfo implements Serializable {
     }
 
     private String cardNumber;
-    private int cvv;
+    private String cvv;
     private int expiryMonth;
     private int expiryYear;
 
@@ -27,11 +25,11 @@ public class CardInfo implements Serializable {
         this.cardNumber = cardNumber;
     }
 
-    public int getCvv() {
+    public String getCvv() {
         return cvv;
     }
 
-    public void setCvv(int cvv) {
+    public void setCvv(String cvv) {
         this.cvv = cvv;
     }
 

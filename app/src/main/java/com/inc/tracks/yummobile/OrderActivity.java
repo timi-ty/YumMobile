@@ -149,6 +149,7 @@ public class OrderActivity extends AppCompatActivity implements
                 break;
             case R.id.btn_deliveryPay:
                 confirmOrder(orderGroups, groupPrices, groupDescs, false);
+                setLoadingUi(false);
                 break;
         }
     }

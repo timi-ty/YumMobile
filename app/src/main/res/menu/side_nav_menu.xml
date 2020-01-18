@@ -10,10 +10,6 @@
         android:icon="@drawable/ic_cart"
         android:title="@string/title_my_orders" />
     <item
-        android:id="@+id/side_nav_address"
-        android:icon="@drawable/ic_pin"
-        android:title="@string/title_my_address" />
-    <item
         android:id="@+id/side_nav_payment_methods"
         android:icon="@drawable/ic_tag"
         android:title="@string/title_payment_methods" />

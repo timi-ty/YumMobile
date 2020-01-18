@@ -326,10 +326,6 @@ public class MainActivity extends AppCompatActivity implements
                         goToOrdersFragment();
                         drawerLayout.closeDrawers();
                         break;
-                    case R.id.side_nav_address:
-                        Toast.makeText(MainActivity.this, "My Address",
-                                Toast.LENGTH_SHORT).show();
-                        break;
                     case R.id.side_nav_support:
                         Toast.makeText(MainActivity.this, "Support",
                                 Toast.LENGTH_SHORT).show();
