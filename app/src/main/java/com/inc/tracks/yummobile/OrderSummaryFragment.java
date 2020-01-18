@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
+import co.paystack.android.PaystackSdk;
+
 
 public class OrderSummaryFragment extends Fragment implements View.OnClickListener{
     private static final String ARG_ORDER_GROUPS = "order_groups";
@@ -63,6 +65,7 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         if (getArguments() != null) {
             orderGroups = (HashMap) getArguments().getSerializable(ARG_ORDER_GROUPS);
         }
+
     }
 
     @Override

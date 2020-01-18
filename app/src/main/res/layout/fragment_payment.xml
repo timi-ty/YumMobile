@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:padding="4dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_paymentFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:id="@+id/txt_cardNumber"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="32dp"
+            android:backgroundTint="@color/colorPrimaryDark"
+            android:gravity="center"
+            android:hint="@string/card_number"
+            android:inputType="number"
+            android:maxLength="16"
+            android:singleLine="true"
+            app:layout_constraintEnd_toStartOf="@+id/guideline30"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="Autofill" />
+
+        <EditText
+            android:id="@+id/txt_CVV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="@color/colorPrimaryDark"
+            android:gravity="center"
+            android:hint="@string/cvv"
+            android:inputType="number"
+            android:maxLength="3"
+            android:singleLine="true"
+            app:layout_constraintEnd_toEndOf="@+id/txt_cardNumber"
+            app:layout_constraintTop_toBottomOf="@+id/txt_cardNumber"
+            tools:ignore="Autofill" />
+
+        <EditText
+            android:id="@+id/txt_expiryMonth"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            android:backgroundTint="@color/colorPrimaryDark"
+            android:gravity="center"
+            android:hint="@string/expiry_month_mm"
+            android:inputType="number"
+            android:maxLength="2"
+            android:singleLine="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/guideline30"
+            app:layout_constraintTop_toTopOf="@+id/txt_cardNumber"
+            tools:ignore="Autofill" />
+
+        <EditText
+            android:id="@+id/txt_expiryYear"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="@color/colorPrimaryDark"
+            android:gravity="center"
+            android:hint="@string/expiry_year_yy"
+            android:inputType="number"
+            android:maxLength="2"
+            android:singleLine="true"
+            app:layout_constraintEnd_toEndOf="@+id/txt_expiryMonth"
+            app:layout_constraintStart_toStartOf="@+id/txt_expiryMonth"
+            app:layout_constraintTop_toBottomOf="@+id/txt_expiryMonth"
+            tools:ignore="Autofill" />
+
+
+        <Button
+            android:id="@+id/btn_payNow"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="32dp"
+            android:backgroundTint="@color/colorPrimaryDark"
+            android:text="@string/pay_now"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/txt_CVV" />
+
+        <Button
+            android:id="@+id/btn_saveCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="32dp"
+            android:backgroundTint="@color/white"
+            android:text="@string/save_card"
+            android:textColor="@color/colorPrimaryDark"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btn_payNow" />
+
+
+        <ProgressBar
+            android:id="@+id/pb_paymentFragment"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminateTint="@color/colorAccent"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@+id/btn_saveCard"
+            app:layout_constraintEnd_toEndOf="@+id/btn_payNow"
+            app:layout_constraintStart_toStartOf="@+id/btn_payNow"
+            app:layout_constraintTop_toTopOf="@+id/btn_payNow" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline30"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.60" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</ScrollView>

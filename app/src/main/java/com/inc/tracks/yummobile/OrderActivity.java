@@ -22,16 +22,23 @@ import com.google.firebase.firestore.GeoPoint;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import co.paystack.android.PaystackSdk;
+
 
 public class OrderActivity extends AppCompatActivity implements
         OrderDetailsFragment.OnFragmentInteractionListener,
-        OrderSummaryFragment.OnFragmentInteractionListener{
+        OrderSummaryFragment.OnFragmentInteractionListener,
+        PaymentFragment.OnFragmentInteractionListener{
 
     FragmentManager fragmentManager;
 
     ConstraintLayout myLayout;
 
     ProgressBar pbLoading;
+
+    HashMap<String, HashMap> orderGroups;
+    HashMap<String, Integer> groupPrices;
+    HashMap<String, String> groupDescs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,31 +69,46 @@ public class OrderActivity extends AppCompatActivity implements
                 onBackPressed();
             }
         });
+
+        PaystackSdk.initialize(getApplicationContext());
     }
 
     private void goToOrderDetailsFragment(HashMap orderGroups){
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.order_fragment, OrderDetailsFragment.newInstance(orderGroups));
+        fragmentTransaction.replace(R.id.order_fragment_container, OrderDetailsFragment.newInstance(orderGroups));
         fragmentTransaction.commit();
     }
 
     private void goToOrderSummaryFragment(HashMap orderSummary){
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.order_fragment, OrderSummaryFragment.newInstance(orderSummary));
+        fragmentTransaction.replace(R.id.order_fragment_container, OrderSummaryFragment.newInstance(orderSummary));
         fragmentTransaction.commit();
     }
 
     private void goToOrderCompleteFragment(HashMap orderSummary){
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.order_fragment, OrderCompleteFragment.newInstance(orderSummary));
+        fragmentTransaction.replace(R.id.order_fragment_container, OrderCompleteFragment.newInstance(orderSummary));
         fragmentTransaction.commit();
     }
 
-    private boolean takePayments(){
-        //paystack payment
-        return true;
+    private void addPaymentFragment(){
+        findViewById(R.id.order_fragment_container).setAlpha(0.4f);
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.add(R.id.payment_fragment_container, PaymentFragment.newInstance());
+        fragmentTransaction.commit();
     }
 
+    private void takePayments(){
+        addPaymentFragment();
+    }
+
+
+    @Override
+    public void onFragmentInteraction(int buttonId) {
+        if(buttonId == R.id.btn_payNow){
+            confirmOrder(orderGroups, groupPrices, groupDescs);
+        }
+    }
 
     @Override
     public void onFragmentInteraction(int buttonId, HashMap orderGroups) {
@@ -98,13 +120,17 @@ public class OrderActivity extends AppCompatActivity implements
     @SuppressWarnings("unchecked")
     @Override
     public void onFragmentInteraction(int buttonId, HashMap orderGroups,
-                                      HashMap groupPrices, HashMap groupDescriptions) {
+                                      HashMap groupPrices, HashMap groupDescs) {
+        this.orderGroups = orderGroups;
+        this.groupPrices = groupPrices;
+        this.groupDescs = groupDescs;
+
         switch (buttonId){
             case R.id.btn_cardPay:
+                takePayments();
+                break;
             case R.id.btn_deliveryPay:
-                if(takePayments()){
-                    confirmOrder(orderGroups, groupPrices, groupDescriptions);
-                }
+                confirmOrder(orderGroups, groupPrices, groupDescs);
                 break;
         }
     }

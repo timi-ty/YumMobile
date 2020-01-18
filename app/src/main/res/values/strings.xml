@@ -94,4 +94,10 @@
     <string name="location_permission_encouragement">Grant Location Permission For The Maximum Shopping Experience</string>
     <string name="prompt_menu_search">Search For Menu Item</string>
     <string name="prompt_order_search">Search Active Orders</string>
+    <string name="card_number">Card Number</string>
+    <string name="cvv">CVV</string>
+    <string name="expiry_month_mm">MM</string>
+    <string name="expiry_year_yy">YY</string>
+    <string name="save_card">Save Card</string>
+    <string name="pay_now">Pay Now</string>
 </resources>

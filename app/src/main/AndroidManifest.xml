@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".ManagerActivity"></activity>
+        <activity android:name=".ManagerActivity" />
         <activity android:name=".OrderActivity" />
         <activity android:name=".Launcher">
             <intent-filter>
@@ -26,6 +26,10 @@
             android:name=".MainActivity"
             android:label="@string/title_activity_home_page" />
         <activity android:name=".RegistrationActivity" />
+
+        <meta-data
+            android:name="co.paystack.android.PublicKey"
+            android:value="pk_test_cfcf23217eb56f462a411b9cc6daea9daaa20803"/>
     </application>
 
 </manifest>
