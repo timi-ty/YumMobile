@@ -307,6 +307,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
             TextView tvAddress;
             ImageView imgLogo;
 
+            RestaurantItem restaurantItem;
+
             RstViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvName = itemView.findViewById(R.id.tv_restaurantName);
@@ -318,6 +320,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
             }
 
             void bindView(RestaurantItem restaurantItem){
+                this.restaurantItem = restaurantItem;
+
                 tvName.setText(restaurantItem.getName());
                 tvDesc.setText(restaurantItem.getDescription());
                 tvAddress.setText(restaurantItem.getAddress());
@@ -352,8 +356,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
             @Override
             public void onClick(View v) {
-                int position = getAdapterPosition();
-                RestaurantItem restaurantItem = restaurantListFiltered.get(position);
                 switch (v.getId()) {
                     case R.id.item_nearRestaurant:
                         onButtonPressed(v.getId(), restaurantItem);

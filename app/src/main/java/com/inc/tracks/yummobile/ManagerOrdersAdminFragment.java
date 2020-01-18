@@ -1,11 +1,14 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
@@ -30,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 
 public class ManagerOrdersAdminFragment extends Fragment{
@@ -254,22 +258,29 @@ public class ManagerOrdersAdminFragment extends Fragment{
             TextView tvDesc;
             TextView tvTimestamp;
             TextView tvPrice;
+            Button btnCallTransporter;
             ImageView imgLogo;
+
+            ActiveOrder activeOrder;
+            UserPrefs transporter;
 
             ActiveOrderViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvDesc = itemView.findViewById(R.id.tv_orderDesc);
                 tvTimestamp = itemView.findViewById(R.id.tv_timeStamp);
                 tvPrice = itemView.findViewById(R.id.tv_orderPrice);
+                btnCallTransporter = itemView.findViewById(R.id.btn_orderInteraction);
                 imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
 
                 itemView.setOnClickListener(this);
             }
 
             void bindView(final ActiveOrder activeOrder){
+                this.activeOrder = activeOrder;
+
                 RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
                 UserPrefs buyer = buyers.get(activeOrder.getClientId());
-                UserPrefs transporter = transporters.get(activeOrder.getTransporterId());
+                transporter = transporters.get(activeOrder.getTransporterId());
                 if(restaurantItem != null && buyer != null &&
                         (transporter != null || !activeOrder.isAccepted())){
 
@@ -281,6 +292,11 @@ public class ManagerOrdersAdminFragment extends Fragment{
                                 + restaurantItem.getName() + " is being delivered by " +
                                 transporter.getUserName() + " (" + transporter.getUserPhone() +
                                 ").";
+
+                        btnCallTransporter.setText(getResources().
+                                getString(R.string.call_transporter));
+
+                        btnCallTransporter.setOnClickListener(this);
                     }
                     else{
                         message = "Order for " + buyer.getUserName() +
@@ -366,7 +382,25 @@ public class ManagerOrdersAdminFragment extends Fragment{
 
             @Override
             public void onClick(View v) {
-                onButtonPressed(v.getId(), activeOrdersFiltered.get(getAdapterPosition()));
+                if(v.getId() == R.id.btn_orderInteraction){
+                    callTransporter();
+                }
+                else{
+                    onButtonPressed(v.getId(), activeOrder);
+                }
+            }
+
+            private void callTransporter(){
+                if(transporter != null){
+                    Uri phone = Uri.parse("tel:" + transporter.getUserPhone());
+
+                    Intent dialerIntent = new Intent(Intent.ACTION_DIAL, phone);
+
+                    if (dialerIntent.resolveActivity(Objects.requireNonNull(getActivity())
+                            .getPackageManager()) != null) {
+                        startActivity(dialerIntent);
+                    }
+                }
             }
         }
     }

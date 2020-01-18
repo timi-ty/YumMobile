@@ -6,12 +6,19 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
@@ -19,10 +26,17 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import co.paystack.android.Paystack;
 import co.paystack.android.PaystackSdk;
+import co.paystack.android.Transaction;
+import co.paystack.android.model.Card;
+import co.paystack.android.model.Charge;
 
 
 public class OrderActivity extends AppCompatActivity implements
@@ -98,16 +112,20 @@ public class OrderActivity extends AppCompatActivity implements
         fragmentTransaction.commit();
     }
 
-    private void takePayments(){
+    private void getCardInfo(){
         addPaymentFragment();
     }
 
 
     @Override
-    public void onFragmentInteraction(int buttonId) {
-        if(buttonId == R.id.btn_payNow){
-            confirmOrder(orderGroups, groupPrices, groupDescs);
-        }
+    public void onFragmentInteraction(int buttonId, Card card) {
+        chargeCard(card);
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        Fragment paymentFragment = fragmentManager.findFragmentById(R.id.payment_fragment_container);
+        assert paymentFragment != null;
+        fragmentTransaction.detach(paymentFragment);
+        fragmentTransaction.commit();
+        findViewById(R.id.order_fragment_container).setAlpha(1.0f);
     }
 
     @Override
@@ -127,18 +145,98 @@ public class OrderActivity extends AppCompatActivity implements
 
         switch (buttonId){
             case R.id.btn_cardPay:
-                takePayments();
+                getCardInfo();
                 break;
             case R.id.btn_deliveryPay:
-                confirmOrder(orderGroups, groupPrices, groupDescs);
+                confirmOrder(orderGroups, groupPrices, groupDescs, false);
                 break;
         }
+    }
+
+    private void chargeCard(Card card){
+        setLoadingUi(true);
+        int totalPrice = 0;
+        for(Integer groupPrice : groupPrices.values()){
+            totalPrice  += groupPrice;
+        }
+
+        Charge charge = new Charge();
+        charge.setCard(card);
+        charge.setAmount(totalPrice * 100);
+        charge.setEmail(UserAuth.currentUser.getEmail());
+
+        PaystackSdk.chargeCard(OrderActivity.this, charge, new Paystack.TransactionCallback() {
+            @Override
+            public void onSuccess(Transaction transaction) {
+
+                RequestQueue queue = Volley.newRequestQueue(OrderActivity.this);
+                String url = "https://api.paystack.co/transaction/verify/" + transaction.getReference();
+
+                HashMap<String, String> headers = new HashMap<>();
+                headers.put("Authorization", "Bearer sk_test_9fe2ac2ae3c74affdf4b9d70efbb0184a1b55c04");/**/
+
+                YumJsonObjectRequest jsonRequest = new YumJsonObjectRequest(Request.Method.GET,
+                        url, headers,null,
+                        new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                String status = "";
+                                try {
+                                    status = response.getJSONObject("data").getString("status");
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                                if(status.equals("success")){
+                                    confirmOrder(orderGroups, groupPrices, groupDescs, true);
+                                }
+                                else{
+                                    Snackbar.make(myLayout,
+                                            "Failed. Could not pay, try again.",
+                                            Snackbar.LENGTH_SHORT).show();
+
+                                    goToOrderSummaryFragment(orderGroups);
+                                }
+                                setLoadingUi(false);
+
+                                Log.d("Paystack Response", response.toString());
+                            }
+                        }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Snackbar.make(myLayout,
+                                "Failed. Could not pay, try again.",
+                                Snackbar.LENGTH_SHORT).show();
+
+                        setLoadingUi(false);
+
+                        goToOrderSummaryFragment(orderGroups);
+                    }
+                });
+
+                queue.add(jsonRequest);
+            }
+
+            @Override
+            public void beforeValidate(Transaction transaction) {
+                // This is called only before requesting OTP.
+                // Save reference so you may send to server. If
+                // error occurs with OTP, you should still verify on server.
+            }
+
+            @Override
+            public void onError(Throwable error, Transaction transaction) {
+                error.printStackTrace();
+                setLoadingUi(false);
+            }
+
+        });
     }
 
     @SuppressWarnings("unchecked")
     private void confirmOrder(final HashMap<String, HashMap> orderGroups,
                               final HashMap<String, Integer> groupPrices,
-                              final HashMap<String, String> groupDescs){
+                              final HashMap<String, String> groupDescs,
+                              final boolean paidFor){
         setLoadingUi(true);
 
         FirebaseFirestore fireDB = FirebaseFirestore.getInstance();
@@ -155,7 +253,7 @@ public class OrderActivity extends AppCompatActivity implements
             assert cost != null;
 
             ActiveOrder activeOrder = new ActiveOrder(clientId, restaurantId, orderItems,
-                    cost, description, Timestamp.now());
+                    cost, description, paidFor, Timestamp.now());
 
             if(UserAuth.mCurrentLocation != null){
                 activeOrder.setClientLocation(new GeoPoint
@@ -172,7 +270,6 @@ public class OrderActivity extends AppCompatActivity implements
                             .addOnSuccessListener(new OnSuccessListener<Void>() {
                                 @Override
                                 public void onSuccess(Void aVoid) {
-                                    setLoadingUi(false);
                                     goToOrderCompleteFragment(orderGroups);
                                 }
                             })
@@ -187,11 +284,13 @@ public class OrderActivity extends AppCompatActivity implements
                                     snackbar.setAction("Try Again", new View.OnClickListener() {
                                         @Override
                                         public void onClick(View v) {
-                                            confirmOrder(orderGroups, groupPrices, groupDescs);
+                                            confirmOrder(orderGroups, groupPrices, groupDescs, paidFor);
                                         }
                                     });
 
                                     setLoadingUi(false);
+
+                                    goToOrderSummaryFragment(orderGroups);
                                 }
                             });
         }

@@ -57,6 +57,8 @@ public class ManagerActivity extends AppCompatActivity implements
 
     private String mode;
 
+    private int search_prompt_res;
+
     ConstraintLayout myLayout;
 
     FragmentManager fragmentManager;
@@ -99,6 +101,8 @@ public class ManagerActivity extends AppCompatActivity implements
         setSupportActionBar(myToolbar);
 
         Intent incoming = getIntent();
+
+        search_prompt_res = R.string.search;
 
         if(savedInstanceState == null){
             assert incoming.getExtras() != null;
@@ -161,7 +165,7 @@ public class ManagerActivity extends AppCompatActivity implements
         getMenuInflater().inflate(R.menu.search_menu, menu);
         MenuItem mSearch = menu.findItem(R.id.appSearchBar);
         mSearchView = (SearchView) mSearch.getActionView();
-        mSearchView.setQueryHint(getResources().getString(R.string.prompt_restaurant_search));
+        mSearchView.setQueryHint(getResources().getString(search_prompt_res));
         mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -291,18 +295,18 @@ public class ManagerActivity extends AppCompatActivity implements
                 myToolbar.setVisibility(View.GONE);
                 break;
             case R.layout.fragment_manager_restaurants:
-                mSearchView.setQueryHint(getResources().getString(R.string.prompt_restaurant_search));
+                search_prompt_res = R.string.prompt_restaurant_search;
                 myToolbar.setTitle(R.string.prompt_restaurant_search);
                 myToolbar.setVisibility(View.VISIBLE);
                 break;
             case R.layout.fragment_manager_menu:
-                mSearchView.setQueryHint(getResources().getString(R.string.prompt_menu_search));
+                search_prompt_res = R.string.prompt_menu_search;
                 myToolbar.setTitle(R.string.prompt_menu_search);
                 myToolbar.setVisibility(View.VISIBLE);
                 break;
             case R.layout.fragment_manager_active_orders:
             case R.layout.fragment_manager_active_orders_admin:
-                mSearchView.setQueryHint(getResources().getString(R.string.prompt_order_search));
+                search_prompt_res = R.string.prompt_order_search;
                 myToolbar.setTitle(R.string.prompt_order_search);
                 myToolbar.setVisibility(View.VISIBLE);
                 break;

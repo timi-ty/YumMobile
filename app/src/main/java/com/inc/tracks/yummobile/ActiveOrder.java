@@ -14,12 +14,13 @@ public class ActiveOrder implements Serializable {
 
     public ActiveOrder(String clientId, String restaurantId,
                        HashMap<String, Integer> orderItems, int cost,
-                       String description, Timestamp timestamp) {
+                       String description, boolean paidFor, Timestamp timestamp) {
         this.clientId = clientId;
         this.restaurantId = restaurantId;
         this.orderItems = orderItems;
         this.cost = cost;
         this.description = description;
+        this.paidFor = paidFor;
         this.timestamp = timestamp;
 
         accepted = false;
@@ -45,9 +46,11 @@ public class ActiveOrder implements Serializable {
 
     private boolean clientConfirmed;
 
+    private boolean paidFor;
+
     private String transporterId;
 
-    private Timestamp timestamp;
+    private transient Timestamp timestamp;
 
     private Double clientLat;
     private Double clientLong;
@@ -113,7 +116,6 @@ public class ActiveOrder implements Serializable {
     public boolean isAccepted() {
         return accepted;
     }
-
 
     public void setAccepted(boolean accepted) {
         this.accepted = accepted;
@@ -188,5 +190,9 @@ public class ActiveOrder implements Serializable {
 
     public void setInitialDistance(int initialDistance) {
         this.initialDistance = initialDistance;
+    }
+
+    public boolean isPaidFor() {
+        return paidFor;
     }
 }

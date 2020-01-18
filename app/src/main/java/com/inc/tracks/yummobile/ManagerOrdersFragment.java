@@ -351,6 +351,8 @@ public class ManagerOrdersFragment extends Fragment{
             ProgressBar pbLoading;
             ImageView imgLogo;
 
+            ActiveOrder activeOrder;
+
             RstViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvDesc = itemView.findViewById(R.id.tv_orderDesc);
@@ -364,6 +366,8 @@ public class ManagerOrdersFragment extends Fragment{
             }
 
             void bindView(final ActiveOrder activeOrder){
+                this.activeOrder = activeOrder;
+
                 RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
                 UserPrefs buyer = buyers.get(activeOrder.getClientId());
 
@@ -439,7 +443,7 @@ public class ManagerOrdersFragment extends Fragment{
             public void onClick(View v) {
                 switch (v.getId()){
                     case R.id.item_activeOrder:
-                        onButtonPressed(v.getId(), activeOrdersFiltered.get(getAdapterPosition()));
+                        onButtonPressed(v.getId(), activeOrder);
                         break;
                     case R.id.btn_orderInteraction:
                         acceptOrder();
@@ -450,8 +454,6 @@ public class ManagerOrdersFragment extends Fragment{
             private void acceptOrder(){
                 btnAcceptOrder.setVisibility(View.INVISIBLE);
                 pbLoading.setVisibility(View.VISIBLE);
-
-                ActiveOrder activeOrder = activeOrders.get(getAdapterPosition());
 
                 activeOrder.setTransporter(UserAuth.currentUser.getUid());
 
@@ -660,6 +662,8 @@ public class ManagerOrdersFragment extends Fragment{
             ProgressBar pbLoading;
             ImageView imgLogo;
 
+            ActiveOrder acceptedOrder;
+
             ActiveOrderViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvDesc = itemView.findViewById(R.id.tv_orderDesc);
@@ -672,9 +676,11 @@ public class ManagerOrdersFragment extends Fragment{
                 itemView.setOnClickListener(this);
             }
 
-            void bindView(final ActiveOrder activeOrder){
-                RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
-                UserPrefs buyer = buyers.get(activeOrder.getClientId());
+            void bindView(final ActiveOrder acceptedOrder){
+                this.acceptedOrder = acceptedOrder;
+
+                RestaurantItem restaurantItem = restaurantItems.get(acceptedOrder.getRestaurantId());
+                UserPrefs buyer = buyers.get(acceptedOrder.getClientId());
 
                 if(restaurantItem != null && buyer != null){
                     String message = buyer.getUserName() +
@@ -684,11 +690,11 @@ public class ManagerOrdersFragment extends Fragment{
                     tvDesc.setText(message);
 
                     tvPrice.setText(String.format(Locale.ENGLISH,
-                            "%d", activeOrder.getCost()));
+                            "%d", acceptedOrder.getCost()));
 
-                    tvTimestamp.setText(activeOrder.getTimestamp().toDate().toString());
+                    tvTimestamp.setText(acceptedOrder.getTimestamp().toDate().toString());
 
-                    boolean fulfilled = activeOrder.isTransporterConfirmed();
+                    boolean fulfilled = acceptedOrder.isTransporterConfirmed();
                     btnOrderDelivered.setText(fulfilled ?
                             R.string.wait_on_customer : R.string.confirm_delivered);
 
@@ -698,7 +704,7 @@ public class ManagerOrdersFragment extends Fragment{
                 }
                 if(restaurantItem == null) {
                     fireDB.collection("restaurants")
-                            .document(activeOrder.getRestaurantId())
+                            .document(acceptedOrder.getRestaurantId())
                             .get()
                             .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                                 @Override
@@ -706,7 +712,7 @@ public class ManagerOrdersFragment extends Fragment{
                                     RestaurantItem restaurantItem = documentSnapshot
                                             .toObject(RestaurantItem.class);
 
-                                    restaurantItems.put(activeOrder.getRestaurantId(),
+                                    restaurantItems.put(acceptedOrder.getRestaurantId(),
                                             restaurantItem);
 
                                     notifyItemChanged(getAdapterPosition());
@@ -715,7 +721,7 @@ public class ManagerOrdersFragment extends Fragment{
                 }
                 if(buyer == null) {
                     fireDB.collection("users")
-                            .document(activeOrder.getClientId())
+                            .document(acceptedOrder.getClientId())
                             .get()
                             .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                                 @Override
@@ -723,7 +729,7 @@ public class ManagerOrdersFragment extends Fragment{
                                     UserPrefs buyer = documentSnapshot
                                             .toObject(UserPrefs.class);
 
-                                    buyers.put(activeOrder.getClientId(),
+                                    buyers.put(acceptedOrder.getClientId(),
                                             buyer);
 
                                     notifyItemChanged(getAdapterPosition());
@@ -752,15 +758,13 @@ public class ManagerOrdersFragment extends Fragment{
                     fulfillOrder();
                 }
                 else{
-                    onButtonPressed(v.getId(), acceptedOrdersFiltered.get(getAdapterPosition()));
+                    onButtonPressed(v.getId(), acceptedOrder);
                 }
             }
 
             private void fulfillOrder(){
                 btnOrderDelivered.setVisibility(View.INVISIBLE);
                 pbLoading.setVisibility(View.VISIBLE);
-
-                ActiveOrder acceptedOrder = acceptedOrders.get(getAdapterPosition());
 
                 acceptedOrder.setTransporterConfirmed(true);
 

@@ -1,6 +1,8 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,6 +35,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 public class ManagerRestaurantsFragment extends Fragment implements View.OnClickListener{
@@ -268,6 +271,8 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
             TextView tvAddress;
             ImageView imgLogo;
 
+            RestaurantItem restaurantItem;
+
             RstViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvName = itemView.findViewById(R.id.tv_restaurantName);
@@ -282,9 +287,22 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
             }
 
             void bindView(RestaurantItem restaurantItem){
+                this.restaurantItem = restaurantItem;
+
                 tvName.setText(restaurantItem.getName());
                 tvDesc.setText(restaurantItem.getDescription());
                 tvAddress.setText(restaurantItem.getAddress());
+
+                if(restaurantItem.getLocation() != null){
+                    tvAddress.setOnClickListener(this);
+
+                    tvAddress.setCompoundDrawablesRelativeWithIntrinsicBounds
+                            (0, 0, R.drawable.ic_pin, 0);
+                }
+                else{
+                    tvAddress.setCompoundDrawablesRelativeWithIntrinsicBounds
+                            (0, 0, 0, 0);
+                }
 
                 refreshThumbnail(restaurantItem);
             }
@@ -310,7 +328,28 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
                         deleteRestaurant();
                         break;
                     case R.id.item_manageRestaurant:
-                        onButtonPressed(v.getId(), restaurantListFiltered.get(getAdapterPosition()));
+                        onButtonPressed(v.getId(), restaurantItem);
+                        break;
+                    case R.id.tv_restaurantAddress:
+                        findInGMaps(restaurantItem);
+                        break;
+                }
+            }
+
+            private void findInGMaps(RestaurantItem restaurantItem){
+                String latitude = "" + restaurantItem.getLocation().getLatitude();
+                String longitude = "" + restaurantItem.getLocation().getLongitude();
+
+                Uri gmmIntentUri = Uri.parse("geo:"+latitude+","+longitude);
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                mapIntent.setPackage("com.google.android.apps.maps");
+                if (mapIntent.resolveActivity(Objects.requireNonNull(getActivity())
+                        .getPackageManager()) != null) {
+                    startActivity(mapIntent);
+                }
+                else{
+                    Snackbar.make(myLayout, "Install Google Maps to find this restaurant on the map.",
+                            Snackbar.LENGTH_SHORT).show();
                 }
             }
 

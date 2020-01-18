@@ -1,7 +1,9 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -41,6 +43,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 
 public class ActiveOrdersFragment extends Fragment {
@@ -274,6 +277,9 @@ public class ActiveOrdersFragment extends Fragment {
             Button btnConfirmReceived;
             ImageView imgLogo;
 
+            ActiveOrder activeOrder;
+            UserPrefs transporter;
+
             ActiveOrderViewHolder(@NonNull View itemView) {
                 super(itemView);
 
@@ -286,8 +292,11 @@ public class ActiveOrdersFragment extends Fragment {
             }
 
             void bindView(final ActiveOrder activeOrder){
+                this.activeOrder = activeOrder;
+
                 RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
-                UserPrefs transporter = transporters.get(activeOrder.getTransporterId());
+                transporter = transporters.get(activeOrder.getTransporterId());
+
                 if(restaurantItem != null && (transporter != null || !activeOrder.isAccepted())){
 
                     String message;
@@ -395,10 +404,26 @@ public class ActiveOrdersFragment extends Fragment {
             public void onClick(View v) {
                 switch (v.getId()){
                     case R.id.tv_orderDesc:
+                        if(activeOrder.isAccepted()){
+                            callTransporter();
+                        }
                         break;
                     case R.id.btn_confirmReceived:
-                        confirmOrderReceived(activeOrdersFiltered.get(getAdapterPosition()));
+                        confirmOrderReceived(activeOrder);
                         break;
+                }
+            }
+
+            private void callTransporter(){
+                if(transporter != null){
+                    Uri phone = Uri.parse("tel:" + transporter.getUserPhone());
+
+                    Intent dialerIntent = new Intent(Intent.ACTION_DIAL, phone);
+
+                    if (dialerIntent.resolveActivity(Objects.requireNonNull(getActivity())
+                            .getPackageManager()) != null) {
+                        startActivity(dialerIntent);
+                    }
                 }
             }
 

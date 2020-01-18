@@ -100,4 +100,6 @@
     <string name="expiry_year_yy">YY</string>
     <string name="save_card">Save Card</string>
     <string name="pay_now">Pay Now</string>
+    <string name="search">Search</string>
+    <string name="call_transporter">Call Transporter</string>
 </resources>

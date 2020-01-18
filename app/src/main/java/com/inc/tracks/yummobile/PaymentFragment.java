@@ -13,6 +13,10 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.snackbar.Snackbar;
+
+import co.paystack.android.model.Card;
+
 
 public class PaymentFragment extends Fragment implements
         View.OnClickListener{
@@ -56,7 +60,6 @@ public class PaymentFragment extends Fragment implements
                 container, false);
 
         myLayout = fragView.findViewById(R.id.layout_paymentFragment);
-        mListener.onFragmentInteraction(R.layout.fragment_payment);
 
         btnPayNow = fragView.findViewById(R.id.btn_payNow);
         btnSaveCard = fragView.findViewById(R.id.btn_saveCard);
@@ -74,11 +77,6 @@ public class PaymentFragment extends Fragment implements
         return fragView;
     }
 
-    private void onButtonPressed(int buttonId) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(buttonId);
-        }
-    }
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -101,14 +99,40 @@ public class PaymentFragment extends Fragment implements
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.btn_payNow:
+                verifyCard();
                 break;
             case R.id.btn_saveCard:
                 break;
         }
     }
 
+    private void verifyCard(){
+        String cardNumber = txtCardNumber.getText().toString();
+        String cvv = txtCVV.getText().toString();
+        int expMonth = 0;
+        int expYear = 0;
+
+        try{
+            expMonth = Integer.parseInt(txtExpiryMonth.getText().toString());
+            expYear = Integer.parseInt(txtExpiryYear.getText().toString());
+        }
+        catch (NumberFormatException e){
+            e.printStackTrace();
+        }
+
+        Card card = new Card(cardNumber, expMonth, expYear, cvv);
+        if(card.isValid()){
+            mListener.onFragmentInteraction(R.id.btn_payNow, card);
+        }
+        else{
+            Snackbar.make((View) myLayout.getParent(),
+                    "Invalid Card Details.", Snackbar.LENGTH_SHORT).show();
+        }
+    }
+
+
     public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(int buttonId);
+        void onFragmentInteraction(int buttonId, Card card);
     }
 
 

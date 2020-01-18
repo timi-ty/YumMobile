@@ -1,6 +1,9 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
+import android.content.Intent;
+import android.location.Geocoder;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,18 +17,22 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 
-public class ManagerOrderDetailsFragment extends Fragment{
+public class ManagerOrderDetailsFragment extends Fragment implements View.OnClickListener{
 
     private static final String ARG_ORDER = "currentOrder";
 
@@ -34,6 +41,10 @@ public class ManagerOrderDetailsFragment extends Fragment{
     private FirebaseFirestore fireDB;
 
     private OnFragmentInteractionListener mListener;
+
+    private View myLayout;
+
+    private UserPrefs clientInfo;
 
     public ManagerOrderDetailsFragment() {
         // Required empty public constructor
@@ -73,6 +84,11 @@ public class ManagerOrderDetailsFragment extends Fragment{
 
         final TextView tvTotalCost = fragView.findViewById(R.id.tv_totalPrice);
 
+        tvPhone.setOnClickListener(this);
+        tvLocation.setOnClickListener(this);
+
+        myLayout = (View) tvName.getParent();
+
         rvItems.setLayoutManager(new LinearLayoutManager(getContext()));
         rvItems.setAdapter(new OrderRVAdapter());
 
@@ -84,14 +100,28 @@ public class ManagerOrderDetailsFragment extends Fragment{
                 .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        UserPrefs userPrefs = documentSnapshot.toObject(UserPrefs.class);
-                        assert userPrefs != null;
+                        clientInfo = documentSnapshot.toObject(UserPrefs.class);
+                        assert clientInfo != null;
 
-                        tvName.setText(userPrefs.getUserName());
-                        tvPhone.setText(userPrefs.getUserPhone());
+                        tvName.setText(clientInfo.getUserName());
+                        tvPhone.setText(clientInfo.getUserPhone());
                         tvTotalCost.setText(String.format(Locale.ENGLISH, "%d", activeOrder.getCost()));
                     }
                 });
+
+        if(Geocoder.isPresent() && activeOrder.getClientLocation() != null){
+            double latitude = activeOrder.getClientLocation().getLatitude();
+            double longitude = activeOrder.getClientLocation().getLongitude();
+
+            Geocoder mGeocoder = new Geocoder(getActivity());
+
+            try {
+                String strLocation = mGeocoder.getFromLocation(latitude, longitude, 1).get(0).getAddressLine(0);
+                tvLocation.setText(strLocation);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         return fragView;
     }
@@ -113,10 +143,52 @@ public class ManagerOrderDetailsFragment extends Fragment{
         mListener = null;
     }
 
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.tv_clientPhone:
+                callClient();
+                break;
+            case R.id.tv_clientLocation:
+                if(activeOrder.getClientLocation() != null){
+                    findInGMaps(activeOrder.getClientLocation());
+                }
+        }
+    }
 
 
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction(int interactionId);
+    }
+
+    private void callClient(){
+        if(clientInfo != null){
+            Uri phone = Uri.parse("tel:" + clientInfo.getUserPhone());
+
+            Intent dialerIntent = new Intent(Intent.ACTION_DIAL, phone);
+
+            if (dialerIntent.resolveActivity(Objects.requireNonNull(getActivity())
+                    .getPackageManager()) != null) {
+                startActivity(dialerIntent);
+            }
+        }
+    }
+
+    private void findInGMaps(GeoPoint clientLocation){
+        String latitude = "" + clientLocation.getLatitude();
+        String longitude = "" + clientLocation.getLongitude();
+
+        Uri gmmIntentUri = Uri.parse("geo:"+latitude+","+longitude);
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+        mapIntent.setPackage("com.google.android.apps.maps");
+        if (mapIntent.resolveActivity(Objects.requireNonNull(getActivity())
+                .getPackageManager()) != null) {
+            startActivity(mapIntent);
+        }
+        else{
+            Snackbar.make(myLayout, "Install Google Maps to find this restaurant on the map.",
+                    Snackbar.LENGTH_SHORT).show();
+        }
     }
 
     public class OrderRVAdapter extends RecyclerView.Adapter<OrderRVAdapter.RstViewHolder>{
