@@ -48,7 +48,8 @@ public class ManagerActivity extends AppCompatActivity implements
         ManagerMenuFragment.OnFragmentInteractionListener,
         ManagerOrdersFragment.OnFragmentInteractionListener,
         ManagerOrderDetailsFragment.OnFragmentInteractionListener,
-        ManagerOrdersAdminFragment.OnFragmentInteractionListener{
+        ManagerOrdersAdminFragment.OnFragmentInteractionListener,
+        ManagerTransportersFragment.OnFragmentInteractionListener{
 
     private static int RC_PERMISSION_LOCATION = 4505;
 
@@ -69,9 +70,13 @@ public class ManagerActivity extends AppCompatActivity implements
 
     ManagerMenuFragment managerMenuFragment;
 
+    ManagerTransportersFragment managerTransportersFragment;
+
     ManagerOrdersFragment managerOrdersFragment;
 
     ManagerOrdersAdminFragment managerOrdersAdminFragment;
+
+    ManagerCompletedOrdersFragment completedOrdersFragment;
 
     Toolbar myToolbar;
 
@@ -185,6 +190,12 @@ public class ManagerActivity extends AppCompatActivity implements
                 if(managerOrdersAdminFragment != null){
                     managerOrdersAdminFragment.onSearchQuery(newText);
                 }
+                if(managerTransportersFragment != null){
+                    managerTransportersFragment.onSearchQuery(newText);
+                }
+                if(completedOrdersFragment != null){
+                    completedOrdersFragment.onSearchQuery(newText);
+                }
                 return true;
             }
         });
@@ -244,6 +255,19 @@ public class ManagerActivity extends AppCompatActivity implements
         }
     }
 
+    private void goToManageTransportersFragment(){
+        if(managerTransportersFragment == null){
+            managerTransportersFragment = ManagerTransportersFragment.newInstance();
+        }
+
+        FragmentTransaction fragmentTransaction;
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction
+                .replace(R.id.manager_frag_container,
+                        managerTransportersFragment);
+        fragmentTransaction.commit();
+    }
+
     private void goToManageOrdersFragment(){
         if(managerOrdersFragment == null){
             managerOrdersFragment = ManagerOrdersFragment.newInstance();
@@ -270,13 +294,26 @@ public class ManagerActivity extends AppCompatActivity implements
         fragmentTransaction.commit();
     }
 
-    private void goToManageOrderDetailsFragment(ActiveOrder activeOrder){
+    private void goToManageOrderDetailsFragment(OrderItem activeOrder){
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction
                 .replace(R.id.manager_frag_container,
                         ManagerOrderDetailsFragment.newInstance(activeOrder))
                 .addToBackStack(null);
+        fragmentTransaction.commit();
+    }
+
+    private void goToCompletedOrdersFragment(UserPrefs transporter){
+        if(completedOrdersFragment == null){
+            completedOrdersFragment = ManagerCompletedOrdersFragment.newInstance(transporter);
+        }
+
+        FragmentTransaction fragmentTransaction;
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction
+                .replace(R.id.manager_frag_container,
+                        completedOrdersFragment);
         fragmentTransaction.commit();
     }
 
@@ -288,6 +325,9 @@ public class ManagerActivity extends AppCompatActivity implements
                 break;
             case R.id.btn_manageOrders:
                 goToManageOrdersAdminFragment();
+                break;
+            case R.id.btn_manageTransporters:
+                goToManageTransportersFragment();
                 break;
             case R.layout.fragment_manager_home:
             case R.layout.fragment_manager_restaurant_editor:
@@ -310,11 +350,26 @@ public class ManagerActivity extends AppCompatActivity implements
                 myToolbar.setTitle(R.string.prompt_order_search);
                 myToolbar.setVisibility(View.VISIBLE);
                 break;
+            case R.layout.fragment_manager_transporters:
+                search_prompt_res = R.string.prompt_search_transporters;
+                myToolbar.setTitle(R.string.prompt_search_transporters);
+                myToolbar.setVisibility(View.VISIBLE);
+                break;
+            case R.layout.fragment_manager_completed_orders:
+                search_prompt_res = R.string.prompt_search_completed_orders;
+                myToolbar.setTitle(R.string.prompt_search_completed_orders);
+                myToolbar.setVisibility(View.VISIBLE);
+                break;
         }
     }
 
     @Override
-    public void onFragmentInteraction(int interactionId, ActiveOrder activeOrder) {
+    public void onFragmentInteraction(int interactionId, UserPrefs transporter) {
+        goToCompletedOrdersFragment(transporter);
+    }
+
+    @Override
+    public void onFragmentInteraction(int interactionId, OrderItem activeOrder) {
         goToManageOrderDetailsFragment(activeOrder);
     }
 

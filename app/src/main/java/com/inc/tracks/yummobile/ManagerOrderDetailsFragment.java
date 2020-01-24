@@ -36,7 +36,7 @@ public class ManagerOrderDetailsFragment extends Fragment implements View.OnClic
 
     private static final String ARG_ORDER = "currentOrder";
 
-    private ActiveOrder activeOrder;
+    private OrderItem activeOrder;
 
     private FirebaseFirestore fireDB;
 
@@ -51,7 +51,7 @@ public class ManagerOrderDetailsFragment extends Fragment implements View.OnClic
     }
 
 
-    public static ManagerOrderDetailsFragment newInstance(ActiveOrder activeOrder) {
+    public static ManagerOrderDetailsFragment newInstance(OrderItem activeOrder) {
         ManagerOrderDetailsFragment fragment = new ManagerOrderDetailsFragment();
         Bundle args = new Bundle();
         args.putSerializable(ARG_ORDER, activeOrder);
@@ -63,7 +63,7 @@ public class ManagerOrderDetailsFragment extends Fragment implements View.OnClic
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(getArguments() != null){
-            activeOrder = (ActiveOrder) getArguments().getSerializable(ARG_ORDER);
+            activeOrder = (OrderItem) getArguments().getSerializable(ARG_ORDER);
         }
     }
 

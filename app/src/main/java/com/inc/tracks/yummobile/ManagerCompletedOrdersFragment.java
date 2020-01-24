@@ -1,8 +1,6 @@
 package com.inc.tracks.yummobile;
 
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,44 +10,59 @@ import android.widget.Button;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 
-public class ManagerOrdersAdminFragment extends Fragment{
+public class ManagerCompletedOrdersFragment extends Fragment {
+
+    private final static String ARG_TRANSPORTER = "transporter_user_prefs";
+
+    private UserPrefs transporter;
 
     private OnFragmentInteractionListener mListener;
 
-    private ActiveOrdersRVAdapter activeOrdersRVAdapter;
+    private RecyclerView rvOrders;
 
-    public ManagerOrdersAdminFragment() {
+    private ConstraintLayout myLayout;
+
+    private CompletedOrdersOrdersRVAdapter completedOrdersRVAdapter;
+
+    FirebaseFirestore fireDB;
+
+    public ManagerCompletedOrdersFragment() {
         // Required empty public constructor
     }
 
 
-    public static ManagerOrdersAdminFragment newInstance() {
-        ManagerOrdersAdminFragment fragment = new ManagerOrdersAdminFragment();
+    public static ManagerCompletedOrdersFragment newInstance(UserPrefs transporter) {
+        ManagerCompletedOrdersFragment fragment = new ManagerCompletedOrdersFragment();
         Bundle args = new Bundle();
+        args.putSerializable(ARG_TRANSPORTER, transporter);
         fragment.setArguments(args);
         return fragment;
     }
@@ -57,24 +70,31 @@ public class ManagerOrdersAdminFragment extends Fragment{
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if(getArguments() != null){
+            transporter = (UserPrefs) getArguments().getSerializable(ARG_TRANSPORTER);
+        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View fragView = inflater.inflate(R.layout.fragment_manager_active_orders_admin,
-                container, false);
+        View fragView = inflater.inflate(R.layout.fragment_manager_active_orders, container, false);
 
-        RecyclerView rvActiveOrders = fragView.findViewById(R.id.rv_activeOrders);
+        myLayout = fragView.findViewById(R.id.layout_orderManager);
 
-        rvActiveOrders.setLayoutManager(new LinearLayoutManager(getContext()));
-        if(activeOrdersRVAdapter == null){
-            activeOrdersRVAdapter = new ActiveOrdersRVAdapter();
-            activeOrdersRVAdapter.getFilter().filter("");
+        rvOrders = fragView.findViewById(R.id.rv_activeOrders);
+
+        if (savedInstanceState == null) {
+            completedOrdersRVAdapter = new CompletedOrdersOrdersRVAdapter();
+
+            rvOrders.setLayoutManager(new LinearLayoutManager(getContext()));
+            rvOrders.setAdapter(completedOrdersRVAdapter);
+
+            completedOrdersRVAdapter.getFilter().filter("");
         }
-        rvActiveOrders.setAdapter(activeOrdersRVAdapter);
 
-        mListener.onFragmentInteraction(R.layout.fragment_manager_active_orders_admin);
+
+        mListener.onFragmentInteraction(R.layout.fragment_manager_active_orders);
 
         return fragView;
     }
@@ -103,30 +123,30 @@ public class ManagerOrdersAdminFragment extends Fragment{
         mListener = null;
     }
 
+
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction(int interactionId);
+
         void onFragmentInteraction(int interactionId, OrderItem activeOrder);
     }
 
-    void onSearchQuery(String newText){
-        if(isVisible()){
-            activeOrdersRVAdapter.getFilter().filter(newText);
+    void onSearchQuery(String newText) {
+        if (isVisible()) {
+            completedOrdersRVAdapter.getFilter().filter(newText);
         }
     }
 
-    public class ActiveOrdersRVAdapter extends
-            RecyclerView.Adapter<ActiveOrdersRVAdapter.ActiveOrderViewHolder> implements Filterable {
+    public class CompletedOrdersOrdersRVAdapter extends
+            RecyclerView.Adapter<CompletedOrdersOrdersRVAdapter.OrderViewHolder> implements Filterable {
 
         private final String TAG = "FireStore";
-        FirebaseFirestore fireDB;
 
-        private ArrayList<OrderItem> activeOrders = new ArrayList<>();
-        List<OrderItem> activeOrdersFiltered = new ArrayList<>();
+        private ArrayList<OrderItem> completedOrders = new ArrayList<>();
+        List<OrderItem> completedOrdersFiltered = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
         private HashMap<String, UserPrefs> buyers = new HashMap<>();
-        private HashMap<String, UserPrefs> transporters = new HashMap<>();
 
-        ActiveOrdersRVAdapter() {
+        CompletedOrdersOrdersRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
 
             EventListener<QuerySnapshot> dataChangedListener =
@@ -155,33 +175,33 @@ public class ManagerOrdersAdminFragment extends Fragment{
 
                                         activeOrder.setId(dc.getDocument().getId());
 
-                                        activeOrders.add(activeOrder);
+                                        completedOrders.add(activeOrder);
 
-                                        notifyItemInserted(activeOrders.size() - 1);
+                                        notifyItemInserted(completedOrders.size() - 1);
                                         break;
                                     case MODIFIED:
                                         Log.d(TAG, "Modified OrderItem: " + dc.getDocument().getData());
 
-                                        for(OrderItem item : activeOrders){
-                                            if(item.getId().equals(dc.getDocument().getId())){
-                                                position = activeOrders.indexOf(item);
+                                        for (OrderItem item : completedOrders) {
+                                            if (item.getId().equals(dc.getDocument().getId())) {
+                                                position = completedOrders.indexOf(item);
                                             }
                                         }
-                                        if(position >= 0){
+                                        if (position >= 0) {
                                             notifyItemChanged(position);
                                         }
                                         break;
                                     case REMOVED:
                                         Log.d(TAG, "Removed OrderItem: " + dc.getDocument().getData());
 
-                                        for(OrderItem item : activeOrders){
-                                            if(item.getId().equals(dc.getDocument().getId())){
-                                                position = activeOrders.indexOf(item);
+                                        for (OrderItem item : completedOrders) {
+                                            if (item.getId().equals(dc.getDocument().getId())) {
+                                                position = completedOrders.indexOf(item);
                                             }
                                         }
 
-                                        if(position >= 0){
-                                            activeOrders.remove(position);
+                                        if (position >= 0) {
+                                            completedOrders.remove(position);
                                             notifyItemRemoved(position);
                                         }
                                         break;
@@ -191,28 +211,30 @@ public class ManagerOrdersAdminFragment extends Fragment{
                         }
                     };
 
-            fireDB.collection("activeOrders")
+            fireDB.collection("transporters")
+                    .document(transporter.getId())
+                    .collection("completedOrders")
                     .addSnapshotListener(dataChangedListener);
         }
 
         @NonNull
         @Override
-        public ActiveOrderViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        public OrderViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
-            View orderView = LayoutInflater.from(viewGroup.getContext())
+            View restaurantView = LayoutInflater.from(viewGroup.getContext())
                     .inflate(R.layout.item_manage_order, viewGroup, false);
-            return new ActiveOrderViewHolder(orderView);
+            return new OrderViewHolder(restaurantView);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull ActiveOrderViewHolder viewHolder, int position) {
-            OrderItem activeOrder = activeOrdersFiltered.get(position);
+        public void onBindViewHolder(@NonNull OrderViewHolder viewHolder, int position) {
+            OrderItem activeOrder = completedOrdersFiltered.get(position);
             viewHolder.bindView(activeOrder);
         }
 
         @Override
         public int getItemCount() {
-            return activeOrdersFiltered.size();
+            return completedOrdersFiltered.size();
         }
 
         @Override
@@ -223,12 +245,12 @@ public class ManagerOrdersAdminFragment extends Fragment{
                     String charString = charSequence.toString();
 
                     if (charString.isEmpty()) {
-                        activeOrdersFiltered = activeOrders;
+                        completedOrdersFiltered = completedOrders;
                     } else {
                         List<OrderItem> filteredList = new ArrayList<>();
-                        for (OrderItem order : activeOrders) {
+                        for (OrderItem order : completedOrders) {
                             RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
-                            assert  restaurantItem != null;
+                            assert restaurantItem != null;
                             String restaurantName = restaurantItem.getName();
                             if (order.getDescription().toLowerCase().contains(charString.toLowerCase())
                                     || restaurantName.toLowerCase().contains(charString.toLowerCase())) {
@@ -236,73 +258,56 @@ public class ManagerOrdersAdminFragment extends Fragment{
                             }
                         }
 
-                        activeOrdersFiltered = filteredList;
+                        completedOrdersFiltered = filteredList;
                     }
 
                     FilterResults filterResults = new FilterResults();
-                    filterResults.values = activeOrdersFiltered;
+                    filterResults.values = completedOrdersFiltered;
                     return filterResults;
                 }
 
                 @SuppressWarnings("unchecked")
                 @Override
                 protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-                    activeOrdersFiltered = (ArrayList<OrderItem>) filterResults.values;
+                    completedOrdersFiltered = (ArrayList<OrderItem>) filterResults.values;
 
                     notifyDataSetChanged();
                 }
             };
         }
 
-        class ActiveOrderViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+        class OrderViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
             TextView tvDesc;
             TextView tvTimestamp;
             TextView tvPrice;
-            Button btnCallTransporter;
+            Button btnAcceptOrder;
+            ProgressBar pbLoading;
             ImageView imgLogo;
 
             OrderItem activeOrder;
-            UserPrefs transporter;
 
-            ActiveOrderViewHolder(@NonNull View itemView) {
+            OrderViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvDesc = itemView.findViewById(R.id.tv_orderDesc);
                 tvTimestamp = itemView.findViewById(R.id.tv_timeStamp);
                 tvPrice = itemView.findViewById(R.id.tv_orderPrice);
-                btnCallTransporter = itemView.findViewById(R.id.btn_orderInteraction);
                 imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
+                btnAcceptOrder = itemView.findViewById(R.id.btn_orderInteraction);
+                pbLoading = itemView.findViewById(R.id.pb_activeOrder);
 
                 itemView.setOnClickListener(this);
             }
 
-            void bindView(final OrderItem activeOrder){
+            void bindView(final OrderItem activeOrder) {
                 this.activeOrder = activeOrder;
 
                 RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
                 UserPrefs buyer = buyers.get(activeOrder.getClientId());
-                transporter = transporters.get(activeOrder.getTransporterId());
-                if(restaurantItem != null && buyer != null &&
-                        (transporter != null || !activeOrder.isAccepted())){
 
-                    String message;
-
-                    if(activeOrder.isAccepted() && transporter != null){
-                        message = "Order for " + buyer.getUserName() +
-                                " (" + buyer.getUserPhone() +") from "
-                                + restaurantItem.getName() + " is being delivered by " +
-                                transporter.getUserName() + " (" + transporter.getUserPhone() +
-                                ").";
-
-                        btnCallTransporter.setText(getResources().
-                                getString(R.string.call_transporter));
-
-                        btnCallTransporter.setOnClickListener(this);
-                    }
-                    else{
-                        message = "Order for " + buyer.getUserName() +
-                                " (" + buyer.getUserPhone() +") from "
-                                + restaurantItem.getName() + " is pending.";
-                    }
+                if (restaurantItem != null && buyer != null) {
+                    String message = "Order for " + buyer.getUserName() +
+                            " (" + buyer.getUserPhone() + ") from "
+                            + restaurantItem.getName() + " is pending.";
 
                     tvDesc.setText(message);
 
@@ -311,9 +316,13 @@ public class ManagerOrdersAdminFragment extends Fragment{
 
                     tvTimestamp.setText(activeOrder.getTimestamp().toDate().toString());
 
+                    btnAcceptOrder.setText(R.string.close_order);
+
+                    btnAcceptOrder.setOnClickListener(this);
+
                     refreshThumbnail(restaurantItem);
                 }
-                if(restaurantItem == null) {
+                if (restaurantItem == null) {
                     fireDB.collection("restaurants")
                             .document(activeOrder.getRestaurantId())
                             .get()
@@ -330,7 +339,7 @@ public class ManagerOrdersAdminFragment extends Fragment{
                                 }
                             });
                 }
-                if(buyer == null) {
+                if (buyer == null) {
                     fireDB.collection("users")
                             .document(activeOrder.getClientId())
                             .get()
@@ -347,23 +356,6 @@ public class ManagerOrdersAdminFragment extends Fragment{
                                 }
                             });
                 }
-                if(activeOrder.isAccepted() && transporter == null) {
-                    fireDB.collection("users")
-                            .document(activeOrder.getTransporterId())
-                            .get()
-                            .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                                @Override
-                                public void onSuccess(DocumentSnapshot documentSnapshot) {
-                                    UserPrefs transporter = documentSnapshot
-                                            .toObject(UserPrefs.class);
-
-                                    transporters.put(activeOrder.getTransporterId(),
-                                            transporter);
-
-                                    notifyItemChanged(getAdapterPosition());
-                                }
-                            });
-                }
             }
 
             private void refreshThumbnail(RestaurantItem item) {
@@ -374,33 +366,47 @@ public class ManagerOrdersAdminFragment extends Fragment{
                     GlideApp.with(imgLogo.getContext())
                             .load(imageRef)
                             .into(imgLogo);
-                }
-                catch(Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
 
             @Override
             public void onClick(View v) {
-                if(v.getId() == R.id.btn_orderInteraction){
-                    callTransporter();
-                }
-                else{
-                    onButtonPressed(v.getId(), activeOrder);
+                switch (v.getId()) {
+                    case R.id.item_activeOrder:
+                        onButtonPressed(v.getId(), activeOrder);
+                        break;
+                    case R.id.btn_orderInteraction:
+                        closeOrder();
+                        break;
                 }
             }
 
-            private void callTransporter(){
-                if(transporter != null){
-                    Uri phone = Uri.parse("tel:" + transporter.getUserPhone());
+            private void closeOrder(){
+                btnAcceptOrder.setVisibility(View.INVISIBLE);
+                pbLoading.setVisibility(View.VISIBLE);
 
-                    Intent dialerIntent = new Intent(Intent.ACTION_DIAL, phone);
+                fireDB.collection("transporters")
+                        .document(activeOrder.getTransporterId())
+                        .set(activeOrder, SetOptions.merge())
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Snackbar.make(myLayout, "You accepted the order!",
+                                        Snackbar.LENGTH_SHORT).show();
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Snackbar.make(myLayout, "Failed to accept order.",
+                                        Snackbar.LENGTH_SHORT).show();
 
-                    if (dialerIntent.resolveActivity(Objects.requireNonNull(getActivity())
-                            .getPackageManager()) != null) {
-                        startActivity(dialerIntent);
-                    }
-                }
+                                btnAcceptOrder.setVisibility(View.VISIBLE);
+                                pbLoading.setVisibility(View.INVISIBLE);
+                            }
+                        });
             }
         }
     }

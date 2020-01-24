@@ -8,13 +8,13 @@ import com.google.firebase.firestore.GeoPoint;
 import java.io.Serializable;
 import java.util.HashMap;
 
-public class ActiveOrder implements Serializable {
+public class OrderItem implements Serializable {
 
-    public ActiveOrder(){}
+    public OrderItem(){}
 
-    public ActiveOrder(String clientId, String restaurantId,
-                       HashMap<String, Integer> orderItems, int cost,
-                       String description, boolean paidFor, Timestamp timestamp) {
+    public OrderItem(String clientId, String restaurantId,
+                     HashMap<String, Integer> orderItems, int cost,
+                     String description, boolean paidFor, Timestamp timestamp) {
         this.clientId = clientId;
         this.restaurantId = restaurantId;
         this.orderItems = orderItems;

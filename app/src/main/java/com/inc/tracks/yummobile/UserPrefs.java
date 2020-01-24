@@ -8,6 +8,7 @@ public class UserPrefs implements Serializable {
 
     private String userName;
     private String userPhone;
+    private String id;
 
 
     public String getUserName() {
@@ -24,5 +25,13 @@ public class UserPrefs implements Serializable {
 
     public void setUserPhone(String userPhone) {
         this.userPhone = userPhone;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

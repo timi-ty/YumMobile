@@ -38,6 +38,8 @@ public class ManagerHomeFragment extends Fragment implements View.OnClickListene
 
         fragView.findViewById(R.id.btn_manageOrders).setOnClickListener(this);
 
+        fragView.findViewById(R.id.btn_manageTransporters).setOnClickListener(this);
+
         mListener.onFragmentInteraction(R.layout.fragment_manager_home);
 
         return fragView;

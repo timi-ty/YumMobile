@@ -106,7 +106,7 @@ public class ActiveOrdersFragment extends Fragment {
     void onLocationUpdate(){
         WriteBatch batch = fireDB.batch();
 
-        for(ActiveOrder activeOrder : activeOrdersRVAdapter.activeOrders){
+        for(OrderItem activeOrder : activeOrdersRVAdapter.activeOrders){
             activeOrder.setClientLocation(new GeoPoint
                     (UserAuth.mCurrentLocation.getLatitude(),
                             UserAuth.mCurrentLocation.getLongitude()));
@@ -133,8 +133,8 @@ public class ActiveOrdersFragment extends Fragment {
 
         private final String TAG = "FireStore";
 
-        private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
-        List<ActiveOrder> activeOrdersFiltered = new ArrayList<>();
+        private ArrayList<OrderItem> activeOrders = new ArrayList<>();
+        List<OrderItem> activeOrdersFiltered = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
         private HashMap<String, UserPrefs> transporters = new HashMap<>();
 
@@ -157,13 +157,13 @@ public class ActiveOrdersFragment extends Fragment {
                             }
 
                             for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                                ActiveOrder activeOrder;
+                                OrderItem activeOrder;
                                 int position = -1;
                                 switch (dc.getType()) {
                                     case ADDED:
-                                        Log.d(TAG, "New ActiveOrder: " + dc.getDocument().getData());
+                                        Log.d(TAG, "New OrderItem: " + dc.getDocument().getData());
 
-                                        activeOrder = dc.getDocument().toObject(ActiveOrder.class);
+                                        activeOrder = dc.getDocument().toObject(OrderItem.class);
 
                                         activeOrder.setId(dc.getDocument().getId());
 
@@ -172,13 +172,13 @@ public class ActiveOrdersFragment extends Fragment {
                                         notifyItemInserted(activeOrders.size() - 1);
                                         break;
                                     case MODIFIED:
-                                        Log.d(TAG, "Modified ActiveOrder: " + dc.getDocument().getData());
+                                        Log.d(TAG, "Modified OrderItem: " + dc.getDocument().getData());
 
-                                        for(ActiveOrder item : activeOrders){
+                                        for(OrderItem item : activeOrders){
                                             if(item.getId().equals(dc.getDocument().getId())){
                                                 position = activeOrders.indexOf(item);
                                                 activeOrders.set(position,
-                                                        dc.getDocument().toObject(ActiveOrder.class));
+                                                        dc.getDocument().toObject(OrderItem.class));
                                             }
                                         }
                                         if(position >= 0){
@@ -186,9 +186,9 @@ public class ActiveOrdersFragment extends Fragment {
                                         }
                                         break;
                                     case REMOVED:
-                                        Log.d(TAG, "Removed ActiveOrder: " + dc.getDocument().getData());
+                                        Log.d(TAG, "Removed OrderItem: " + dc.getDocument().getData());
 
-                                        for(ActiveOrder item : activeOrders){
+                                        for(OrderItem item : activeOrders){
                                             if(item.getId().equals(dc.getDocument().getId())){
                                                 position = activeOrders.indexOf(item);
                                             }
@@ -239,8 +239,8 @@ public class ActiveOrdersFragment extends Fragment {
                     if (charString.isEmpty()) {
                         activeOrdersFiltered = activeOrders;
                     } else {
-                        List<ActiveOrder> filteredList = new ArrayList<>();
-                        for (ActiveOrder order : activeOrders) {
+                        List<OrderItem> filteredList = new ArrayList<>();
+                        for (OrderItem order : activeOrders) {
                             RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
                             assert  restaurantItem != null;
                             String restaurantName = restaurantItem.getName();
@@ -261,7 +261,7 @@ public class ActiveOrdersFragment extends Fragment {
                 @SuppressWarnings("unchecked")
                 @Override
                 protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-                    activeOrdersFiltered = (ArrayList<ActiveOrder>) filterResults.values;
+                    activeOrdersFiltered = (ArrayList<OrderItem>) filterResults.values;
 
                     notifyDataSetChanged();
                 }
@@ -277,7 +277,7 @@ public class ActiveOrdersFragment extends Fragment {
             Button btnConfirmReceived;
             ImageView imgLogo;
 
-            ActiveOrder activeOrder;
+            OrderItem activeOrder;
             UserPrefs transporter;
 
             ActiveOrderViewHolder(@NonNull View itemView) {
@@ -291,7 +291,7 @@ public class ActiveOrdersFragment extends Fragment {
                 btnConfirmReceived = itemView.findViewById(R.id.btn_confirmReceived);
             }
 
-            void bindView(final ActiveOrder activeOrder){
+            void bindView(final OrderItem activeOrder){
                 this.activeOrder = activeOrder;
 
                 RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
@@ -449,7 +449,7 @@ public class ActiveOrdersFragment extends Fragment {
                 return (int) (EARTH_RADIUS * angle);
             }
 
-            private void confirmOrderReceived(final ActiveOrder activeOrder){
+            private void confirmOrderReceived(final OrderItem activeOrder){
                 if(activeOrder.isTransporterConfirmed()) {
                     setLoading(true);
                     activeOrder.setClientConfirmed(true);

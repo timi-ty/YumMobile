@@ -6,7 +6,7 @@ import com.google.firebase.firestore.GeoPoint;
 
 import java.util.Comparator;
 
-public class SortActiveOrders implements Comparator<ActiveOrder> {
+public class SortActiveOrders implements Comparator<OrderItem> {
 
     private final int EARTH_RADIUS = 6378137; // approximate Earth radius, *in meters*
 
@@ -17,7 +17,7 @@ public class SortActiveOrders implements Comparator<ActiveOrder> {
     }
 
     @Override
-    public int compare(final ActiveOrder activeOrder1, final ActiveOrder activeOrder2) {
+    public int compare(final OrderItem activeOrder1, final OrderItem activeOrder2) {
         GeoPoint location1 = activeOrder1.getClientLocation();
         GeoPoint location2 = activeOrder2.getClientLocation();
 

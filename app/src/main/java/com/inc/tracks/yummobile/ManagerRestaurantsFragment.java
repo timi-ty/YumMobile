@@ -280,7 +280,7 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
                 tvAddress = itemView.findViewById(R.id.tv_restaurantAddress);
                 imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
 
-                ImageButton btnDelete = itemView.findViewById(R.id.btn_deleteResataurant);
+                ImageButton btnDelete = itemView.findViewById(R.id.btn_deleteRestaurant);
 
                 itemView.setOnClickListener(this);
                 btnDelete.setOnClickListener(this);
@@ -324,7 +324,7 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
             @Override
             public void onClick(View v) {
                 switch (v.getId()){
-                    case R.id.btn_deleteResataurant:
+                    case R.id.btn_deleteRestaurant:
                         deleteRestaurant();
                         break;
                     case R.id.item_manageRestaurant:
@@ -359,10 +359,8 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
                         .setAction("Delete", new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                int position = getAdapterPosition();
-                                String docId = restaurantList.get(position).getId();
                                 fireDB.collection("restaurants")
-                                        .document(docId)
+                                        .document(restaurantItem.getId())
                                         .delete()
                                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                                             @Override

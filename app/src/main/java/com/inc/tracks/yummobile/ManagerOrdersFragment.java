@@ -141,7 +141,7 @@ public class ManagerOrdersFragment extends Fragment{
         }
     };
 
-    private void onButtonPressed(int buttonId, ActiveOrder activeOrder) {
+    private void onButtonPressed(int buttonId, OrderItem activeOrder) {
         if (mListener != null) {
             mListener.onFragmentInteraction(buttonId);
             mListener.onFragmentInteraction(buttonId, activeOrder);
@@ -169,7 +169,7 @@ public class ManagerOrdersFragment extends Fragment{
 
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction(int interactionId);
-        void onFragmentInteraction(int interactionId, ActiveOrder activeOrder);
+        void onFragmentInteraction(int interactionId, OrderItem activeOrder);
     }
 
     void onLocationUpdate(){
@@ -181,7 +181,7 @@ public class ManagerOrdersFragment extends Fragment{
         if(acceptedOrdersRVAdapter.acceptedOrders != null){
             WriteBatch batch = fireDB.batch();
 
-            for(ActiveOrder acceptedOrder : acceptedOrdersRVAdapter.acceptedOrders){
+            for(OrderItem acceptedOrder : acceptedOrdersRVAdapter.acceptedOrders){
                 acceptedOrder.setTransLocation(new GeoPoint
                         (UserAuth.mCurrentLocation.getLatitude(),
                                 UserAuth.mCurrentLocation.getLongitude()));
@@ -209,8 +209,8 @@ public class ManagerOrdersFragment extends Fragment{
 
         private final String TAG = "FireStore";
 
-        private ArrayList<ActiveOrder> activeOrders = new ArrayList<>();
-        List<ActiveOrder> activeOrdersFiltered = new ArrayList<>();
+        private ArrayList<OrderItem> activeOrders = new ArrayList<>();
+        List<OrderItem> activeOrdersFiltered = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
         private HashMap<String, UserPrefs> buyers = new HashMap<>();
 
@@ -233,13 +233,13 @@ public class ManagerOrdersFragment extends Fragment{
                             }
 
                             for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                                ActiveOrder activeOrder;
+                                OrderItem activeOrder;
                                 int position = -1;
                                 switch (dc.getType()) {
                                     case ADDED:
-                                        Log.d(TAG, "New ActiveOrder: " + dc.getDocument().getData());
+                                        Log.d(TAG, "New OrderItem: " + dc.getDocument().getData());
 
-                                        activeOrder = dc.getDocument().toObject(ActiveOrder.class);
+                                        activeOrder = dc.getDocument().toObject(OrderItem.class);
 
                                         activeOrder.setId(dc.getDocument().getId());
 
@@ -248,9 +248,9 @@ public class ManagerOrdersFragment extends Fragment{
                                         notifyItemInserted(activeOrders.size() - 1);
                                         break;
                                     case MODIFIED:
-                                        Log.d(TAG, "Modified ActiveOrder: " + dc.getDocument().getData());
+                                        Log.d(TAG, "Modified OrderItem: " + dc.getDocument().getData());
 
-                                        for(ActiveOrder item : activeOrders){
+                                        for(OrderItem item : activeOrders){
                                             if(item.getId().equals(dc.getDocument().getId())){
                                                 position = activeOrders.indexOf(item);
                                             }
@@ -260,9 +260,9 @@ public class ManagerOrdersFragment extends Fragment{
                                         }
                                         break;
                                     case REMOVED:
-                                        Log.d(TAG, "Removed ActiveOrder: " + dc.getDocument().getData());
+                                        Log.d(TAG, "Removed OrderItem: " + dc.getDocument().getData());
 
-                                        for(ActiveOrder item : activeOrders){
+                                        for(OrderItem item : activeOrders){
                                             if(item.getId().equals(dc.getDocument().getId())){
                                                 position = activeOrders.indexOf(item);
                                             }
@@ -289,13 +289,13 @@ public class ManagerOrdersFragment extends Fragment{
         public RstViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
             View restaurantView = LayoutInflater.from(viewGroup.getContext())
-                    .inflate(R.layout.item_manage_active_order, viewGroup, false);
+                    .inflate(R.layout.item_manage_order, viewGroup, false);
             return new RstViewHolder(restaurantView);
         }
 
         @Override
         public void onBindViewHolder(@NonNull RstViewHolder viewHolder, int position) {
-            ActiveOrder activeOrder = activeOrdersFiltered.get(position);
+            OrderItem activeOrder = activeOrdersFiltered.get(position);
             viewHolder.bindView(activeOrder);
         }
 
@@ -314,8 +314,8 @@ public class ManagerOrdersFragment extends Fragment{
                     if (charString.isEmpty()) {
                         activeOrdersFiltered = activeOrders;
                     } else {
-                        List<ActiveOrder> filteredList = new ArrayList<>();
-                        for (ActiveOrder order : activeOrders) {
+                        List<OrderItem> filteredList = new ArrayList<>();
+                        for (OrderItem order : activeOrders) {
                             RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
                             assert  restaurantItem != null;
                             String restaurantName = restaurantItem.getName();
@@ -336,7 +336,7 @@ public class ManagerOrdersFragment extends Fragment{
                 @SuppressWarnings("unchecked")
                 @Override
                 protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-                    activeOrdersFiltered = (ArrayList<ActiveOrder>) filterResults.values;
+                    activeOrdersFiltered = (ArrayList<OrderItem>) filterResults.values;
 
                     notifyDataSetChanged();
                 }
@@ -351,7 +351,7 @@ public class ManagerOrdersFragment extends Fragment{
             ProgressBar pbLoading;
             ImageView imgLogo;
 
-            ActiveOrder activeOrder;
+            OrderItem activeOrder;
 
             RstViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -365,7 +365,7 @@ public class ManagerOrdersFragment extends Fragment{
                 itemView.setOnClickListener(this);
             }
 
-            void bindView(final ActiveOrder activeOrder){
+            void bindView(final OrderItem activeOrder){
                 this.activeOrder = activeOrder;
 
                 RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
@@ -518,8 +518,8 @@ public class ManagerOrdersFragment extends Fragment{
         private final String TAG = "FireStore";
         FirebaseFirestore fireDB;
 
-        private ArrayList<ActiveOrder> acceptedOrders = new ArrayList<>();
-        List<ActiveOrder> acceptedOrdersFiltered = new ArrayList<>();
+        private ArrayList<OrderItem> acceptedOrders = new ArrayList<>();
+        List<OrderItem> acceptedOrdersFiltered = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
         private HashMap<String, UserPrefs> buyers = new HashMap<>();
 
@@ -542,13 +542,13 @@ public class ManagerOrdersFragment extends Fragment{
                             }
 
                             for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                                ActiveOrder activeOrder;
+                                OrderItem activeOrder;
                                 int position = -1;
                                 switch (dc.getType()) {
                                     case ADDED:
                                         Log.d(TAG, "New AcceptedOrder: " + dc.getDocument().getData());
 
-                                        activeOrder = dc.getDocument().toObject(ActiveOrder.class);
+                                        activeOrder = dc.getDocument().toObject(OrderItem.class);
 
                                         activeOrder.setId(dc.getDocument().getId());
 
@@ -559,11 +559,11 @@ public class ManagerOrdersFragment extends Fragment{
                                     case MODIFIED:
                                         Log.d(TAG, "Modified AcceptedOrder: " + dc.getDocument().getData());
 
-                                        for(ActiveOrder item : acceptedOrders){
+                                        for(OrderItem item : acceptedOrders){
                                             if(item.getId().equals(dc.getDocument().getId())){
                                                 position = acceptedOrders.indexOf(item);
                                                 acceptedOrders.set(position, dc.getDocument()
-                                                        .toObject(ActiveOrder.class));
+                                                        .toObject(OrderItem.class));
                                             }
                                         }
                                         if(position >= 0){
@@ -573,7 +573,7 @@ public class ManagerOrdersFragment extends Fragment{
                                     case REMOVED:
                                         Log.d(TAG, "Removed AcceptedOrder: " + dc.getDocument().getData());
 
-                                        for(ActiveOrder item : acceptedOrders){
+                                        for(OrderItem item : acceptedOrders){
                                             if(item.getId().equals(dc.getDocument().getId())){
                                                 position = acceptedOrders.indexOf(item);
                                             }
@@ -600,13 +600,13 @@ public class ManagerOrdersFragment extends Fragment{
         public ActiveOrderViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
             View restaurantView = LayoutInflater.from(viewGroup.getContext())
-                    .inflate(R.layout.item_manage_active_order, viewGroup, false);
+                    .inflate(R.layout.item_manage_order, viewGroup, false);
             return new ActiveOrderViewHolder(restaurantView);
         }
 
         @Override
         public void onBindViewHolder(@NonNull ActiveOrderViewHolder viewHolder, int position) {
-            ActiveOrder activeOrder = acceptedOrdersFiltered.get(position);
+            OrderItem activeOrder = acceptedOrdersFiltered.get(position);
             viewHolder.bindView(activeOrder);
         }
 
@@ -625,8 +625,8 @@ public class ManagerOrdersFragment extends Fragment{
                     if (charString.isEmpty()) {
                         acceptedOrdersFiltered = acceptedOrders;
                     } else {
-                        List<ActiveOrder> filteredList = new ArrayList<>();
-                        for (ActiveOrder order : acceptedOrders) {
+                        List<OrderItem> filteredList = new ArrayList<>();
+                        for (OrderItem order : acceptedOrders) {
                             RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
                             assert  restaurantItem != null;
                             String restaurantName = restaurantItem.getName();
@@ -647,7 +647,7 @@ public class ManagerOrdersFragment extends Fragment{
                 @SuppressWarnings("unchecked")
                 @Override
                 protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-                    acceptedOrdersFiltered = (ArrayList<ActiveOrder>) filterResults.values;
+                    acceptedOrdersFiltered = (ArrayList<OrderItem>) filterResults.values;
 
                     notifyDataSetChanged();
                 }
@@ -662,7 +662,7 @@ public class ManagerOrdersFragment extends Fragment{
             ProgressBar pbLoading;
             ImageView imgLogo;
 
-            ActiveOrder acceptedOrder;
+            OrderItem acceptedOrder;
 
             ActiveOrderViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -676,7 +676,7 @@ public class ManagerOrdersFragment extends Fragment{
                 itemView.setOnClickListener(this);
             }
 
-            void bindView(final ActiveOrder acceptedOrder){
+            void bindView(final OrderItem acceptedOrder){
                 this.acceptedOrder = acceptedOrder;
 
                 RestaurantItem restaurantItem = restaurantItems.get(acceptedOrder.getRestaurantId());

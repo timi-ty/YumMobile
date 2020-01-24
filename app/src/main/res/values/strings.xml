@@ -77,8 +77,8 @@
     <string name="prompt_go_home">Go Home</string>
     <string name="sample_time_stamp">Thursday November 2, 5:49 PM.</string>
     <string name="confirm_delivered">Confirm Order Delivered</string>
-    <string name="sample_client_name">SlowMobius</string>
-    <string name="sample_client_number">09025213546</string>
+    <string name="sample_name">SlowMobius</string>
+    <string name="sample_phone_number">09025213546</string>
     <string name="sample_client_location">No. 17 Hermes Road, Olympus.</string>
     <string name="sample_price_count">1000 X 5</string>
     <string name="placeholder_loading">.....................</string>
@@ -102,4 +102,9 @@
     <string name="pay_now">Pay Now</string>
     <string name="search">Search</string>
     <string name="call_transporter">Call Transporter</string>
+    <string name="title_completed_orders">Completed Orders</string>
+    <string name="prompt_search_transporters">Search For Transporters</string>
+    <string name="prompt_search_completed_orders">Search For Completed Orders</string>
+    <string name="close_order">Close Order</string>
+    <string name="manage_transporters">Manage Transporters</string>
 </resources>

@@ -91,18 +91,14 @@ public class PaymentFragment extends Fragment implements
                     + " must implement OnFragmentInteractionListener");
         }
 
-        progressDbHelper = new FeedProgressDbHelper(context);
-        readableProgressDb = progressDbHelper.getReadableDatabase();
-        writableProgressDb = progressDbHelper.getWritableDatabase();
+        openLocalDb(context);
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         mListener = null;
-        readableProgressDb.close();
-        writableProgressDb.close();
-        progressDbHelper.close();
+        closeLocalDb();
     }
 
     @Override
@@ -233,5 +229,17 @@ public class PaymentFragment extends Fragment implements
         }
 
         cursor.close();
+    }
+
+    private void openLocalDb(Context context){
+        progressDbHelper = new FeedProgressDbHelper(context);
+        readableProgressDb = progressDbHelper.getReadableDatabase();
+        writableProgressDb = progressDbHelper.getWritableDatabase();
+    }
+
+    private void closeLocalDb(){
+        readableProgressDb.close();
+        writableProgressDb.close();
+        progressDbHelper.close();
     }
 }

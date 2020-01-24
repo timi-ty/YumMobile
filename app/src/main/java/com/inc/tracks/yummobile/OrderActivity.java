@@ -253,7 +253,7 @@ public class OrderActivity extends AppCompatActivity implements
 
             assert cost != null;
 
-            ActiveOrder activeOrder = new ActiveOrder(clientId, restaurantId, orderItems,
+            OrderItem activeOrder = new OrderItem(clientId, restaurantId, orderItems,
                     cost, description, paidFor, Timestamp.now());
 
             if(UserAuth.mCurrentLocation != null){
