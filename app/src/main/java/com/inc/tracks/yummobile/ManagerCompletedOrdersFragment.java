@@ -78,11 +78,11 @@ public class ManagerCompletedOrdersFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View fragView = inflater.inflate(R.layout.fragment_manager_active_orders, container, false);
+        View fragView = inflater.inflate(R.layout.fragment_manager_completed_orders, container, false);
 
         myLayout = fragView.findViewById(R.id.layout_orderManager);
 
-        rvOrders = fragView.findViewById(R.id.rv_activeOrders);
+        rvOrders = fragView.findViewById(R.id.rv_completedOrders);
 
         if (savedInstanceState == null) {
             completedOrdersRVAdapter = new CompletedOrdersOrdersRVAdapter();
@@ -94,7 +94,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
         }
 
 
-        mListener.onFragmentInteraction(R.layout.fragment_manager_active_orders);
+        mListener.onFragmentInteraction(R.layout.fragment_manager_completed_orders);
 
         return fragView;
     }
@@ -213,7 +213,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
 
             fireDB.collection("transporters")
                     .document(transporter.getId())
-                    .collection("completedOrders")
+                    .collection("completedDeliveries")
                     .addSnapshotListener(dataChangedListener);
         }
 
@@ -284,7 +284,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
             ProgressBar pbLoading;
             ImageView imgLogo;
 
-            OrderItem activeOrder;
+            OrderItem completedOrder;
 
             OrderViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -299,7 +299,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
             }
 
             void bindView(final OrderItem activeOrder) {
-                this.activeOrder = activeOrder;
+                this.completedOrder = activeOrder;
 
                 RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
                 UserPrefs buyer = buyers.get(activeOrder.getClientId());
@@ -375,7 +375,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
             public void onClick(View v) {
                 switch (v.getId()) {
                     case R.id.item_activeOrder:
-                        onButtonPressed(v.getId(), activeOrder);
+                        onButtonPressed(v.getId(), completedOrder);
                         break;
                     case R.id.btn_orderInteraction:
                         closeOrder();
@@ -388,19 +388,21 @@ public class ManagerCompletedOrdersFragment extends Fragment {
                 pbLoading.setVisibility(View.VISIBLE);
 
                 fireDB.collection("transporters")
-                        .document(activeOrder.getTransporterId())
-                        .set(activeOrder, SetOptions.merge())
+                        .document(completedOrder.getTransporterId())
+                        .collection("completedDeliveries")
+                        .document(completedOrder.getId())
+                        .delete()
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
-                                Snackbar.make(myLayout, "You accepted the order!",
+                                Snackbar.make(myLayout, "You closed the order!",
                                         Snackbar.LENGTH_SHORT).show();
                             }
                         })
                         .addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
-                                Snackbar.make(myLayout, "Failed to accept order.",
+                                Snackbar.make(myLayout, "Failed to close order.",
                                         Snackbar.LENGTH_SHORT).show();
 
                                 btnAcceptOrder.setVisibility(View.VISIBLE);

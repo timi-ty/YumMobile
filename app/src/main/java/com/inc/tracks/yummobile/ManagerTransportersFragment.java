@@ -23,16 +23,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -66,9 +69,8 @@ public class ManagerTransportersFragment extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View fragView = inflater.inflate(R.layout.fragment_manager_transporters, container, false);
-        myLayout = fragView.findViewById(R.id.layout_restManager);
-        RecyclerView rvTransporters = fragView.findViewById(R.id.rv_allRestaurants);
-        FloatingActionButton fab_addRestaurant = fragView.findViewById(R.id.fab_addRestaurant);
+        myLayout = fragView.findViewById(R.id.layout_transManager);
+        RecyclerView rvTransporters = fragView.findViewById(R.id.rv_allTransporters);
 
         rvTransporters.setLayoutManager(new LinearLayoutManager(getContext()));
         if(transportersRVAdapter == null){
@@ -77,7 +79,7 @@ public class ManagerTransportersFragment extends Fragment{
         transportersRVAdapter.getFilter().filter("");
         rvTransporters.setAdapter(transportersRVAdapter);
 
-        mListener.onFragmentInteraction(R.layout.fragment_manager_restaurants);
+        mListener.onFragmentInteraction(R.layout.fragment_manager_transporters);
 
         return fragView;
     }
@@ -122,6 +124,7 @@ public class ManagerTransportersFragment extends Fragment{
             RecyclerView.Adapter<TransportersRVAdapter.TransViewHolder> implements Filterable {
 
         private final String TAG = "FireStore";
+        private HashMap<UserPrefs, String> transporters = new HashMap<>();
         private ArrayList<UserPrefs> transportersList = new ArrayList<>();
         List<UserPrefs> transportersListFiltered = new ArrayList<>();
         FirebaseFirestore fireDB;
@@ -204,9 +207,9 @@ public class ManagerTransportersFragment extends Fragment{
         @Override
         public TransViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
-            View restaurantView = LayoutInflater.from(viewGroup.getContext())
+            View transView = LayoutInflater.from(viewGroup.getContext())
                     .inflate(R.layout.item_manage_transporter, viewGroup, false);
-            return new TransViewHolder(restaurantView);
+            return new TransViewHolder(transView);
         }
 
         @Override
@@ -274,11 +277,30 @@ public class ManagerTransportersFragment extends Fragment{
                 btnDelete.setOnClickListener(this);
             }
 
-            void bindView(UserPrefs transporter){
+            void bindView(final UserPrefs transporter){
                 this.transporter = transporter;
 
-                tvName.setText(transporter.getUserName());
-                tvPhone.setText(transporter.getUserPhone());
+                if(transporter.getUserName() == null){
+                    fireDB.collection("users")
+                            .document(transporter.getId())
+                            .get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                        @Override
+                        public void onSuccess(DocumentSnapshot documentSnapshot) {
+                            UserPrefs userEntry = documentSnapshot.toObject(UserPrefs.class);
+                            assert  userEntry != null;
+                            transporter.setUserName(userEntry.getUserName());
+                            transporter.setUserPhone(userEntry.getUserPhone());
+
+                            notifyItemChanged(getAdapterPosition());
+                        }
+                    });
+                }
+                else{
+                    tvName.setText(transporter.getUserName());
+                    tvPhone.setText(transporter.getUserPhone());
+                    tvPhone.setOnClickListener(this);
+                }
+
             }
 
             @Override

@@ -49,7 +49,8 @@ public class ManagerActivity extends AppCompatActivity implements
         ManagerOrdersFragment.OnFragmentInteractionListener,
         ManagerOrderDetailsFragment.OnFragmentInteractionListener,
         ManagerOrdersAdminFragment.OnFragmentInteractionListener,
-        ManagerTransportersFragment.OnFragmentInteractionListener{
+        ManagerTransportersFragment.OnFragmentInteractionListener,
+        ManagerCompletedOrdersFragment.OnFragmentInteractionListener{
 
     private static int RC_PERMISSION_LOCATION = 4505;
 
@@ -85,8 +86,6 @@ public class ManagerActivity extends AppCompatActivity implements
     private LocationRequest locationRequest;
 
     private LocationCallback locationCallback;
-
-    private SearchView mSearchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -169,7 +168,7 @@ public class ManagerActivity extends AppCompatActivity implements
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.search_menu, menu);
         MenuItem mSearch = menu.findItem(R.id.appSearchBar);
-        mSearchView = (SearchView) mSearch.getActionView();
+        SearchView mSearchView = (SearchView) mSearch.getActionView();
         mSearchView.setQueryHint(getResources().getString(search_prompt_res));
         mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -264,7 +263,8 @@ public class ManagerActivity extends AppCompatActivity implements
         fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction
                 .replace(R.id.manager_frag_container,
-                        managerTransportersFragment);
+                        managerTransportersFragment)
+                .addToBackStack(null);
         fragmentTransaction.commit();
     }
 
@@ -313,7 +313,8 @@ public class ManagerActivity extends AppCompatActivity implements
         fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction
                 .replace(R.id.manager_frag_container,
-                        completedOrdersFragment);
+                        completedOrdersFragment)
+                .addToBackStack(null);
         fragmentTransaction.commit();
     }
 
