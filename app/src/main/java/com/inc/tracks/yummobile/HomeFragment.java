@@ -14,8 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Filter;
-import android.widget.Filterable;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -33,7 +32,6 @@ import com.google.firebase.storage.StorageReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
 
 
@@ -85,7 +83,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
         if(rvRestaurantList.getAdapter() == null){
             rvRestaurantList.setAdapter(restaurantsRVAdapter);
         }
-        restaurantsRVAdapter.getFilter().filter("");
 
         if(fragView.getId() == R.id.layout_landHome){
             rvRecentOrders.setLayoutManager(new LinearLayoutManager(fragView.getContext(),
@@ -144,6 +141,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction(int interactionId, RestaurantItem restaurantItem);
         void onFragmentInteraction(int interactionId, HashMap orderSummary);
+        void onFragmentInteraction(int interactionId, String searchText);
     }
 
     private void greetUser(){
@@ -160,16 +158,15 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
     void onSearchQuery(String newText){
         if(isVisible()){
-            restaurantsRVAdapter.getFilter().filter(newText);
+            mListener.onFragmentInteraction(R.string.search, newText);
         }
     }
 
     public class RestaurantsRVAdapter extends
-            RecyclerView.Adapter<RestaurantsRVAdapter.RstViewHolder> implements Filterable {
+            RecyclerView.Adapter<RestaurantsRVAdapter.RstViewHolder>{
 
         private final String TAG = "FireStore";
         private ArrayList<RestaurantItem> restaurantList = new ArrayList<>();
-        List<RestaurantItem> restaurantListFiltered = new ArrayList<>();
 
         RestaurantsRVAdapter() {
             fireDB = FirebaseFirestore.getInstance();
@@ -256,48 +253,14 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
         @Override
         public void onBindViewHolder(@NonNull RstViewHolder viewHolder, int position) {
-            RestaurantItem restaurantItem = restaurantListFiltered.get(position);
+            RestaurantItem restaurantItem = restaurantList.get(position);
             viewHolder.bindView(restaurantItem);
         }
 
         @Override
         public int getItemCount() {
-            return restaurantListFiltered.size();
-        }
-
-        @Override
-        public Filter getFilter() {
-            return new Filter() {
-                @Override
-                protected FilterResults performFiltering(CharSequence charSequence) {
-                    String charString = charSequence.toString();
-
-                    if (charString.isEmpty()) {
-                        restaurantListFiltered = restaurantList;
-                    } else {
-                        List<RestaurantItem> filteredList = new ArrayList<>();
-                        for (RestaurantItem item : restaurantList) {
-                            if (item.getName().toLowerCase().contains(charString.toLowerCase())) {
-                                filteredList.add(item);
-                            }
-                        }
-
-                        restaurantListFiltered = filteredList;
-                    }
-
-                    FilterResults filterResults = new FilterResults();
-                    filterResults.values = restaurantListFiltered;
-                    return filterResults;
-                }
-
-                @SuppressWarnings("unchecked")
-                @Override
-                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-                    restaurantListFiltered = (ArrayList<RestaurantItem>) filterResults.values;
-
-                    notifyDataSetChanged();
-                }
-            };
+            if(restaurantList.size() < 6) return restaurantList.size();
+                    else{ return 6;}
         }
 
 
@@ -305,6 +268,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
             TextView tvName;
             TextView tvDesc;
             TextView tvAddress;
+            ImageButton btnLocPin;
             ImageView imgLogo;
 
             RestaurantItem restaurantItem;
@@ -314,6 +278,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                 tvName = itemView.findViewById(R.id.tv_restaurantName);
                 tvDesc = itemView.findViewById(R.id.tv_restaurantDesc);
                 tvAddress = itemView.findViewById(R.id.tv_restaurantAddress);
+                btnLocPin = itemView.findViewById(R.id.btn_locPin);
                 imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
 
                 itemView.setOnClickListener(this);
@@ -327,14 +292,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                 tvAddress.setText(restaurantItem.getAddress());
 
                 if(restaurantItem.getLocation() != null){
-                    tvAddress.setOnClickListener(this);
+                    btnLocPin.setOnClickListener(this);
 
-                    tvAddress.setCompoundDrawablesRelativeWithIntrinsicBounds
-                            (0, 0, R.drawable.ic_pin, 0);
+                    btnLocPin.setVisibility(View.VISIBLE);
                 }
                 else{
-                    tvAddress.setCompoundDrawablesRelativeWithIntrinsicBounds
-                            (0, 0, 0, 0);
+                    btnLocPin.setVisibility(View.INVISIBLE);
                 }
 
                 refreshThumbnail(restaurantItem);
@@ -360,7 +323,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                     case R.id.item_nearRestaurant:
                         onButtonPressed(v.getId(), restaurantItem);
                         break;
-                    case R.id.tv_restaurantAddress:
+                    case R.id.btn_locPin:
                         findInGMaps(restaurantItem);
                         break;
                 }

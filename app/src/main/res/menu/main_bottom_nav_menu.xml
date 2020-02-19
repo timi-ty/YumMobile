@@ -5,7 +5,7 @@
     <item
         android:id="@+id/navigation_catalogue"
         android:icon="@drawable/ic_menu"
-        android:title="@string/title_catalogue" />
+        android:title="@string/title_restaurants" />
 
     <item
         android:id="@+id/navigation_home"

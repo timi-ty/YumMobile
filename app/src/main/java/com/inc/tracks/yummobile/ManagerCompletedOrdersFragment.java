@@ -307,7 +307,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
                 if (restaurantItem != null && buyer != null) {
                     String message = "Order for " + buyer.getUserName() +
                             " (" + buyer.getUserPhone() + ") from "
-                            + restaurantItem.getName() + " is pending.";
+                            + restaurantItem.getName() + " has been completed.";
 
                     tvDesc.setText(message);
 

@@ -10,7 +10,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,53 +34,38 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 
-public class CatalogueFragment extends Fragment implements View.OnClickListener{
+public class MenuFragment extends Fragment implements View.OnClickListener{
     private static final String ARG_REST_ITEM = "arg_rest_path";
     private static final String ARG_ORDER_GROUPS = "arg_order_groups";
 
     private ConstraintLayout myLayout;
 
     private RestaurantItem activeRestItem;
-    private int activeRestPosition;
 
-    private RecyclerView rvRestaurantList;
     private RecyclerView rvFoodMenu;
 
     private TextView tvRestaurantName;
 
-    private RestaurantsRVAdapter restaurantsRVAdapter;
     private FoodMenuRVAdapter menuItemsAdapter;
-
-    private FirebaseFirestore fireDB;
 
     private HashMap<String, HashMap<String, Integer>> orderGroups = new HashMap<>();
     private HashMap<String, Integer> orderItems = new HashMap<>();
 
-    public CatalogueFragment() {
+    public MenuFragment() {
         // Required empty public constructor
     }
 
 
-    public static CatalogueFragment newInstance(RestaurantItem restaurantItem) {
-        CatalogueFragment fragment = new CatalogueFragment();
+    public static MenuFragment newInstance(RestaurantItem restaurantItem) {
+        MenuFragment fragment = new MenuFragment();
         Bundle args = new Bundle();
         if(restaurantItem == null) {
             restaurantItem  = new RestaurantItem();
         }
         args.putSerializable(ARG_REST_ITEM, restaurantItem);
         args.putSerializable(ARG_ORDER_GROUPS, new HashMap<>());
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    public static CatalogueFragment newInstance(HashMap orderGroups) {
-        CatalogueFragment fragment = new CatalogueFragment();
-        Bundle args = new Bundle();
-        args.putSerializable(ARG_ORDER_GROUPS, orderGroups);
-        args.putSerializable(ARG_REST_ITEM, new RestaurantItem());
         fragment.setArguments(args);
         return fragment;
     }
@@ -99,24 +83,14 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View fragView = inflater.inflate(R.layout.fragment_catalogue,
+        View fragView = inflater.inflate(R.layout.fragment_menu,
                 container, false);
 
         myLayout = fragView.findViewById(R.id.layout_catalogue);
 
-        rvRestaurantList = fragView.findViewById(R.id.rv_restaurantList);
         rvFoodMenu = fragView.findViewById(R.id.rv_foodMenu);
 
         tvRestaurantName = fragView.findViewById(R.id.tv_restaurantName);
-
-        rvRestaurantList.setLayoutManager(new LinearLayoutManager(fragView.getContext()));
-        if(restaurantsRVAdapter == null){
-            restaurantsRVAdapter = new RestaurantsRVAdapter();
-        }
-        if(rvRestaurantList.getAdapter() == null){
-            rvRestaurantList.setAdapter(restaurantsRVAdapter);
-        }
-        restaurantsRVAdapter.getFilter().filter("");
 
         rvFoodMenu.setLayoutManager(new LinearLayoutManager(fragView.getContext()));
         if(menuItemsAdapter == null){
@@ -125,10 +99,11 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
         if(rvFoodMenu.getAdapter() == null){
             rvFoodMenu.setAdapter(menuItemsAdapter);
         }
+        menuItemsAdapter.getFilter().filter("");
+
+        tvRestaurantName.setText(activeRestItem.getName());
 
         fragView.findViewById(R.id.fab_cart).setOnClickListener(this);
-
-        selectActiveRestaurantFromId();
 
         return fragView;
     }
@@ -153,7 +128,7 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
 
     void onSearchQuery(String newText){
         if(isVisible()){
-            restaurantsRVAdapter.getFilter().filter(newText);
+            menuItemsAdapter.getFilter().filter(newText);
         }
     }
 
@@ -180,52 +155,9 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
         }
     }
 
-    private void selectActiveRestaurantFromId(){
-        if(activeRestItem.getId() != null){
-            Handler scrollHandler = new Handler(Objects.requireNonNull(getActivity()).getMainLooper());
-            scrollHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    boolean foundRestaurant = false;
-                    for (RestaurantItem item : restaurantsRVAdapter.restaurantList){
-                        if(item.getId().equals(activeRestItem.getId())){
-                            int selectedPosition = restaurantsRVAdapter.restaurantListFiltered
-                                    .indexOf(item);
-
-                            selectActiveRestaurantFromPosition(selectedPosition);
-
-                            foundRestaurant = true;
-
-                            break;
-                        }
-                    }
-                    if(!foundRestaurant){
-                        Handler scrollHandler = new Handler(Objects.requireNonNull(getActivity()).getMainLooper());
-                        scrollHandler.postDelayed(this, 100);
-                        Log.d("ScrollHandler", "Restaurant not found, retrying...");
-                    }
-                }
-            }, 100);
-        }
-    }
-
-    private void selectActiveRestaurantFromPosition(int position){
-        int formerActive = activeRestPosition;
-
-        activeRestPosition = position;
-
-        restaurantsRVAdapter.notifyItemChanged(formerActive);
-
-        restaurantsRVAdapter.notifyItemChanged(activeRestPosition);
-
+    void updateActiveRestaurantItem(RestaurantItem restaurantItem){
         tvRestaurantName.setText(activeRestItem.getName());
 
-        rvRestaurantList.scrollToPosition(activeRestPosition);
-
-        Log.d("Selected Rest Item",  "" + activeRestPosition);
-    }
-
-    void updateActiveRestaurantItem(RestaurantItem restaurantItem){
         if(!orderItems.isEmpty() && activeRestItem != null){
             orderGroups.put(activeRestItem.getId(), orderItems);
         }
@@ -242,228 +174,19 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
         rvFoodMenu.invalidate();
     }
 
-    @SuppressWarnings("unchecked")
-    void updateOrderGroups(HashMap<String, HashMap<String, Integer>> orderGroups){
-        this.orderGroups = orderGroups;
-        if (getArguments() != null) {
-            getArguments().putSerializable(ARG_ORDER_GROUPS, orderGroups);
-            this.orderGroups = (HashMap) getArguments().getSerializable(ARG_ORDER_GROUPS);
-        }
 
-        menuItemsAdapter = new FoodMenuRVAdapter();
-
-        rvFoodMenu.setAdapter(menuItemsAdapter);
-
-        rvFoodMenu.invalidate();
-    }
-
-
-    public class RestaurantsRVAdapter extends
-            RecyclerView.Adapter<RestaurantsRVAdapter.RstViewHolder> implements Filterable {
-
-        private final String TAG = "FireStore";
-        private ArrayList<RestaurantItem> restaurantList = new ArrayList<>();
-        List<RestaurantItem> restaurantListFiltered = new ArrayList<>();
-
-        RestaurantsRVAdapter() {
-            fireDB = FirebaseFirestore.getInstance();
-
-            EventListener<QuerySnapshot> dataChangedListener =
-                    new EventListener<QuerySnapshot>() {
-                        @Override
-                        public void onEvent(@Nullable QuerySnapshot snapshots,
-                                            @Nullable FirebaseFirestoreException e) {
-                            if (e != null) {
-                                Log.w(TAG, "listen:error", e);
-                                return;
-                            }
-
-                            if (snapshots == null) {
-                                Log.w(TAG, "snapshot not found:error");
-                                return;
-                            }
-
-                            for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                                RestaurantItem restaurantItem;
-                                int position = -1;
-                                switch (dc.getType()) {
-                                    case ADDED:
-                                        Log.d(TAG, "New Restaurant: " + dc.getDocument().getData());
-
-                                        restaurantItem = dc.getDocument().toObject(RestaurantItem.class);
-
-                                        restaurantItem.setId(dc.getDocument().getId());
-
-                                        restaurantList.add(restaurantItem);
-
-                                        notifyItemInserted(restaurantList.size() - 1);
-                                        break;
-                                    case MODIFIED:
-                                        Log.d(TAG, "Modified Restaurant: " + dc.getDocument().getData());
-
-                                        restaurantItem = dc.getDocument().toObject(RestaurantItem.class);
-
-                                        for(RestaurantItem item : restaurantList){
-                                            if(item.getId().equals(restaurantItem.getId())){
-                                                position = restaurantList.indexOf(item);
-                                            }
-                                        }
-                                        if(position >= 0){
-                                            notifyItemChanged(position);
-                                        }
-                                        break;
-                                    case REMOVED:
-                                        Log.d(TAG, "Removed Restaurant: " + dc.getDocument().getData());
-
-                                        restaurantItem = dc.getDocument().toObject(RestaurantItem.class);
-
-                                        for(RestaurantItem item : restaurantList){
-                                            if(item.getId().equals(restaurantItem.getId())){
-                                                position = restaurantList.indexOf(item);
-                                                Log.d(TAG, "Removed Restaurant Notified!: " + item.getId()
-                                                        + " => " + restaurantItem.getId() + " => " + restaurantList.indexOf(item));
-                                            }
-                                        }
-
-                                        if(position >= 0){
-                                            restaurantList.remove(position);
-                                            notifyItemRemoved(position);
-                                        }
-                                        break;
-                                }
-                            }
-
-                        }
-                    };
-
-            fireDB.collection("restaurants").addSnapshotListener(dataChangedListener);
-        }
-
-        @NonNull
-        @Override
-        public RstViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-
-            View restaurantView = LayoutInflater.from(viewGroup.getContext())
-                    .inflate(R.layout.item_catalogue_restaurant, viewGroup, false);
-            return new RstViewHolder(restaurantView);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull RstViewHolder viewHolder, int position) {
-            RestaurantItem restaurantItem = restaurantListFiltered.get(position);
-            viewHolder.bindView(restaurantItem);
-        }
-
-        @Override
-        public int getItemCount() {
-            return restaurantListFiltered.size();
-        }
-
-        @Override
-        public Filter getFilter() {
-            return new Filter() {
-                @Override
-                protected FilterResults performFiltering(CharSequence charSequence) {
-                    String charString = charSequence.toString();
-
-                    if (charString.isEmpty()) {
-                        restaurantListFiltered = restaurantList;
-                    } else {
-                        List<RestaurantItem> filteredList = new ArrayList<>();
-                        for (RestaurantItem item : restaurantList) {
-                            if (item.getName().toLowerCase().contains(charString.toLowerCase())) {
-                                filteredList.add(item);
-                            }
-                        }
-
-                        restaurantListFiltered = filteredList;
-                    }
-
-                    FilterResults filterResults = new FilterResults();
-                    filterResults.values = restaurantListFiltered;
-                    return filterResults;
-                }
-
-                @SuppressWarnings("unchecked")
-                @Override
-                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-                    restaurantListFiltered = (ArrayList<RestaurantItem>) filterResults.values;
-
-                    notifyDataSetChanged();
-                }
-            };
-        }
-
-        class RstViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
-            TextView tvName;
-            ImageView imgLogo;
-            ConstraintLayout container;
-
-            RstViewHolder(@NonNull View itemView) {
-                super(itemView);
-                tvName = itemView.findViewById(R.id.tv_restaurantName);
-                imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
-                container = itemView.findViewById(R.id.item_catalogueRestaurant);
-
-                itemView.setOnClickListener(this);
-            }
-
-            @Override
-            public void onClick(View v) {
-                int position = getAdapterPosition();
-
-                updateActiveRestaurantItem(restaurantListFiltered.get(position));
-
-                selectActiveRestaurantFromPosition(position);
-            }
-
-            void bindView(RestaurantItem restaurantItem){
-                tvName.setText(restaurantItem.getName());
-
-                if(getAdapterPosition() == activeRestPosition){
-                    activateItem();
-                }
-                else {
-                    deactivateItem();
-                }
-
-                refreshThumbnail(restaurantItem);
-            }
-
-            private void refreshThumbnail(RestaurantItem item) {
-                try {
-                    StorageReference imageRef = UserAuth.firebaseStorage
-                            .getReferenceFromUrl(item.getImgRef());
-
-                    GlideApp.with(imgLogo.getContext())
-                            .load(imageRef)
-                            .into(imgLogo);
-                }
-                catch(Exception e){
-                    e.printStackTrace();
-                }
-            }
-
-            private void activateItem(){
-                container.setBackgroundResource(R.drawable.background_highlight);
-            }
-
-            private void deactivateItem(){
-                container.setBackground(null);
-            }
-        }
-    }
-
-    public class FoodMenuRVAdapter extends RecyclerView.Adapter<FoodMenuRVAdapter.MenuItemViewHolder>{
+    public class FoodMenuRVAdapter extends RecyclerView.Adapter<FoodMenuRVAdapter.MenuItemViewHolder>
+            implements Filterable {
 
         private final String TAG = "FireStore";
         private ArrayList<MenuItem> menuItems = new ArrayList<>();
+        private List<MenuItem> menuItemsFiltered = new ArrayList<>();
 
         private int activeMenuItemPos = -1;
 
 
         FoodMenuRVAdapter() {
-            fireDB = FirebaseFirestore.getInstance();
+            FirebaseFirestore fireDB = FirebaseFirestore.getInstance();
 
             orderItems = orderGroups.get(activeRestItem.getId());
 
@@ -557,17 +280,47 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
 
         @Override
         public void onBindViewHolder(@NonNull MenuItemViewHolder viewHolder, int i) {
-            if(i >= menuItems.size()){
-                viewHolder.bindPlaceholder();
-            }
-            else {
-                viewHolder.bindView(menuItems.get(i));
-            }
+            viewHolder.bindView(menuItemsFiltered.get(i));
         }
 
         @Override
         public int getItemCount() {
-            return menuItems.size() + 1;
+            return menuItemsFiltered.size();
+        }
+
+        @Override
+        public Filter getFilter() {
+            return new Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence charSequence) {
+                    String charString = charSequence.toString();
+
+                    if (charString.isEmpty()) {
+                        menuItemsFiltered = menuItems;
+                    } else {
+                        List<MenuItem> filteredList = new ArrayList<>();
+                        for (MenuItem item : menuItems) {
+                            if (item.getName().toLowerCase().contains(charString.toLowerCase())) {
+                                filteredList.add(item);
+                            }
+                        }
+
+                        menuItemsFiltered = filteredList;
+                    }
+
+                    FilterResults filterResults = new FilterResults();
+                    filterResults.values = menuItemsFiltered;
+                    return filterResults;
+                }
+
+                @SuppressWarnings("unchecked")
+                @Override
+                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+                    menuItemsFiltered = (ArrayList<MenuItem>) filterResults.values;
+
+                    notifyDataSetChanged();
+                }
+            };
         }
 
         class MenuItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
@@ -647,9 +400,6 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
                 refreshThumbnail();
             }
 
-            void bindPlaceholder(){
-                itemView.setVisibility(View.INVISIBLE);
-            }
 
             private void refreshThumbnail() {
                 try {
@@ -769,4 +519,3 @@ public class CatalogueFragment extends Fragment implements View.OnClickListener{
         }
     }
 }
-// TODO: 1/10/2020 save orderItems to orderGroups when leaving this activity and add order groups to the intent

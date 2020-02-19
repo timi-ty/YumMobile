@@ -19,17 +19,18 @@
 
         <ImageView
             android:id="@+id/img_restaurantLogo"
-            android:layout_width="96dp"
-            android:layout_height="96dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
             android:background="@drawable/rounded_background_accent_dark_ring_8"
             android:padding="4dp"
             android:scaleType="centerCrop"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0"
             app:srcCompat="@drawable/restaurant"
             tools:ignore="ContentDescription" />
 
@@ -38,15 +39,13 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="8dp"
             android:text="@string/sample_restaurant_name"
-            android:textColor="@android:color/white"
+            android:textColor="@color/white"
             android:textSize="18sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/img_restaurantLogo"
             app:layout_constraintStart_toEndOf="@+id/img_restaurantLogo"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="@+id/img_restaurantLogo" />
 
         <TextView
             android:id="@+id/tv_restaurantDesc"
@@ -55,8 +54,9 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:text="@string/sample_description"
-            android:textColor="@android:color/white"
+            android:textColor="@color/black"
             android:textSize="14sp"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
@@ -70,17 +70,31 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:drawableEnd="@drawable/ic_pin"
             android:text="@string/sample_address"
-            android:textColor="@android:color/white"
+            android:textColor="@color/black"
             android:textSize="14sp"
+            android:visibility="gone"
             app:drawableTint="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toEndOf="@+id/img_restaurantLogo"
             app:layout_constraintTop_toBottomOf="@+id/tv_restaurantDesc" />
+
+        <ImageButton
+            android:id="@+id/btn_locPin"
+            android:layout_width="36dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="8dp"
+            android:background="@color/transparent"
+            android:tint="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_pin"
+            tools:ignore="ContentDescription" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

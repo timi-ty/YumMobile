@@ -6,42 +6,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/txt_restaurant"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:text="@string/title_restaurants"
-        android:textColor="@android:color/primary_text_light"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_restaurantList"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/rounded_tl_background_accent_dark_8"
-        android:paddingTop="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/guideline6"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/txt_restaurant"
-        tools:listitem="@layout/item_catalogue_restaurant" />
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/restaurantNameLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:background="@drawable/rounded_tr_background_primary_dark_8"
         android:paddingBottom="4dp"
         app:layout_constraintEnd_toEndOf="@+id/rv_foodMenu"
-        app:layout_constraintStart_toStartOf="@+id/guideline6"
-        app:layout_constraintTop_toTopOf="@+id/rv_restaurantList">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/tv_restaurantName"
@@ -76,8 +50,7 @@
         android:layout_marginEnd="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="@+id/guideline6"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/restaurantNameLayout"
         app:layout_constraintVertical_bias="1.0"
         tools:listitem="@layout/item_catalogue_food" />
@@ -95,12 +68,5 @@
         app:layout_constraintBottom_toBottomOf="@+id/rv_foodMenu"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_cart" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline6"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.4" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

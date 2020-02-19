@@ -48,7 +48,8 @@ import java.util.HashMap;
 
 
 public class MainActivity extends AppCompatActivity implements
-        HomeFragment.OnFragmentInteractionListener {
+        HomeFragment.OnFragmentInteractionListener,
+        RestaurantsFragment.OnFragmentInteractionListener{
 
     private static int REQUEST_CHECK_SETTINGS = 8714;
 
@@ -59,7 +60,8 @@ public class MainActivity extends AppCompatActivity implements
     FragmentManager fragmentManager;
 
     HomeFragment homeFragment;
-    CatalogueFragment catalogueFragment;
+    MenuFragment menuFragment;
+    RestaurantsFragment restaurantsFragment;
     ActiveOrdersFragment activeOrdersFragment;
 
     Menu bottomMenu;
@@ -81,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements
                     goToHomeFragment();
                     return true;
                 case R.id.navigation_catalogue:
-                    goToCatalogueFragment((RestaurantItem) null);
+                    goToRestaurantsFragment();
                     return true;
                 case R.id.navigation_orders:
                     goToOrdersFragment();
@@ -166,11 +168,14 @@ public class MainActivity extends AppCompatActivity implements
                 if(homeFragment != null){
                     homeFragment.onSearchQuery(newText);
                 }
-                if(catalogueFragment != null){
-                    catalogueFragment.onSearchQuery(newText);
+                if(menuFragment != null){
+                    menuFragment.onSearchQuery(newText);
                 }
                 if(activeOrdersFragment != null){
                     activeOrdersFragment.onSearchQuery(newText);
+                }
+                if(restaurantsFragment != null){
+                    restaurantsFragment.onSearchQuery(newText);
                 }
                 return true;
             }
@@ -201,15 +206,24 @@ public class MainActivity extends AppCompatActivity implements
     public void onFragmentInteraction(int interactionId, RestaurantItem restaurantItem) {
         switch (interactionId){
             case R.id.item_nearRestaurant:
+            case R.id.item_catalogueRestaurant:
+                goToMenuFragment(restaurantItem);
+                break;
             case R.id.tv_viewMore:
-                goToCatalogueFragment(restaurantItem);
+                goToRestaurantsFragment();
                 break;
         }
     }
 
     @Override
     public void onFragmentInteraction(int interactionId, HashMap orderSummary) {
-        goToCatalogueFragment(orderSummary);
+        goToCart(orderSummary);
+    }
+
+    @Override
+    public void onFragmentInteraction(int interactionId, String searchText) {
+        goToRestaurantsFragment();
+        restaurantsFragment.onSearchQuery(searchText);
     }
 
     private void startLocationUpdates() {
@@ -233,39 +247,37 @@ public class MainActivity extends AppCompatActivity implements
         fragmentTransaction.commit();
 
         bottomMenu.getItem(1).setChecked(true);
+
+        bottomMenu.getItem(0).setTitle(R.string.title_restaurants);
     }
 
-    private void goToCatalogueFragment(RestaurantItem restaurantItem){
-        if(catalogueFragment == null){
-            catalogueFragment = CatalogueFragment.newInstance(restaurantItem);
+    private void goToMenuFragment(RestaurantItem restaurantItem){
+        if(menuFragment == null){
+            menuFragment = MenuFragment.newInstance(restaurantItem);
         }
         else if(restaurantItem != null){
-            catalogueFragment.updateActiveRestaurantItem(restaurantItem);
+            menuFragment.updateActiveRestaurantItem(restaurantItem);
         }
 
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frag_container, catalogueFragment);
+        fragmentTransaction.replace(R.id.frag_container, menuFragment);
         fragmentTransaction.commit();
 
-        bottomMenu.getItem(0).setChecked(true);
+        bottomMenu.getItem(0).setChecked(true).setTitle(R.string.title_menu);
     }
 
-    @SuppressWarnings("unchecked")
-    private void goToCatalogueFragment(HashMap orderGroups){
-        if(catalogueFragment == null){
-            catalogueFragment = CatalogueFragment.newInstance(orderGroups);
-        }
-        else if(orderGroups != null){
-            catalogueFragment.updateOrderGroups(orderGroups);
+    private void goToRestaurantsFragment(){
+        if(restaurantsFragment == null){
+            restaurantsFragment = RestaurantsFragment.newInstance();
         }
 
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frag_container, catalogueFragment);
+        fragmentTransaction.replace(R.id.frag_container, restaurantsFragment);
         fragmentTransaction.commit();
 
-        bottomMenu.getItem(0).setChecked(true);
+        bottomMenu.getItem(0).setChecked(true).setTitle(R.string.title_restaurants);
     }
 
     private void goToOrdersFragment(){
@@ -279,6 +291,14 @@ public class MainActivity extends AppCompatActivity implements
         fragmentTransaction.commit();
 
         bottomMenu.getItem(2).setChecked(true);
+
+        bottomMenu.getItem(0).setTitle(R.string.title_restaurants);
+    }
+
+    private void goToCart(HashMap orderSummary){
+        Intent orderIntent = new Intent(this, OrderActivity.class);
+        orderIntent.putExtra("cart", orderSummary);
+        startActivity(orderIntent);
     }
 
     private void startManagingServices(){

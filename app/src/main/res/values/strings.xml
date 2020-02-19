@@ -5,7 +5,6 @@
     <string name="switch_account">Switch account</string>
     <string name="title_activity_home_page">HomePage</string>
     <string name="title_home">Home</string>
-    <string name="title_catalogue">Catalogue</string>
     <string name="title_active_orders">Active Orders</string>
     <string name="done">Done</string>
     <string name="switch_account_Q">Clicked on the wrong account?</string>
@@ -107,4 +106,5 @@
     <string name="prompt_search_completed_orders">Search For Completed Orders</string>
     <string name="close_order">Close Order</string>
     <string name="manage_transporters">Manage Transporters</string>
+    <string name="title_menu">Menu</string>
 </resources>
