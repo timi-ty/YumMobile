@@ -1,0 +1,47 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:fitsSystemWindows">true</item>
+        <item name="android:statusBarColor">@color/colorLight</item>
+    </style>
+
+    <style name="LaunchTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:fitsSystemWindows">true</item>
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+    </style>
+
+    <style name="DarkTextAppearance" >
+        <item name="font">@font/montserrat</item>
+        <item name="fontFamily">@font/montserrat</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="LightTextAppearance" >
+        <item name="font">@font/montserrat</item>
+        <item name="fontFamily">@font/montserrat</item>
+        <item name="android:textColor">@color/lightText</item>
+    </style>
+
+    <style name="ExtraLightTextAppearance" >
+        <item name="font">@font/montserrat</item>
+        <item name="fontFamily">@font/montserrat</item>
+        <item name="android:textColor">@color/toolText</item>
+    </style>
+
+    <style name="ColoredTextAppearance" >
+        <item name="font">@font/montserrat</item>
+        <item name="fontFamily">@font/montserrat</item>
+        <item name="android:textColor">@color/colorPrimaryDark</item>
+    </style>
+
+    <style name="WhiteTextAppearance" >
+        <item name="font">@font/montserrat</item>
+        <item name="fontFamily">@font/montserrat</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+</resources>

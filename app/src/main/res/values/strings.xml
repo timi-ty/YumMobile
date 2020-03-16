@@ -1,0 +1,118 @@
+<resources>
+    <string name="app_name">Yum Mobile</string>
+    <string name="hint_phone">Phone</string>
+    <string name="hint_password">Password</string>
+    <string name="switch_account">Switch account</string>
+    <string name="title_activity_home_page">HomePage</string>
+    <string name="title_home">Home</string>
+    <string name="title_active_orders">Active Orders</string>
+    <string name="done">Done</string>
+    <string name="switch_account_Q">Clicked on the wrong account?</string>
+    <string name="username">Username</string>
+    <string name="title_recent_orders">Recent Orders</string>
+    <string name="recently_bought_food">Recently Bought Food</string>
+    <string name="sample_restaurant_name">Yummy Restaurant</string>
+    <string name="sample_description">Your one stop for all things dangerously sweet.</string>
+    <string name="sample_address">13/14 Savory Street, Glaze Town, Lagos.</string>
+    <string name="title_restaurants">Restaurants</string>
+    <string name="dont_got_account_Q">Don\'t have an account?</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="sample_food">Yummy Food</string>
+    <string name="sample_food_desc">Nice food with nice ingredients.</string>
+    <string name="sample_extra_detail">Excessively long text to demonstrate the description
+    of a food item or restaurant: \n
+        1. Description item one \n
+        2. Description item two \n
+        3. Description item three \n
+        4. Description item four \n
+        5. Description item five \n
+        6. Description item six</string>
+    <string name="title_close_restaurants">Restaurants near you</string>
+    <string name="title_food_menu">Menu</string>
+    <string name="prompt_restaurant_search">Search For Restaurants</string>
+    <string name="my_account">My Account</string>
+    <string name="settings">Settings</string>
+    <string name="my_cart">My Cart</string>
+    <string name="drawer">Drawer</string>
+    <string name="open">Open</string>
+    <string name="close">Close</string>
+    <string name="title_my_address">My Address</string>
+    <string name="title_my_orders">My Orders</string>
+    <string name="title_support">Support</string>
+    <string name="title_about">About</string>
+    <string name="title_keep_shopping">Keep Shopping</string>
+    <string name="tag_proceed_to_checkout">Proceed To Checkout</string>
+    <string name="title_payment_methods">Payment Methods</string>
+    <string name="desc_cart_food">About To Buy This Food</string>
+    <string name="desc_sample_checkout">You are buying some food from this restaurant</string>
+    <string name="sample_food_price">₦500.00</string>
+    <string name="prompt_card_payment">Pay With Card</string>
+    <string name="title_total">Total</string>
+    <string name="sample_total_price">₦2500.00</string>
+    <string name="prompt_delivery_payment">Pay On Delivery</string>
+    <string name="msg_order_complete">Your food is on the way!\n\nGive this order a name to save it.</string>
+    <string name="prompt_save_order">Save Order</string>
+    <string name="sample_desc_active_order">Yummy food from Yummy Restaurant is on its way</string>
+    <string name="prompt_view_more">view more+</string>
+    <string name="sample_greeting">Hello, User</string>
+    <string name="title_sign_out">Sign Out</string>
+    <string name="title_manage_services">Manage Services</string>
+    <string name="manage_restaurants">Manage Restaurants</string>
+    <string name="manage_orders">Manage Orders</string>
+    <string name="hint_restaurant_name">Restaurant Name</string>
+    <string name="hint_restaurant_description">Restaurant Description</string>
+    <string name="hint_restaurant_address">Restaurant Address</string>
+    <string name="btn_upload_Image">Upload Image</string>
+    <string name="save_restaurant">Save Restaurant</string>
+    <string name="manage_menu">Manage Menu</string>
+    <string name="hint_food_name">Food Name</string>
+    <string name="hint_food_description">Food Description</string>
+    <string name="hint_price">Price In Naira</string>
+    <string name="save">Save</string>
+    <string name="sample_price">₦5000</string>
+    <string name="default_count">2X</string>
+    <string name="prompt_go_home">Go Home</string>
+    <string name="sample_time_stamp">Thursday November 2, 5:49 PM.</string>
+    <string name="confirm_delivered">Confirm Order Delivered</string>
+    <string name="sample_name">SlowMobius</string>
+    <string name="sample_phone_number">09025213546</string>
+    <string name="sample_client_location">No. 17 Hermes Road, Olympus.</string>
+    <string name="sample_price_count">1000 X 5</string>
+    <string name="placeholder_loading">.....................</string>
+    <string name="accept_order">Accept Order</string>
+    <string name="title_transport_orders">Transport Orders</string>
+    <string name="title_pending_orders">Pending Orders</string>
+    <string name="title_your_deliveries">Your Deliveries</string>
+    <string name="wait_on_customer">Waiting For Customer To Confirm</string>
+    <string name="confirm_order_received">Confirm Order Received</string>
+    <string name="location_permission_rationale">Setting the location automatically requires this permission.</string>
+    <string name="location_permission_consequence">Cannot set the location automatically without this permission.</string>
+    <string name="whine_about_location_permission">Shopping Experience Will Decline Without This Permission</string>
+    <string name="location_permission_encouragement">Grant Location Permission For The Maximum Shopping Experience</string>
+    <string name="prompt_menu_search">Search For Menu Item</string>
+    <string name="prompt_order_search">Search Active Orders</string>
+    <string name="card_number">Card Number</string>
+    <string name="cvv">CVV</string>
+    <string name="expiry_month_mm">MM</string>
+    <string name="expiry_year_yy">MM/YY</string>
+    <string name="save_card">Save Card</string>
+    <string name="pay_now">Pay Now</string>
+    <string name="search">Search</string>
+    <string name="call_transporter">Call Transporter</string>
+    <string name="title_completed_orders">Completed Orders</string>
+    <string name="prompt_search_transporters">Search For Transporters</string>
+    <string name="prompt_search_completed_orders">Search For Completed Orders</string>
+    <string name="close_order">Close Order</string>
+    <string name="manage_transporters">Manage Transporters</string>
+    <string name="title_menu">Menu</string>
+    <string name="subtotal">Subtotal</string>
+    <string name="total">Total</string>
+    <string name="vat">VAT</string>
+    <string name="delivery">Delivery</string>
+    <string name="_700">₦700</string>
+    <string name="_250">₦250</string>
+    <string name="expiration_date">Expiration Date</string>
+    <string name="card_holder_name">Card Holder Name</string>
+</resources>

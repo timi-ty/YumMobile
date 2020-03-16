@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/side_nav_home"
+        android:icon="@drawable/ic_home_black_24dp"
+        android:title="@string/title_home" />
+    <item
+        android:id="@+id/side_nav_orders"
+        android:icon="@drawable/ic_cart"
+        android:title="@string/title_my_orders" />
+    <item
+        android:id="@+id/side_nav_payment_methods"
+        android:icon="@drawable/ic_tag"
+        android:title="@string/title_payment_methods" />
+    <item
+        android:id="@+id/side_nav_support"
+        android:icon="@drawable/ic_phone"
+        android:title="@string/title_support" />
+    <item
+        android:id="@+id/side_nav_about"
+        android:icon="@drawable/ic_settings"
+        android:title="@string/title_about" />
+    <item
+        android:id="@+id/side_nav_sign_out"
+        android:icon="@drawable/ic_avatar"
+        android:title="@string/title_sign_out" />
+    <item
+        android:id="@+id/side_nav_manage_services"
+        android:icon="@drawable/ic_menu"
+        android:title="@string/title_manage_services" />
+    <item
+        android:id="@+id/side_nav_transport_orders"
+        android:icon="@drawable/ic_active_orders"
+        android:title="@string/title_transport_orders" />
+</menu>
