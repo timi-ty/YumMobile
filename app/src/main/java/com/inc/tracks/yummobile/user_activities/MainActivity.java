@@ -54,7 +54,6 @@ import com.inc.tracks.yummobile.user_fragments.RestaurantsFragment;
 
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Objects;
 
 
 public class MainActivity extends AppCompatActivity implements
@@ -438,8 +437,8 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
 
-                Snackbar.make(myLayout, "Waiting For Location Update...",
-                        Snackbar.LENGTH_SHORT).show();
+//                Snackbar.make(myLayout, "Waiting For Location Update...",
+//                        Snackbar.LENGTH_SHORT).show();
 
                 new Handler(getMainLooper()).postDelayed(new Runnable() {
                     @Override

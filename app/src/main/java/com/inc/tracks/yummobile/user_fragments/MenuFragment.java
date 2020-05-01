@@ -128,6 +128,13 @@ public class MenuFragment extends Fragment implements View.OnClickListener{
         fragView.findViewById(R.id.btn_emptyCart).setOnClickListener(this);
         fragView.findViewById(R.id.btn_back).setOnClickListener(this);
 
+        if(orderItems.isEmpty() && orderGroups.isEmpty()){
+            btnCart.setVisibility(View.GONE);
+        }
+        else {
+            btnCart.setVisibility(View.VISIBLE);
+        }
+
         return fragView;
     }
 
@@ -221,6 +228,8 @@ public class MenuFragment extends Fragment implements View.OnClickListener{
         });
         emptyAlert.setActionTextColor(getResources().getColor(R.color.colorPrimaryDark));
         emptyAlert.show();
+
+        btnCart.setVisibility(View.GONE);
     }
 
     public void updateActiveRestaurantItem(RestaurantItem restaurantItem){

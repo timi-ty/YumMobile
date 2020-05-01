@@ -15,4 +15,5 @@
     <color name="lightText">#676767</color>
     <color name="toolText">#c4c4c4</color>
     <color name="transparent">#00FFFFFF</color>
+    <color name="cashGreen">#319F0A</color>
 </resources>

@@ -48,13 +48,11 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
     private OnFragmentInteractionListener mListener;
 
-    private ImageView btnCardPay;
+    private RecyclerView rvPaymentOptions;
 
-    private ImageView btnCashPay;
+    private TextView tvDefaultPayment;
 
-    private TextView tvCardPay;
-
-    private TextView tvCashPay;
+    private ImageView imvDefaultPayment;
 
     private Button btnCheckout;
 
@@ -96,11 +94,12 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         orderSummary.setLayoutManager(new LinearLayoutManager(getContext()));
         orderSummary.setAdapter(new OrderSummaryRVAdapter());
 
-        btnCardPay =  fragView.findViewById(R.id.img_card);
-        btnCashPay = fragView.findViewById(R.id.img_cash);
+        tvDefaultPayment =  fragView.findViewById(R.id.tv_defaultPayment);
+        imvDefaultPayment = fragView.findViewById(R.id.imv_defaultPayment);
 
-        tvCardPay =  fragView.findViewById(R.id.tv_cardPay);
-        tvCashPay = fragView.findViewById(R.id.tv_cashPay);
+        rvPaymentOptions = fragView.findViewById(R.id.rv_paymentOptions);
+
+        rvPaymentOptions.setLayoutManager(new LinearLayoutManager(getContext()));
 
         btnCheckout = fragView.findViewById(R.id.btn_checkout);
 
@@ -151,10 +150,10 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
                 showCheckoutButton(false);
             case R.id.btn_back:
                 onButtonPressed(v.getId());
-                break;
-            case R.id.img_card:
-            case R.id.img_cash:
-                pickPaymentOption(v.getId());
+//                break;
+//            case R.id.img_card:
+//            case R.id.img_cash:
+//                pickPaymentOption(v.getId());
                 break;
         }
     }
@@ -172,8 +171,8 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
             btnCheckout.setEnabled(false);
 
 
-            btnCardPay.setOnClickListener(this);
-            btnCashPay.setOnClickListener(this);
+            tvDefaultPayment.setOnClickListener(this);
+            imvDefaultPayment.setOnClickListener(this);
             btnCheckout.setOnClickListener(this);
         }
         else{
@@ -192,29 +191,33 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         }
     }
 
-    private void pickPaymentOption(int option){
-        if(option == R.id.img_card){
-            btnCardPay.setSelected(true);
-            btnCashPay.setSelected(false);
+//    private void pickPaymentOption(int option){
+//        if(option == R.id.img_card){
+//            tvDefaultPayment.setSelected(true);
+//            imvDefaultPayment.setSelected(false);
+//
+//            tvCardPay.setSelected(true);
+//            tvCashPay.setSelected(false);
+//
+//            btnCheckout.setEnabled(true);
+//
+//            paymentMethod = OPTION_CARD;
+//        }
+//        else if(option == R.id.img_cash){
+//            tvDefaultPayment.setSelected(false);
+//            imvDefaultPayment.setSelected(true);
+//
+//            tvCardPay.setSelected(false);
+//            tvCashPay.setSelected(true);
+//
+//            btnCheckout.setEnabled(true);
+//
+//            paymentMethod = OPTION_CASH;
+//        }
+//    }
 
-            tvCardPay.setSelected(true);
-            tvCashPay.setSelected(false);
-
-            btnCheckout.setEnabled(true);
-
-            paymentMethod = OPTION_CARD;
-        }
-        else if(option == R.id.img_cash){
-            btnCardPay.setSelected(false);
-            btnCashPay.setSelected(true);
-
-            tvCardPay.setSelected(false);
-            tvCashPay.setSelected(true);
-
-            btnCheckout.setEnabled(true);
-
-            paymentMethod = OPTION_CASH;
-        }
+    private void showPaymentOptions(boolean show){
+        rvPaymentOptions.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
     }
 
     private void showCheckoutButton(boolean show){

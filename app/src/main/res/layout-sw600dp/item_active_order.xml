@@ -38,7 +38,7 @@
             android:gravity="center"
             android:text="@string/placeholder_loading"
             android:textAppearance="@style/DarkTextAppearance"
-            android:textSize="18sp"
+            android:textSize="24sp"
             app:layout_constraintStart_toStartOf="@+id/pb_orderState"
             app:layout_constraintTop_toBottomOf="@+id/tv_orderDesc" />
 
@@ -111,7 +111,7 @@
             android:layout_height="0dp"
             android:text="order #0001"
             android:textColor="@color/colorPrimaryDark"
-            android:textSize="18sp"
+            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="@+id/pb_orderProgress"
             app:layout_constraintTop_toTopOf="parent" />
 

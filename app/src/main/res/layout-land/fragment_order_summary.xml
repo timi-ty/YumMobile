@@ -28,7 +28,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.7" />
+        app:layout_constraintGuide_percent="0.6" />
 
     <ImageButton
         android:id="@+id/btn_back"
@@ -153,81 +153,6 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintLayout4"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/bg_gray"
-        app:layout_constraintBottom_toTopOf="@+id/pb_orderSummary"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/guideline8"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-            android:id="@+id/img_card"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:src="@drawable/ic_credit_card"
-            android:tint="@color/payment_option_color"
-            app:layout_constraintEnd_toEndOf="@+id/textView14"
-            app:layout_constraintStart_toStartOf="@+id/textView14"
-            app:layout_constraintTop_toBottomOf="@+id/textView14" />
-
-        <ImageView
-            android:id="@+id/img_cash"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:src="@drawable/ic_cash"
-            android:tint="@color/payment_option_color"
-            app:layout_constraintEnd_toEndOf="@+id/textView14"
-            app:layout_constraintStart_toStartOf="@+id/textView14"
-            app:layout_constraintTop_toBottomOf="@+id/tv_cardPay" />
-
-        <TextView
-            android:id="@+id/textView14"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="32dp"
-            android:layout_marginEnd="8dp"
-            android:gravity="center"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:text="CHOOSE PAYMENT METHOD"
-            android:textAppearance="@style/DarkTextAppearance"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/tv_cardPay"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Pay With Card"
-            android:textAppearance="@style/DarkTextAppearance"
-            android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="@+id/img_card"
-            app:layout_constraintStart_toStartOf="@+id/img_card"
-            app:layout_constraintTop_toBottomOf="@+id/img_card" />
-
-        <TextView
-            android:id="@+id/tv_cashPay"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Pay On Delivery"
-            android:textAppearance="@style/DarkTextAppearance"
-            android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="@+id/img_cash"
-            app:layout_constraintStart_toStartOf="@+id/img_cash"
-            app:layout_constraintTop_toBottomOf="@+id/img_cash" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
     <ProgressBar
         android:id="@+id/pb_orderSummary"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
@@ -263,9 +188,67 @@
         android:layout_width="2dp"
         android:layout_height="0dp"
         android:background="@color/colorDark2"
-        app:layout_constraintEnd_toStartOf="@+id/constraintLayout4"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/rv_orderSummary"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/paymentMethods"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        app:layout_constraintBottom_toTopOf="@+id/divider13"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/guideline8">
+
+        <TextView
+            android:id="@+id/tv_defaultPayment"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/ripple"
+            android:gravity="center"
+            android:padding="16dp"
+            android:text="@string/prompt_delivery_payment"
+            android:textAppearance="@style/DarkTextAppearance"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <ImageView
+            android:id="@+id/imv_defaultPayment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:src="@drawable/ic_cash"
+            android:tint="@color/cashGreen"
+            app:layout_constraintBottom_toBottomOf="@id/tv_defaultPayment"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tv_defaultPayment" />
+
+        <ImageButton
+            android:id="@+id/img_arrowDown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/ripple"
+            android:src="@drawable/arrow_down"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_defaultPayment"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tv_defaultPayment" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_paymentOptions"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/white"
+        app:layout_constraintBottom_toTopOf="@+id/btn_checkout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/divider5"
+        app:layout_constraintTop_toBottomOf="@+id/paymentMethods"
+        tools:listitem="@layout/item_payment_method" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
