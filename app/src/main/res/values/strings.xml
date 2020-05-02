@@ -115,4 +115,6 @@
     <string name="_250">₦250</string>
     <string name="expiration_date">Expiration Date</string>
     <string name="card_holder_name">Card Holder Name</string>
+    <string name="secret_cvv">XXX</string>
+    <string name="secret_date">XX/XX</string>
 </resources>

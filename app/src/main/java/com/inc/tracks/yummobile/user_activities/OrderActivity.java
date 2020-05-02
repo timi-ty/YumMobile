@@ -4,7 +4,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -31,7 +30,7 @@ import com.inc.tracks.yummobile.components.OrderItem;
 import com.inc.tracks.yummobile.components.UserAuth;
 import com.inc.tracks.yummobile.user_fragments.OrderCompleteFragment;
 import com.inc.tracks.yummobile.user_fragments.OrderSummaryFragment;
-import com.inc.tracks.yummobile.user_fragments.PaymentFragment;
+import com.inc.tracks.yummobile.user_fragments.ManageCardsFragment;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,7 +47,7 @@ import co.paystack.android.model.Charge;
 
 public class OrderActivity extends AppCompatActivity implements
         OrderSummaryFragment.OnFragmentInteractionListener,
-        PaymentFragment.OnFragmentInteractionListener{
+        ManageCardsFragment.OnFragmentInteractionListener{
 
     FragmentManager fragmentManager;
 
@@ -97,7 +96,7 @@ public class OrderActivity extends AppCompatActivity implements
     private void addPaymentFragment(){
         findViewById(R.id.order_fragment_container).setAlpha(0.4f);
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.add(R.id.payment_fragment_container, PaymentFragment.newInstance());
+        fragmentTransaction.add(R.id.payment_fragment_container, ManageCardsFragment.newInstance());
         fragmentTransaction.commit();
     }
 

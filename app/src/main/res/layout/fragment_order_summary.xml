@@ -158,21 +158,21 @@
             android:id="@+id/tv_deliveryFee"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="₦350"
             android:textAppearance="@style/DarkTextAppearance"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="@+id/tv_subTotal"
-            app:layout_constraintTop_toTopOf="@+id/textView6" />
+            app:layout_constraintTop_toTopOf="@+id/textView6"
+            tools:text="@string/_250" />
 
         <TextView
             android:id="@+id/tv_vat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/_250"
             android:textAppearance="@style/DarkTextAppearance"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="@+id/tv_subTotal"
-            app:layout_constraintTop_toTopOf="@+id/textView8" />
+            app:layout_constraintTop_toTopOf="@+id/textView8"
+            tools:text="@string/_250" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -252,6 +252,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:background="@drawable/ripple"
+            android:clickable="true"
             android:gravity="center"
             android:padding="16dp"
             android:text="@string/prompt_delivery_payment"
@@ -267,6 +268,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            android:clickable="true"
             android:src="@drawable/ic_cash"
             android:tint="@color/cashGreen"
             app:layout_constraintBottom_toBottomOf="@id/tv_defaultPayment"
@@ -295,7 +297,7 @@
         android:paddingStart="16dp"
         android:paddingTop="16dp"
         android:paddingEnd="16dp"
-        android:visibility="invisible"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

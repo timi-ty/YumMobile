@@ -6,6 +6,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.provider.BaseColumns;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,8 +20,8 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.adapter.FragmentViewHolder;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -28,12 +31,13 @@ import com.inc.tracks.yummobile.R;
 import com.inc.tracks.yummobile.utils.ProgressDbContract;
 import com.tbuonomo.viewpagerdotsindicator.DotsIndicator;
 
-import java.util.Locale;
+import java.util.List;
+import java.util.Objects;
 
 import co.paystack.android.model.Card;
 
 
-public class PaymentFragment extends Fragment implements
+public class ManageCardsFragment extends Fragment implements
         View.OnClickListener{
 
     ViewPager2 mPager;
@@ -46,18 +50,40 @@ public class PaymentFragment extends Fragment implements
     private EditText txtCardNumber;
     private EditText txtCVV;
     private EditText txtExpiryDate;
+    private EditText txtHolderName;
 
     private FeedProgressDbHelper progressDbHelper;
     private SQLiteDatabase readableProgressDb;
     private SQLiteDatabase writableProgressDb;
 
-    public PaymentFragment() {
+    TextWatcher dateWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            if(s.length() == 3 && s.charAt(2) != '/'){
+                String date = s.subSequence(0, 2) + "/" + s.charAt(2);
+                txtExpiryDate.setText(date);
+                txtExpiryDate.setSelection(4);
+            }
+        }
+    };
+
+    public ManageCardsFragment() {
         // Required empty public constructor
     }
 
 
-    public static PaymentFragment newInstance() {
-        PaymentFragment fragment = new PaymentFragment();
+    public static ManageCardsFragment newInstance() {
+        ManageCardsFragment fragment = new ManageCardsFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -84,19 +110,22 @@ public class PaymentFragment extends Fragment implements
 
         dotsIndicator.setViewPager2(mPager);
 
-        Button btnPayNow = fragView.findViewById(R.id.btn_payNow);
+        Button btnAddCard = fragView.findViewById(R.id.btn_addCard);
 
         txtCardNumber = fragView.findViewById(R.id.txt_cardNumber);
         txtCVV = fragView.findViewById(R.id.txt_CVV);
+        txtHolderName = fragView.findViewById(R.id.txt_cardHolderName);
         txtExpiryDate = fragView.findViewById(R.id.txt_expirationDate);
+        txtExpiryDate.addTextChangedListener(dateWatcher);
 
-        btnPayNow.setOnClickListener(this);
+        btnAddCard.setOnClickListener(this);
 
-        pagerAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+        mPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
-            public void onChanged() {
-                populateTextViews(getSavedCard(mPager.getCurrentItem()));
-                super.onChanged();
+            public void onPageSelected(int position) {
+                if(position >= getCardCount()) releaseEditTexts();
+                else populateEditTexts(getSavedCard(position));
+                super.onPageSelected(position);
             }
         });
 
@@ -126,54 +155,47 @@ public class PaymentFragment extends Fragment implements
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.btn_payNow) {
+        if (v.getId() == R.id.btn_addCard) {
             saveCard(getCardEntry());
-            initiatePayment();
         }
     }
 
-    private void initiatePayment(){
-        String cardNumber = txtCardNumber.getText().toString();
-        String cvv = txtCVV.getText().toString();
-        int expMonth = 0;
-        int expYear = 0;
-
-        try{
-//            expMonth = Integer.parseInt(txtExpiryMonth.getText().toString());
-            /*parse date to month and year here*/
-            expYear = Integer.parseInt(txtExpiryDate.getText().toString());
-        }
-        catch (NumberFormatException e){
-            e.printStackTrace();
-        }
-
-        Card card = new Card(cardNumber, expMonth, expYear, cvv);
-        if(card.isValid()){
-            mListener.onFragmentInteraction(R.id.btn_payNow, card);
-        }
-        else{
-            Snackbar.make((View) myLayout.getParent(),
-                    "Invalid Card Details.", Snackbar.LENGTH_SHORT).show();
-        }
-    }
-
-    private void populateTextViews(@Nullable CardInfo cardInfo){
+    private void populateEditTexts(@Nullable CardInfo cardInfo){
         if(cardInfo == null) return;
-        txtCardNumber.setText(cardInfo.getCardNumber());
-        txtCVV.setText(cardInfo.getCvv());
-        txtExpiryDate.setText(String.format(Locale.ENGLISH, "%d/%d", cardInfo.getExpiryMonth(),
-                cardInfo.getExpiryYear()));
+        txtCardNumber.setText(formatCardNumber(cardInfo.getCardNumber()));
+        txtCVV.setText(R.string.secret_cvv);
+        txtExpiryDate.setText(R.string.secret_date);
+        txtHolderName.setText(cardInfo.getHolderName());
+
+        txtCardNumber.setEnabled(false);
+        txtCVV.setEnabled(false);
+        txtExpiryDate.setEnabled(false);
+        txtHolderName.setEnabled(false);
+    }
+
+    private void releaseEditTexts(){
+        txtCardNumber.setEnabled(true);
+        txtCVV.setEnabled(true);
+        txtExpiryDate.setEnabled(true);
+        txtHolderName.setEnabled(true);
+
+        txtCardNumber.setText("");
+        txtCVV.setText("");
+        txtExpiryDate.setText("");
+        txtHolderName.setText("");
     }
 
     private CardInfo getCardEntry(){
         String cardNumber = txtCardNumber.getText().toString();
         String cvv = txtCVV.getText().toString();
+        String cardName = txtHolderName.getText().toString();
+        String[] date = txtExpiryDate.getText().toString().split("/");
         int expMonth = 0;
         int expYear = 0;
 
         try{
-            /*parse date to month and year here*/
-            expYear = Integer.parseInt(txtExpiryDate.getText().toString());
+            expMonth = Integer.parseInt(date[0]);
+            expYear = Integer.parseInt(date[1]);
         }
         catch (NumberFormatException e){
             e.printStackTrace();
@@ -181,7 +203,7 @@ public class PaymentFragment extends Fragment implements
 
         Card card = new Card(cardNumber, expMonth, expYear, cvv);
         if(card.isValid()){
-            return new CardInfo(cardNumber, cvv, expMonth, expYear);
+            return new CardInfo(cardNumber, cvv, expMonth, expYear, cardName);
         }
         else{
             Snackbar.make((View) myLayout.getParent(),
@@ -189,9 +211,6 @@ public class PaymentFragment extends Fragment implements
             return  null;
         }
     }
-
-
-
 
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction(int buttonId, Card card);
@@ -222,67 +241,92 @@ public class PaymentFragment extends Fragment implements
                 BaseColumns._ID,
                 ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN,
                 ProgressDbContract.FeedSavedCardEntry.CVV_COLUMN,
+                ProgressDbContract.FeedSavedCardEntry.NAME_COLUMN,
                 ProgressDbContract.FeedSavedCardEntry.EXP_MONTH_COLUMN,
                 ProgressDbContract.FeedSavedCardEntry.EXPIRY_YEAR_COLUMN,
         };
         cursor = readableProgressDb.query(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE,
                 projection, null, null, null, null, null);
 
-        if(cursor.getCount() < 1) return null;
+        if(cursor.getCount() < 1 || position >= cursor.getCount()) return null;
 
         cursor.moveToPosition(position);
 
         String cardNum = cursor.getString(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN));
         String cvv = cursor.getString(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.CVV_COLUMN));
+        String cardName = cursor.getString(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.NAME_COLUMN));
         int expMonth = cursor.getInt(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.EXP_MONTH_COLUMN));
         int expYear = cursor.getInt(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.EXPIRY_YEAR_COLUMN));
+        int id = cursor.getInt(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry._ID));
 
         cursor.close();
 
-        return new CardInfo(cardNum, cvv, expMonth, expYear);
+        CardInfo card = new CardInfo(cardNum, cvv, expMonth, expYear, cardName);
+        card.setId(id);
+
+        return card;
     }
 
     private void saveCard(@Nullable CardInfo card){
         if(card == null) return;
 
-        String selection = ProgressDbContract.FeedSavedCardEntry._ID + " = ?";
-        String[] selectionArgs = {String.valueOf(mPager.getCurrentItem())};
-
-        String[] projection = {
-                BaseColumns._ID,
-                ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN,
-                ProgressDbContract.FeedSavedCardEntry.CVV_COLUMN,
-                ProgressDbContract.FeedSavedCardEntry.EXP_MONTH_COLUMN,
-                ProgressDbContract.FeedSavedCardEntry.EXPIRY_YEAR_COLUMN,
-        };
-
         ContentValues cardData = new ContentValues();
 
         cardData.put(ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN, card.getCardNumber());
         cardData.put(ProgressDbContract.FeedSavedCardEntry.CVV_COLUMN, card.getCvv());
+        cardData.put(ProgressDbContract.FeedSavedCardEntry.NAME_COLUMN, card.getHolderName());
         cardData.put(ProgressDbContract.FeedSavedCardEntry.EXP_MONTH_COLUMN, card.getExpiryMonth());
         cardData.put(ProgressDbContract.FeedSavedCardEntry.EXPIRY_YEAR_COLUMN, card.getExpiryYear());
 
-        Cursor cursor = readableProgressDb.query(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE,
-                projection, null, null, null, null, null);
+        writableProgressDb.insert(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE, null, cardData);
+        Snackbar.make((View) myLayout.getParent(),
+                "Card Details Saved.", Snackbar.LENGTH_SHORT).show();
 
-        if(mPager.getCurrentItem() >= cursor.getCount()){
-            writableProgressDb.insert(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE, null, cardData);
+        pagerAdapter.notifyDataSetChanged();
+        pagerAdapter.createFragment(mPager.getCurrentItem());/**/
+        mPager.invalidate();/**/
+        populateEditTexts(card);
+    }
 
-            Snackbar.make((View) myLayout.getParent(),
-                    "Card Details Saved.", Snackbar.LENGTH_SHORT).show();
+    private void deleteCard(@Nullable int position){
+        String selection = ProgressDbContract.FeedSavedCardEntry._ID + " = ?";
+        String[] selectionArgs = {String.valueOf(Objects.requireNonNull(getSavedCard(position)).getId())};
+
+        writableProgressDb.delete(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE, selection, selectionArgs);
+        Snackbar.make((View) myLayout.getParent(),
+                "Card Deleted.", Snackbar.LENGTH_SHORT).show();
+
+        pagerAdapter.notifyItemRemoved(position);
+        pagerAdapter.createFragment(mPager.getCurrentItem());/**/
+        mPager.invalidate();/**/
+    }
+
+    public boolean cardInteraction(int interactionId){
+        switch (interactionId){
+            case R.id.btn_deleteCard:
+                deleteCard(mPager.getCurrentItem());
+                return true;
+            default: return false;
         }
-        else{
-            writableProgressDb.update(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE, cardData, selection, selectionArgs);
+    }
+
+    private String formatCardNumber(String cardNumber){
+        StringBuilder formattedNumber = new StringBuilder();
+        for (int i = 0; i < cardNumber.length() - 4; i++) {
+            formattedNumber.append("X");
+            if((i + 1) % 4 == 0) formattedNumber.append(" ");
         }
 
-        cursor.close();
+        formattedNumber.append(cardNumber.substring(cardNumber.length() - 4));
+        return formattedNumber.toString();
     }
 
     private void openLocalDb(Context context){
         progressDbHelper = new FeedProgressDbHelper(context);
         readableProgressDb = progressDbHelper.getReadableDatabase();
         writableProgressDb = progressDbHelper.getWritableDatabase();
+
+        progressDbHelper.onCreate(writableProgressDb);
     }
 
     private void closeLocalDb(){
@@ -291,7 +335,7 @@ public class PaymentFragment extends Fragment implements
         progressDbHelper.close();
     }
 
-    private class CardPagerAdapter extends FragmentStateAdapter {
+    private class CardPagerAdapter extends FragmentStateAdapter{
         public CardPagerAdapter(FragmentActivity fm) {
             super(fm);
         }
@@ -300,6 +344,11 @@ public class PaymentFragment extends Fragment implements
         @Override
         public Fragment createFragment(int position) {
             return CardFragment.newInstance(getSavedCard(position));
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
+            super.onBindViewHolder(holder, position, payloads);
         }
 
         @Override

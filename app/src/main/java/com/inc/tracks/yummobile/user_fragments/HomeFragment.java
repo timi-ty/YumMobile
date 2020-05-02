@@ -354,7 +354,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                 Uri gmmIntentUri = Uri.parse("geo:"+latitude+","+longitude);
                 Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
                 mapIntent.setPackage("com.google.android.apps.maps");
-                if (mapIntent.resolveActivity(Objects.requireNonNull(getActivity())
+                if (mapIntent.resolveActivity(requireActivity()
                         .getPackageManager()) != null) {
                     startActivity(mapIntent);
                 }

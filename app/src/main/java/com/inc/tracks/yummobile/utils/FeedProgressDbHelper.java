@@ -16,6 +16,7 @@ public class FeedProgressDbHelper extends SQLiteOpenHelper {
             ProgressDbContract.FeedSavedCardEntry._ID + " INTEGER PRIMARY KEY, " +
             ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN + " TEXT, " +
             ProgressDbContract.FeedSavedCardEntry.CVV_COLUMN + " TEXT, " +
+            ProgressDbContract.FeedSavedCardEntry.NAME_COLUMN + " TEXT, " +
             ProgressDbContract.FeedSavedCardEntry.EXP_MONTH_COLUMN + " INTEGER, " +
             ProgressDbContract.FeedSavedCardEntry.EXPIRY_YEAR_COLUMN + " INTEGER)";
 
@@ -34,6 +35,5 @@ public class FeedProgressDbHelper extends SQLiteOpenHelper {
 
     void deleteDb(SQLiteDatabase db){
         db.execSQL(SQL_DELETE_CARD_ENTRIES);
-
     }
 }

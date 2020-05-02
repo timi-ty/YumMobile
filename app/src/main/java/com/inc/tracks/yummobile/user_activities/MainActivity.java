@@ -48,18 +48,24 @@ import com.inc.tracks.yummobile.components.RestaurantItem;
 import com.inc.tracks.yummobile.components.UserAuth;
 import com.inc.tracks.yummobile.manager_activities.ManagerActivity;
 import com.inc.tracks.yummobile.user_fragments.ActiveOrdersFragment;
+import com.inc.tracks.yummobile.user_fragments.CardFragment;
 import com.inc.tracks.yummobile.user_fragments.HomeFragment;
+import com.inc.tracks.yummobile.user_fragments.ManageCardsFragment;
 import com.inc.tracks.yummobile.user_fragments.MenuFragment;
 import com.inc.tracks.yummobile.user_fragments.RestaurantsFragment;
 
 import java.util.Calendar;
 import java.util.HashMap;
 
+import co.paystack.android.model.Card;
+
 
 public class MainActivity extends AppCompatActivity implements
         HomeFragment.OnFragmentInteractionListener,
         RestaurantsFragment.OnFragmentInteractionListener,
-        MenuFragment.OnFragmentInteractionListener{
+        MenuFragment.OnFragmentInteractionListener,
+        ManageCardsFragment.OnFragmentInteractionListener,
+        CardFragment.OnFragmentInteractionListener {
 
     private static int REQUEST_CHECK_SETTINGS = 8714;
 
@@ -73,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements
     MenuFragment menuFragment;
     RestaurantsFragment restaurantsFragment;
     ActiveOrdersFragment activeOrdersFragment;
+    ManageCardsFragment manageCardsFragment;
 
     BottomNavigationView bottomNavView;
 
@@ -237,7 +244,10 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onFragmentInteraction(int interactionId) {
-        goToRestaurantsFragment();
+        boolean isConsumed = manageCardsFragment.cardInteraction(interactionId);
+        if(!isConsumed){
+            goToRestaurantsFragment();
+        }
     }
 
     @Override
@@ -272,6 +282,7 @@ public class MainActivity extends AppCompatActivity implements
 
         bottomNavView.setVisibility(View.VISIBLE);
 
+        myToolbar.setVisibility(View.VISIBLE);
         myToolbar.setTitle(R.string.prompt_restaurant_search);
     }
 
@@ -292,6 +303,7 @@ public class MainActivity extends AppCompatActivity implements
 
         bottomNavView.setVisibility(View.GONE);
 
+        myToolbar.setVisibility(View.VISIBLE);
         myToolbar.setTitle(R.string.prompt_menu_search);
     }
 
@@ -309,6 +321,7 @@ public class MainActivity extends AppCompatActivity implements
 
         bottomNavView.setVisibility(View.VISIBLE);
 
+        myToolbar.setVisibility(View.VISIBLE);
         myToolbar.setTitle(R.string.prompt_restaurant_search);
     }
 
@@ -329,7 +342,21 @@ public class MainActivity extends AppCompatActivity implements
 
         bottomNavView.setVisibility(View.VISIBLE);
 
+        myToolbar.setVisibility(View.VISIBLE);
         myToolbar.setTitle(R.string.prompt_order_search);
+    }
+
+    private void goToManageCardsFragment(){
+        if(manageCardsFragment == null){
+            manageCardsFragment = ManageCardsFragment.newInstance();
+        }
+
+        FragmentTransaction fragmentTransaction;
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.frag_container, manageCardsFragment);
+        fragmentTransaction.commit();
+
+        myToolbar.setVisibility(View.GONE);
     }
 
     private void goToCart(HashMap orderSummary){
@@ -392,8 +419,8 @@ public class MainActivity extends AppCompatActivity implements
                                 Toast.LENGTH_SHORT).show();
                         break;
                     case R.id.side_nav_payment_methods:
-                        Toast.makeText(MainActivity.this, "Payment Methods",
-                                Toast.LENGTH_SHORT).show();
+                        goToManageCardsFragment();
+                        drawerLayout.closeDrawers();
                         break;
                     case R.id.side_nav_sign_out:
                         signOutToLauncher();
@@ -538,5 +565,10 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
         return true;
+    }
+
+    @Override
+    public void onFragmentInteraction(int buttonId, Card card) {
+
     }
 }

@@ -10,6 +10,7 @@ public final class ProgressDbContract {
         public static final String CARD_TABLE = "saved_card";
         public static final String CARD_NUM_COLUMN = "card_num";
         public static final String CVV_COLUMN = "cvv_num";
+        public static final String NAME_COLUMN = "holder_name";
         public static final String EXP_MONTH_COLUMN = "expiry_month";
         public static final String EXPIRY_YEAR_COLUMN = "expiry_year";
     }

@@ -19,6 +19,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.StorageReference;
@@ -31,6 +32,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+
+import co.paystack.android.model.Card;
 
 
 public class OrderSummaryFragment extends Fragment implements View.OnClickListener{
@@ -54,9 +57,17 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
     private ImageView imvDefaultPayment;
 
+    private ImageButton btnMorePaymentOptions;
+
     private Button btnCheckout;
 
     private ProgressBar pbLoading;
+
+    private TextView tvSubTotal;
+
+    private TextView tvDeliveryFee;
+
+    private TextView tvVAT;
 
     private TextView tvTotalPrice;
 
@@ -89,13 +100,17 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         View fragView =  inflater.inflate(R.layout.fragment_order_summary, container, false);
 
         RecyclerView orderSummary = fragView.findViewById(R.id.rv_orderSummary);
-        tvTotalPrice = fragView.findViewById(R.id.tv_subTotal);
+        tvSubTotal = fragView.findViewById(R.id.tv_subTotal);
+        tvDeliveryFee = fragView.findViewById(R.id.tv_deliveryFee);
+        tvVAT = fragView.findViewById(R.id.tv_vat);
+        tvTotalPrice = fragView.findViewById(R.id.tv_totalPrice);
 
         orderSummary.setLayoutManager(new LinearLayoutManager(getContext()));
         orderSummary.setAdapter(new OrderSummaryRVAdapter());
 
         tvDefaultPayment =  fragView.findViewById(R.id.tv_defaultPayment);
         imvDefaultPayment = fragView.findViewById(R.id.imv_defaultPayment);
+        btnMorePaymentOptions = fragView.findViewById(R.id.img_arrowDown);
 
         rvPaymentOptions = fragView.findViewById(R.id.rv_paymentOptions);
 
@@ -148,12 +163,14 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         switch (v.getId()){
             case R.id.btn_checkout:
                 showCheckoutButton(false);
+                break;
             case R.id.btn_back:
                 onButtonPressed(v.getId());
-//                break;
-//            case R.id.img_card:
-//            case R.id.img_cash:
-//                pickPaymentOption(v.getId());
+                break;
+            case R.id.tv_defaultPayment:
+            case R.id.imv_defaultPayment:
+            case R.id.img_arrowDown:
+                showPaymentOptions(true);
                 break;
         }
     }
@@ -173,6 +190,7 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
             tvDefaultPayment.setOnClickListener(this);
             imvDefaultPayment.setOnClickListener(this);
+            btnMorePaymentOptions.setOnClickListener(this);
             btnCheckout.setOnClickListener(this);
         }
         else{
@@ -183,38 +201,21 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
     private void computePrice(){
         if(groupsPrices.size() == orderGroups.size()) {
             int totalPrice = 0;
+            int delivery = 500;
+            int vat = 0;
             for (Integer groupPrice : groupsPrices.values()) {
                 totalPrice += groupPrice;
             }
-            String price = "₦" + totalPrice;
-            tvTotalPrice.setText(price);
+            String subTotal = "₦" + totalPrice;
+            String deliveryFee = "₦" + delivery;
+            String vatFee = "₦" + vat;
+            String total = "₦" + (totalPrice + delivery + vat);
+            tvSubTotal.setText(subTotal);
+            tvDeliveryFee.setText(deliveryFee);
+            tvVAT.setText(vatFee);
+            tvTotalPrice.setText(total);
         }
     }
-
-//    private void pickPaymentOption(int option){
-//        if(option == R.id.img_card){
-//            tvDefaultPayment.setSelected(true);
-//            imvDefaultPayment.setSelected(false);
-//
-//            tvCardPay.setSelected(true);
-//            tvCashPay.setSelected(false);
-//
-//            btnCheckout.setEnabled(true);
-//
-//            paymentMethod = OPTION_CARD;
-//        }
-//        else if(option == R.id.img_cash){
-//            tvDefaultPayment.setSelected(false);
-//            imvDefaultPayment.setSelected(true);
-//
-//            tvCardPay.setSelected(false);
-//            tvCashPay.setSelected(true);
-//
-//            btnCheckout.setEnabled(true);
-//
-//            paymentMethod = OPTION_CASH;
-//        }
-//    }
 
     private void showPaymentOptions(boolean show){
         rvPaymentOptions.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
@@ -404,5 +405,30 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
                 computePrice();
             }
         }
+    }
+
+    private void initiatePayment(){
+//        String cardNumber = txtCardNumber.getText().toString();
+//        String cvv = txtCVV.getText().toString();
+//        int expMonth = 0;
+//        int expYear = 0;
+//
+//        try{
+////            expMonth = Integer.parseInt(txtExpiryMonth.getText().toString());
+//            /*parse date to month and year here*/
+//            expYear = Integer.parseInt(txtExpiryDate.getText().toString());
+//        }
+//        catch (NumberFormatException e){
+//            e.printStackTrace();
+//        }
+//
+//        Card card = new Card(cardNumber, expMonth, expYear, cvv);
+//        if(card.isValid()){
+//            mListener.onFragmentInteraction(R.id.btn_done, card);
+//        }
+//        else{
+//            Snackbar.make((View) myLayout.getParent(),
+//                    "Invalid Card Details.", Snackbar.LENGTH_SHORT).show();
+//        }
     }
 }
