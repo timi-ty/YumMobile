@@ -1,11 +1,8 @@
 package com.inc.tracks.yummobile.user_fragments;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.provider.BaseColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -25,14 +22,13 @@ import androidx.viewpager2.adapter.FragmentViewHolder;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.inc.tracks.yummobile.components.CardInfo;
-import com.inc.tracks.yummobile.utils.FeedProgressDbHelper;
 import com.inc.tracks.yummobile.R;
-import com.inc.tracks.yummobile.utils.ProgressDbContract;
+import com.inc.tracks.yummobile.components.CardInfo;
+import com.inc.tracks.yummobile.utils.CardManager;
 import com.tbuonomo.viewpagerdotsindicator.DotsIndicator;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import co.paystack.android.model.Card;
 
@@ -40,8 +36,8 @@ import co.paystack.android.model.Card;
 public class ManageCardsFragment extends Fragment implements
         View.OnClickListener{
 
-    ViewPager2 mPager;
-    FragmentStateAdapter pagerAdapter;
+    private ViewPager2 mPager;
+    private CardPagerAdapter pagerAdapter;
 
     private OnFragmentInteractionListener mListener;
 
@@ -52,11 +48,9 @@ public class ManageCardsFragment extends Fragment implements
     private EditText txtExpiryDate;
     private EditText txtHolderName;
 
-    private FeedProgressDbHelper progressDbHelper;
-    private SQLiteDatabase readableProgressDb;
-    private SQLiteDatabase writableProgressDb;
+    private CardManager cardManager;
 
-    TextWatcher dateWatcher = new TextWatcher() {
+    private TextWatcher dateWatcher = new TextWatcher() {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -123,8 +117,7 @@ public class ManageCardsFragment extends Fragment implements
         mPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
-                if(position >= getCardCount()) releaseEditTexts();
-                else populateEditTexts(getSavedCard(position));
+                setEditTexts(cardManager.getSavedCard(position));
                 super.onPageSelected(position);
             }
         });
@@ -143,14 +136,15 @@ public class ManageCardsFragment extends Fragment implements
                     + " must implement OnFragmentInteractionListener");
         }
 
-        openLocalDb(context);
+        cardManager = new CardManager(context);
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         mListener = null;
-        closeLocalDb();
+
+        cardManager.finishManagingCards();
     }
 
     @Override
@@ -160,9 +154,12 @@ public class ManageCardsFragment extends Fragment implements
         }
     }
 
-    private void populateEditTexts(@Nullable CardInfo cardInfo){
-        if(cardInfo == null) return;
-        txtCardNumber.setText(formatCardNumber(cardInfo.getCardNumber()));
+    private void setEditTexts(@Nullable CardInfo cardInfo){
+        if(cardInfo == null) {
+            releaseEditTexts();
+            return;
+        }
+        txtCardNumber.setText(cardManager.formatCardNumber(cardInfo.getCardNumber()));
         txtCVV.setText(R.string.secret_cvv);
         txtExpiryDate.setText(R.string.secret_date);
         txtHolderName.setText(cardInfo.getHolderName());
@@ -216,89 +213,24 @@ public class ManageCardsFragment extends Fragment implements
         void onFragmentInteraction(int buttonId, Card card);
     }
 
-    private int getCardCount(){
-        Cursor cursor;
-        String[] projection = {
-                BaseColumns._ID,
-                ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN,
-                ProgressDbContract.FeedSavedCardEntry.CVV_COLUMN,
-                ProgressDbContract.FeedSavedCardEntry.EXP_MONTH_COLUMN,
-                ProgressDbContract.FeedSavedCardEntry.EXPIRY_YEAR_COLUMN,
-        };
-        cursor = readableProgressDb.query(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE,
-                projection, null, null, null, null, null);
-
-        int count = cursor.getCount();
-
-        cursor.close();
-
-        return count;
-    }
-
-    private CardInfo getSavedCard(int position){
-        Cursor cursor;
-        String[] projection = {
-                BaseColumns._ID,
-                ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN,
-                ProgressDbContract.FeedSavedCardEntry.CVV_COLUMN,
-                ProgressDbContract.FeedSavedCardEntry.NAME_COLUMN,
-                ProgressDbContract.FeedSavedCardEntry.EXP_MONTH_COLUMN,
-                ProgressDbContract.FeedSavedCardEntry.EXPIRY_YEAR_COLUMN,
-        };
-        cursor = readableProgressDb.query(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE,
-                projection, null, null, null, null, null);
-
-        if(cursor.getCount() < 1 || position >= cursor.getCount()) return null;
-
-        cursor.moveToPosition(position);
-
-        String cardNum = cursor.getString(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN));
-        String cvv = cursor.getString(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.CVV_COLUMN));
-        String cardName = cursor.getString(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.NAME_COLUMN));
-        int expMonth = cursor.getInt(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.EXP_MONTH_COLUMN));
-        int expYear = cursor.getInt(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.EXPIRY_YEAR_COLUMN));
-        int id = cursor.getInt(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry._ID));
-
-        cursor.close();
-
-        CardInfo card = new CardInfo(cardNum, cvv, expMonth, expYear, cardName);
-        card.setId(id);
-
-        return card;
-    }
-
     private void saveCard(@Nullable CardInfo card){
         if(card == null) return;
 
-        ContentValues cardData = new ContentValues();
+        cardManager.saveCard(card);
 
-        cardData.put(ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN, card.getCardNumber());
-        cardData.put(ProgressDbContract.FeedSavedCardEntry.CVV_COLUMN, card.getCvv());
-        cardData.put(ProgressDbContract.FeedSavedCardEntry.NAME_COLUMN, card.getHolderName());
-        cardData.put(ProgressDbContract.FeedSavedCardEntry.EXP_MONTH_COLUMN, card.getExpiryMonth());
-        cardData.put(ProgressDbContract.FeedSavedCardEntry.EXPIRY_YEAR_COLUMN, card.getExpiryYear());
-
-        writableProgressDb.insert(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE, null, cardData);
         Snackbar.make((View) myLayout.getParent(),
                 "Card Details Saved.", Snackbar.LENGTH_SHORT).show();
 
-        pagerAdapter.notifyDataSetChanged();
-        pagerAdapter.createFragment(mPager.getCurrentItem());/**/
-        mPager.invalidate();/**/
-        populateEditTexts(card);
+        pagerAdapter.addCardFragment(card);
     }
 
-    private void deleteCard(@Nullable int position){
-        String selection = ProgressDbContract.FeedSavedCardEntry._ID + " = ?";
-        String[] selectionArgs = {String.valueOf(Objects.requireNonNull(getSavedCard(position)).getId())};
+    private void deleteCard(int position){
+        cardManager.deleteCard(position);
 
-        writableProgressDb.delete(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE, selection, selectionArgs);
         Snackbar.make((View) myLayout.getParent(),
                 "Card Deleted.", Snackbar.LENGTH_SHORT).show();
 
-        pagerAdapter.notifyItemRemoved(position);
-        pagerAdapter.createFragment(mPager.getCurrentItem());/**/
-        mPager.invalidate();/**/
+        pagerAdapter.deleteCardFragment(position);
     }
 
     public boolean cardInteraction(int interactionId){
@@ -310,40 +242,39 @@ public class ManageCardsFragment extends Fragment implements
         }
     }
 
-    private String formatCardNumber(String cardNumber){
-        StringBuilder formattedNumber = new StringBuilder();
-        for (int i = 0; i < cardNumber.length() - 4; i++) {
-            formattedNumber.append("X");
-            if((i + 1) % 4 == 0) formattedNumber.append(" ");
-        }
-
-        formattedNumber.append(cardNumber.substring(cardNumber.length() - 4));
-        return formattedNumber.toString();
-    }
-
-    private void openLocalDb(Context context){
-        progressDbHelper = new FeedProgressDbHelper(context);
-        readableProgressDb = progressDbHelper.getReadableDatabase();
-        writableProgressDb = progressDbHelper.getWritableDatabase();
-
-        progressDbHelper.onCreate(writableProgressDb);
-    }
-
-    private void closeLocalDb(){
-        readableProgressDb.close();
-        writableProgressDb.close();
-        progressDbHelper.close();
-    }
-
     private class CardPagerAdapter extends FragmentStateAdapter{
-        public CardPagerAdapter(FragmentActivity fm) {
+        private List<CardFragment> cardFragments = new ArrayList<>();
+        CardPagerAdapter(FragmentActivity fm) {
             super(fm);
         }
 
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            return CardFragment.newInstance(getSavedCard(position));
+            CardFragment cardFragment;
+            if(position >= cardFragments.size()) {
+                cardFragment = CardFragment.newInstance(cardManager.getSavedCard(position));
+                cardFragments.add(cardFragment);
+                Log.d("fragments", "count = " + cardFragments.size() + " pos = " + position);
+            }
+            else {
+                cardFragments.set(position, CardFragment.newInstance(cardManager.getSavedCard(position)));
+                cardFragment = cardFragments.get(position);
+                Log.d("fragments", "countme = " + cardFragments.size() + " pos = " + position);
+            }
+            return cardFragment;
+        }
+
+        void addCardFragment(CardInfo card){
+            cardFragments.get(mPager.getCurrentItem()).updateCardInfo(card);
+            setEditTexts(card);
+            notifyDataSetChanged();
+        }
+
+        void deleteCardFragment(int position){
+            cardFragments.remove(position);
+            setEditTexts(cardManager.getSavedCard(position));
+            notifyItemRemoved(position - 1);
         }
 
         @Override
@@ -353,7 +284,7 @@ public class ManageCardsFragment extends Fragment implements
 
         @Override
         public int getItemCount() {
-            return getCardCount() + 1;
+            return cardManager.getCardCount() + 1;
         }
     }
 }

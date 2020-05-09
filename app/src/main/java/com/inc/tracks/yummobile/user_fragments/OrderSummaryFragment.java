@@ -1,6 +1,7 @@
 package com.inc.tracks.yummobile.user_fragments;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -19,21 +20,20 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.StorageReference;
+import com.inc.tracks.yummobile.components.CardInfo;
 import com.inc.tracks.yummobile.components.MenuItem;
 import com.inc.tracks.yummobile.R;
 import com.inc.tracks.yummobile.components.UserAuth;
+import com.inc.tracks.yummobile.utils.CardManager;
 import com.inc.tracks.yummobile.utils.GlideApp;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-
-import co.paystack.android.model.Card;
 
 
 public class OrderSummaryFragment extends Fragment implements View.OnClickListener{
@@ -47,7 +47,9 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
     private HashMap<String, String> groupsDescs = new HashMap<>();
 
-    private String paymentMethod;
+    private CardInfo paymentMethod;
+
+    private CardManager cardManager;
 
     private OnFragmentInteractionListener mListener;
 
@@ -150,12 +152,16 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+
+        cardManager = new CardManager(context);
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         mListener = null;
+
+        cardManager.finishManagingCards();
     }
 
     @Override
@@ -163,7 +169,6 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         switch (v.getId()){
             case R.id.btn_checkout:
                 showCheckoutButton(false);
-                break;
             case R.id.btn_back:
                 onButtonPressed(v.getId());
                 break;
@@ -178,7 +183,7 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction(int buttonId, HashMap orderGroups, HashMap groupPrices,
-                                   HashMap groupDescriptions, String paymentMethod);
+                                   HashMap groupDescriptions, CardInfo paymentMethod);
         void onFragmentInteraction(int buttonId);
     }
 
@@ -186,7 +191,6 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         if(groupsPrices.size() == orderGroups.size()){
             showCheckoutButton(true);
             btnCheckout.setEnabled(false);
-
 
             tvDefaultPayment.setOnClickListener(this);
             imvDefaultPayment.setOnClickListener(this);
@@ -217,6 +221,14 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         }
     }
 
+    private void setPaymentMethod(CardInfo paymentMethod){
+        this.paymentMethod = paymentMethod;
+        cardManager.saveDefaultCard(paymentMethod, tvDefaultPayment.getContext());
+        imvDefaultPayment.setImageResource(cardManager.getCardHolderIcon(paymentMethod));
+        showPaymentOptions(false);
+
+    }
+
     private void showPaymentOptions(boolean show){
         rvPaymentOptions.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
     }
@@ -226,6 +238,7 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
         pbLoading.setVisibility(show ? View.INVISIBLE : View.VISIBLE);
     }
+
 
     public class OrderSummaryRVAdapter extends RecyclerView.Adapter<OrderSummaryRVAdapter.RstViewHolder>{
 
@@ -407,28 +420,103 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         }
     }
 
-    private void initiatePayment(){
-//        String cardNumber = txtCardNumber.getText().toString();
-//        String cvv = txtCVV.getText().toString();
-//        int expMonth = 0;
-//        int expYear = 0;
-//
-//        try{
-////            expMonth = Integer.parseInt(txtExpiryMonth.getText().toString());
-//            /*parse date to month and year here*/
-//            expYear = Integer.parseInt(txtExpiryDate.getText().toString());
-//        }
-//        catch (NumberFormatException e){
-//            e.printStackTrace();
-//        }
-//
-//        Card card = new Card(cardNumber, expMonth, expYear, cvv);
-//        if(card.isValid()){
-//            mListener.onFragmentInteraction(R.id.btn_done, card);
-//        }
-//        else{
-//            Snackbar.make((View) myLayout.getParent(),
-//                    "Invalid Card Details.", Snackbar.LENGTH_SHORT).show();
-//        }
+    public class PaymentOptionsRVAdapter extends RecyclerView.Adapter<PaymentOptionsRVAdapter.OptionViewHolder>{
+
+        private List<CardInfo> cardInfoList = new ArrayList<>();
+
+        PaymentOptionsRVAdapter(){
+            for(int i = 0; i < cardManager.getCardCount(); i++){
+                cardInfoList.add(cardManager.getSavedCard(i));
+            }
+        }
+
+        @NonNull
+        @Override
+        public OptionViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+
+            View optionView = LayoutInflater.from(getContext())
+                    .inflate(R.layout.item_order_summary, viewGroup, false);
+            return new OptionViewHolder(optionView);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull OptionViewHolder viewHolder, int i) {
+            if(i > 0 && i < cardInfoList.size()) {
+                viewHolder.bindView(cardInfoList.get(i - 1));
+            }
+            else{
+                viewHolder.bindView(i);
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return cardInfoList.size() + 2;
+        }
+
+        class OptionViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+            View itemView;
+            CardInfo mCardInfo;
+
+            TextView tvCardNumber;
+            ImageView imgHolderLogo;
+            ImageButton imgSelected;
+
+            OptionViewHolder(@NonNull View itemView) {
+                super(itemView);
+                this.itemView = itemView;
+                tvCardNumber = itemView.findViewById(R.id.tv_cardNumber);
+                imgHolderLogo = itemView.findViewById(R.id.img_holderIcon);
+                imgSelected = itemView.findViewById(R.id.check_mark);
+            }
+
+            void bindView(CardInfo cardInfo){
+                mCardInfo = cardInfo;
+
+                tvCardNumber.setText(cardManager.formatCardNumber(cardInfo.getCardNumber()));
+
+                itemView.setOnClickListener(this);
+
+                imgSelected.setVisibility(cardInfo.getId() ==
+                        cardManager.getDefaultCard(itemView.getContext()) ?
+                        View.VISIBLE : View.INVISIBLE);
+
+                setHolderThumbnail(cardInfo);
+            }
+
+            void bindView(int pos){
+                if(pos == 0){
+                    mCardInfo = null;
+
+                    tvCardNumber.setText(R.string.prompt_delivery_payment);
+
+                    imgSelected.setVisibility(cardManager.getDefaultCard(itemView.getContext())
+                            == -1 ? View.VISIBLE : View.INVISIBLE);
+
+                    imgHolderLogo.setImageResource(R.drawable.ic_cash);
+                }
+                else{
+                    tvCardNumber.setText("Add Card");
+
+                    imgSelected.setVisibility(View.INVISIBLE);
+
+                    Drawable drawable = itemView.getContext().getDrawable(R.drawable.ic_add);
+                    assert drawable != null;
+                    drawable.setTint(itemView.getContext().getResources().getColor(R.color.colorDark));
+                    imgHolderLogo.setImageDrawable(drawable);
+                }
+                itemView.setOnClickListener(this);
+            }
+
+            private void setHolderThumbnail(CardInfo cardInfo) {
+                imgHolderLogo.setImageResource(cardManager.getCardHolderIcon(cardInfo));
+            }
+
+            @Override
+            public void onClick(View v) {
+                rvPaymentOptions.invalidate();
+                setPaymentMethod(mCardInfo);
+            }
+        }
     }
 }

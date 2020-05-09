@@ -25,6 +25,7 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.inc.tracks.yummobile.R;
+import com.inc.tracks.yummobile.components.CardInfo;
 import com.inc.tracks.yummobile.utils.YumJsonObjectRequest;
 import com.inc.tracks.yummobile.components.OrderItem;
 import com.inc.tracks.yummobile.components.UserAuth;
@@ -107,7 +108,7 @@ public class OrderActivity extends AppCompatActivity implements
 
     @Override
     public void onFragmentInteraction(int buttonId, Card card) {
-        chargeCard(card);
+        /**/
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         Fragment paymentFragment = fragmentManager.findFragmentById(R.id.payment_fragment_container);
         assert paymentFragment != null;
@@ -119,19 +120,17 @@ public class OrderActivity extends AppCompatActivity implements
     @SuppressWarnings("unchecked")
     @Override
     public void onFragmentInteraction(int buttonId, HashMap orderGroups, HashMap groupPrices,
-                                      HashMap groupDescs, String paymentMethod) {
+                                      HashMap groupDescs, CardInfo paymentMethod) {
         this.orderGroups = orderGroups;
         this.groupPrices = groupPrices;
         this.groupDescs = groupDescs;
 
-        switch (paymentMethod){
-            case OrderSummaryFragment.OPTION_CARD:
-                getCardInfo();
-                break;
-            case OrderSummaryFragment.OPTION_CASH:
-                confirmOrder(orderGroups, groupPrices, groupDescs, false);
-                setLoadingUi(false);
-                break;
+        if(paymentMethod == null){
+            confirmOrder(orderGroups, groupPrices, groupDescs, false);
+            setLoadingUi(false);
+        }
+        else{
+            chargeCard(paymentMethod);
         }
     }
 
@@ -140,7 +139,19 @@ public class OrderActivity extends AppCompatActivity implements
         if(buttonId == R.id.btn_back)   onBackPressed();
     }
 
-    private void chargeCard(Card card){
+    private void chargeCard(CardInfo cardInfo){
+        String cardNumber = cardInfo.getCardNumber();
+        String cvv = cardInfo.getCvv();
+        int expMonth = cardInfo.getExpiryMonth();
+        int expYear = cardInfo.getExpiryYear();
+
+        Card card = new Card(cardNumber, expMonth, expYear, cvv);
+        if(!card.isValid()){
+            Snackbar.make(myLayout,
+                    "Invalid Card Details.", Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+
         setLoadingUi(true);
         int totalPrice = 0;
         for(Integer groupPrice : groupPrices.values()){

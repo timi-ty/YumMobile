@@ -18,7 +18,7 @@ public class CardInfo implements Serializable {
     private int expiryYear;
     private String holderName;
 
-    private int id;
+    private long id;
 
 
     public String getCardNumber() {
@@ -41,7 +41,7 @@ public class CardInfo implements Serializable {
         return holderName;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 

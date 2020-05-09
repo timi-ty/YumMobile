@@ -117,4 +117,6 @@
     <string name="card_holder_name">Card Holder Name</string>
     <string name="secret_cvv">XXX</string>
     <string name="secret_date">XX/XX</string>
+    <string name="file_default_payment">DefaultPayment</string>
+    <string name="key_default_payment">Default</string>
 </resources>

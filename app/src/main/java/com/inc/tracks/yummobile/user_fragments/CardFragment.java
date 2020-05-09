@@ -1,7 +1,6 @@
 package com.inc.tracks.yummobile.user_fragments;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,8 +25,9 @@ import java.util.Locale;
 public class CardFragment extends Fragment implements View.OnClickListener{
     private static final String ARG_CARD_INFO = "param1";
 
-    OnFragmentInteractionListener mListener;
+    private OnFragmentInteractionListener mListener;
     private CardInfo cardInfo;
+    private View fragView;
 
     public CardFragment() {
         // Required empty public constructor
@@ -63,8 +63,25 @@ public class CardFragment extends Fragment implements View.OnClickListener{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View fragView = inflater.inflate(R.layout.item_card, container);
+        fragView = inflater.inflate(R.layout.item_card, container);
 
+        updateCardInfo(cardInfo);
+
+        return fragView;
+    }
+
+    private String formatCardNumber(String cardNumber){
+        StringBuilder formattedNumber = new StringBuilder();
+        for (int i = 0; i < cardNumber.length() - 4; i++) {
+            formattedNumber.append("X");
+            if((i + 1) % 4 == 0) formattedNumber.append(" ");
+        }
+
+        formattedNumber.append(cardNumber.substring(cardNumber.length() - 4));
+        return formattedNumber.toString();
+    }
+
+    void updateCardInfo(CardInfo cardInfo){
         TextView txtCardNumber = fragView.findViewById(R.id.txt_cardNumber);
         TextView txtHolderName = fragView.findViewById(R.id.txt_cardHolderName);
         TextView txtCardExpiry = fragView.findViewById(R.id.txt_cardExpiry);
@@ -72,7 +89,6 @@ public class CardFragment extends Fragment implements View.OnClickListener{
         ImageView emptyView = fragView.findViewById(R.id.img_emptyView);
 
         ImageView background = fragView.findViewById(R.id.background);
-
         GlideApp.with(background.getContext())
                 .load(R.drawable.card_bg)
                 .transform(new CenterCrop(), new RoundedCorners(48))
@@ -113,19 +129,10 @@ public class CardFragment extends Fragment implements View.OnClickListener{
             fragView.findViewById(R.id.btn_deleteCard).setOnClickListener(this);
         }
 
-
-        return fragView;
-    }
-
-    private String formatCardNumber(String cardNumber){
-        StringBuilder formattedNumber = new StringBuilder();
-        for (int i = 0; i < cardNumber.length() - 4; i++) {
-            formattedNumber.append("X");
-            if((i + 1) % 4 == 0) formattedNumber.append(" ");
-        }
-
-        formattedNumber.append(cardNumber.substring(cardNumber.length() - 4));
-        return formattedNumber.toString();
+        this.cardInfo = cardInfo;
+        Bundle args = new Bundle();
+        args.putSerializable(ARG_CARD_INFO, this.cardInfo);
+        setArguments(args);
     }
 
     @Override
