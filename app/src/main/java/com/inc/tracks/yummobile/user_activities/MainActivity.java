@@ -48,7 +48,6 @@ import com.inc.tracks.yummobile.components.RestaurantItem;
 import com.inc.tracks.yummobile.components.UserAuth;
 import com.inc.tracks.yummobile.manager_activities.ManagerActivity;
 import com.inc.tracks.yummobile.user_fragments.ActiveOrdersFragment;
-import com.inc.tracks.yummobile.user_fragments.CardFragment;
 import com.inc.tracks.yummobile.user_fragments.HomeFragment;
 import com.inc.tracks.yummobile.user_fragments.ManageCardsFragment;
 import com.inc.tracks.yummobile.user_fragments.MenuFragment;
@@ -57,15 +56,18 @@ import com.inc.tracks.yummobile.user_fragments.RestaurantsFragment;
 import java.util.Calendar;
 import java.util.HashMap;
 
-import co.paystack.android.model.Card;
-
 
 public class MainActivity extends AppCompatActivity implements
         HomeFragment.OnFragmentInteractionListener,
         RestaurantsFragment.OnFragmentInteractionListener,
         MenuFragment.OnFragmentInteractionListener,
-        ManageCardsFragment.OnFragmentInteractionListener,
-        CardFragment.OnFragmentInteractionListener {
+        ManageCardsFragment.OnFragmentInteractionListener {
+
+    private final String HOME_FRAG_TAG = "home";
+    private final String MENU_FRAG_TAG = "menu";
+    private final String RESTAURANTS_FRAG_TAG = "rest";
+    private final String ORDERS_FRAG_TAG = "orders";
+    private final String MANAGE_CARDS_FRAG_TAG = "manage_cards";
 
     private static int REQUEST_CHECK_SETTINGS = 8714;
 
@@ -244,9 +246,19 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onFragmentInteraction(int interactionId) {
-        boolean isConsumed = manageCardsFragment.cardInteraction(interactionId);
-        if(!isConsumed){
-            goToRestaurantsFragment();
+        if(manageCardsFragment != null){
+            boolean isConsumed = manageCardsFragment.cardInteraction(interactionId);
+            if(isConsumed) return;
+        }
+        if(interactionId == R.id.btn_back){
+            onBackPressed();
+
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    checkVisibleFragment();
+                }
+            }, 500);
         }
     }
 
@@ -266,6 +278,29 @@ public class MainActivity extends AppCompatActivity implements
         fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
+    private void checkVisibleFragment(){
+        HomeFragment homeFrag = (HomeFragment)fragmentManager.findFragmentByTag(HOME_FRAG_TAG);
+        MenuFragment menuFrag= (MenuFragment)fragmentManager.findFragmentByTag(MENU_FRAG_TAG);
+        RestaurantsFragment restFrag = (RestaurantsFragment)fragmentManager.findFragmentByTag(RESTAURANTS_FRAG_TAG);
+        ActiveOrdersFragment ordersFrag = (ActiveOrdersFragment)fragmentManager.findFragmentByTag(ORDERS_FRAG_TAG);
+        ManageCardsFragment manageCardsFrag = (ManageCardsFragment)fragmentManager.findFragmentByTag(MANAGE_CARDS_FRAG_TAG);
+        if (homeFrag != null && homeFrag.isVisible()) {
+            goToHomeFragment();
+        }
+        if (menuFrag != null && menuFrag.isVisible()) {
+            goToMenuFragment(null);
+        }
+        if (restFrag != null && restFrag.isVisible()) {
+            goToRestaurantsFragment();
+        }
+        if (ordersFrag != null && ordersFrag.isVisible()) {
+            goToOrdersFragment();
+        }
+        if (manageCardsFrag != null && manageCardsFrag.isVisible()) {
+            goToManageCardsFragment();
+        }
+    }
+
     private void goToHomeFragment(){
         if(homeFragment == null){
             homeFragment = HomeFragment.newInstance();
@@ -273,7 +308,7 @@ public class MainActivity extends AppCompatActivity implements
 
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frag_container, homeFragment);
+        fragmentTransaction.replace(R.id.frag_container, homeFragment, HOME_FRAG_TAG);
         fragmentTransaction.commit();
 
         bottomMenu.getItem(1).setChecked(true);
@@ -296,7 +331,8 @@ public class MainActivity extends AppCompatActivity implements
 
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frag_container, menuFragment);
+        fragmentTransaction.replace(R.id.frag_container, menuFragment, MENU_FRAG_TAG);
+        fragmentTransaction.addToBackStack("Menu");
         fragmentTransaction.commit();
 
         bottomMenu.getItem(0).setChecked(true).setTitle(R.string.title_menu);
@@ -314,7 +350,7 @@ public class MainActivity extends AppCompatActivity implements
 
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frag_container, restaurantsFragment);
+        fragmentTransaction.replace(R.id.frag_container, restaurantsFragment, RESTAURANTS_FRAG_TAG);
         fragmentTransaction.commit();
 
         bottomMenu.getItem(0).setChecked(true).setTitle(R.string.title_restaurants);
@@ -332,7 +368,7 @@ public class MainActivity extends AppCompatActivity implements
 
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frag_container, activeOrdersFragment);
+        fragmentTransaction.replace(R.id.frag_container, activeOrdersFragment, ORDERS_FRAG_TAG);
         fragmentTransaction.commit();
 
 
@@ -353,10 +389,12 @@ public class MainActivity extends AppCompatActivity implements
 
         FragmentTransaction fragmentTransaction;
         fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frag_container, manageCardsFragment);
+        fragmentTransaction.replace(R.id.frag_container, manageCardsFragment, MANAGE_CARDS_FRAG_TAG);
+        fragmentTransaction.addToBackStack("ManageCards");
         fragmentTransaction.commit();
 
         myToolbar.setVisibility(View.GONE);
+        bottomNavView.setVisibility(View.GONE);
     }
 
     private void goToCart(HashMap orderSummary){
@@ -565,10 +603,5 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
         return true;
-    }
-
-    @Override
-    public void onFragmentInteraction(int buttonId, Card card) {
-
     }
 }

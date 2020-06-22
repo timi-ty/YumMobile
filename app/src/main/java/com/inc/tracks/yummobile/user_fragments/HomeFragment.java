@@ -14,7 +14,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -281,7 +280,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
             TextView tvName;
             TextView tvAddress;
             TextView tvRange;
-            ImageButton btnLocPin;
             ImageView imgLogo;
 
             RestaurantItem restaurantItem;
@@ -291,7 +289,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                 tvName = itemView.findViewById(R.id.tv_restaurantName);
                 tvAddress = itemView.findViewById(R.id.tv_restaurantAddress);
                 tvRange = itemView.findViewById(R.id.tv_priceRange);
-                btnLocPin = itemView.findViewById(R.id.btn_locPin);
                 imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
 
                 itemView.setOnClickListener(this);
@@ -307,15 +304,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                         + " - ₦" + restaurantItem.getPriceRange().get(1);
                 tvRange.setText(range);
 
-                if(restaurantItem.getLocation() != null){
-                    btnLocPin.setOnClickListener(this);
-
-//                    btnLocPin.setVisibility(View.VISIBLE);
-                }
-                else{
-                    btnLocPin.setVisibility(View.INVISIBLE);
-                }
-
                 refreshThumbnail(restaurantItem);
             }
 
@@ -325,8 +313,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
                             .getReferenceFromUrl(item.getImgRef());
 
                     GlideApp.with(imgLogo.getContext())
-                            .load(R.drawable.placeholder)
-//                            .transform(new CenterCrop(), new RoundedCorners(16))
+                            .load(imageRef)
+                            .transform(new CenterCrop(), new RoundedCorners(16))
                             .transition(DrawableTransitionOptions.withCrossFade())
                             .into(imgLogo);
                 }
@@ -337,30 +325,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
             @Override
             public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.item_nearRestaurant:
-                        onButtonPressed(v.getId(), restaurantItem);
-                        break;
-                    case R.id.btn_locPin:
-                        findInGMaps(restaurantItem);
-                        break;
-                }
-            }
-
-            private void findInGMaps(RestaurantItem restaurantItem){
-                String latitude = "" + restaurantItem.getLocation().getLatitude();
-                String longitude = "" + restaurantItem.getLocation().getLongitude();
-
-                Uri gmmIntentUri = Uri.parse("geo:"+latitude+","+longitude);
-                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                mapIntent.setPackage("com.google.android.apps.maps");
-                if (mapIntent.resolveActivity(requireActivity()
-                        .getPackageManager()) != null) {
-                    startActivity(mapIntent);
-                }
-                else{
-                    Snackbar.make(myLayout, "Install Google Maps to find this restaurant on the map.",
-                            Snackbar.LENGTH_SHORT).show();
+                if (v.getId() == R.id.item_nearRestaurant) {
+                    onButtonPressed(v.getId(), restaurantItem);
                 }
             }
         }

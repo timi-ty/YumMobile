@@ -147,7 +147,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
         private final String TAG = "FireStore";
 
         private ArrayList<OrderItem> completedOrders = new ArrayList<>();
-        List<OrderItem> completedOrdersFiltered = new ArrayList<>();
+        private List<OrderItem> completedOrdersFiltered = new ArrayList<>();
         private HashMap<String, RestaurantItem> restaurantItems = new HashMap<>();
         private HashMap<String, UserPrefs> buyers = new HashMap<>();
 
@@ -255,10 +255,14 @@ public class ManagerCompletedOrdersFragment extends Fragment {
                         List<OrderItem> filteredList = new ArrayList<>();
                         for (OrderItem order : completedOrders) {
                             RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
-                            assert restaurantItem != null;
-                            String restaurantName = restaurantItem.getName();
+                            String restaurantName = "";
+                            if(restaurantItem != null){
+                                restaurantName = restaurantItem.getName();
+                            }
                             if (order.getDescription().toLowerCase().contains(charString.toLowerCase())
-                                    || restaurantName.toLowerCase().contains(charString.toLowerCase())) {
+                                    || restaurantName.toLowerCase().contains(charString.toLowerCase())
+                                    || order.getTimestamp().toDate().toString().toLowerCase()
+                                    .contains(charString.toLowerCase())) {
                                 filteredList.add(order);
                             }
                         }

@@ -1,34 +1,39 @@
 package com.inc.tracks.yummobile.user_fragments;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
-import androidx.viewpager2.adapter.FragmentViewHolder;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.material.snackbar.Snackbar;
 import com.inc.tracks.yummobile.R;
 import com.inc.tracks.yummobile.components.CardInfo;
 import com.inc.tracks.yummobile.utils.CardManager;
+import com.inc.tracks.yummobile.utils.GlideApp;
 import com.tbuonomo.viewpagerdotsindicator.DotsIndicator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import co.paystack.android.model.Card;
 
@@ -97,7 +102,7 @@ public class ManageCardsFragment extends Fragment implements
         myLayout = fragView.findViewById(R.id.layout_paymentFragment);
 
         mPager = fragView.findViewById(R.id.pager_cards);
-        pagerAdapter = new CardPagerAdapter(getActivity());
+        pagerAdapter = new CardPagerAdapter();
         mPager.setAdapter(pagerAdapter);
 
         DotsIndicator dotsIndicator = fragView.findViewById(R.id.dots_indicator);
@@ -113,6 +118,7 @@ public class ManageCardsFragment extends Fragment implements
         txtExpiryDate.addTextChangedListener(dateWatcher);
 
         btnAddCard.setOnClickListener(this);
+        fragView.findViewById(R.id.btn_back).setOnClickListener(this);
 
         mPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
@@ -149,8 +155,13 @@ public class ManageCardsFragment extends Fragment implements
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.btn_addCard) {
-            saveCard(getCardEntry());
+        switch (v.getId()) {
+            case R.id.btn_addCard:
+                addCard();
+                break;
+            case R.id.btn_back:
+                mListener.onFragmentInteraction(v.getId());
+                break;
         }
     }
 
@@ -210,7 +221,17 @@ public class ManageCardsFragment extends Fragment implements
     }
 
     public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(int buttonId, Card card);
+        void onFragmentInteraction(int buttonId);
+    }
+
+    private void addCard(){
+        if(mPager.getCurrentItem() == pagerAdapter.getItemCount() - 1){
+            saveCard(getCardEntry());
+        }
+        else{
+            mPager.setCurrentItem(pagerAdapter.getItemCount() - 1,
+                    true);
+        }
     }
 
     private void saveCard(@Nullable CardInfo card){
@@ -221,70 +242,148 @@ public class ManageCardsFragment extends Fragment implements
         Snackbar.make((View) myLayout.getParent(),
                 "Card Details Saved.", Snackbar.LENGTH_SHORT).show();
 
-        pagerAdapter.addCardFragment(card);
-    }
-
-    private void deleteCard(int position){
-        cardManager.deleteCard(position);
-
-        Snackbar.make((View) myLayout.getParent(),
-                "Card Deleted.", Snackbar.LENGTH_SHORT).show();
-
-        pagerAdapter.deleteCardFragment(position);
+        pagerAdapter.addCardInfo(card);
     }
 
     public boolean cardInteraction(int interactionId){
-        switch (interactionId){
-            case R.id.btn_deleteCard:
-                deleteCard(mPager.getCurrentItem());
-                return true;
-            default: return false;
+        if (interactionId == R.id.btn_addCard){
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mPager.setCurrentItem(pagerAdapter.getItemCount() - 1,
+                            true);
+                }
+            }, 500);
+            return true;
         }
+        return false;
     }
 
-    private class CardPagerAdapter extends FragmentStateAdapter{
-        private List<CardFragment> cardFragments = new ArrayList<>();
-        CardPagerAdapter(FragmentActivity fm) {
-            super(fm);
+    private class CardPagerAdapter extends RecyclerView.Adapter<CardPagerAdapter.CardViewHolder> {
+
+        private List<CardInfo> cardInfoList = new ArrayList<>();
+
+        CardPagerAdapter() {
+            for(int i = 0; i < cardManager.getCardCount(); i++){
+                CardInfo cardInfo;
+                cardInfo = cardManager.getSavedCard(i);
+                cardInfoList.add(cardInfo);
+            }
         }
 
         @NonNull
         @Override
-        public Fragment createFragment(int position) {
-            CardFragment cardFragment;
-            if(position >= cardFragments.size()) {
-                cardFragment = CardFragment.newInstance(cardManager.getSavedCard(position));
-                cardFragments.add(cardFragment);
-                Log.d("fragments", "count = " + cardFragments.size() + " pos = " + position);
-            }
-            else {
-                cardFragments.set(position, CardFragment.newInstance(cardManager.getSavedCard(position)));
-                cardFragment = cardFragments.get(position);
-                Log.d("fragments", "countme = " + cardFragments.size() + " pos = " + position);
-            }
-            return cardFragment;
-        }
-
-        void addCardFragment(CardInfo card){
-            cardFragments.get(mPager.getCurrentItem()).updateCardInfo(card);
-            setEditTexts(card);
-            notifyDataSetChanged();
-        }
-
-        void deleteCardFragment(int position){
-            cardFragments.remove(position);
-            setEditTexts(cardManager.getSavedCard(position));
-            notifyItemRemoved(position - 1);
+        public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View cardView = LayoutInflater.from(getContext())
+                    .inflate(R.layout.item_card, parent, false);
+            return new CardViewHolder(cardView);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
-            super.onBindViewHolder(holder, position, payloads);
+        public void onBindViewHolder(@NonNull CardViewHolder cardViewHolder, int position) {
+            if(position < cardInfoList.size()){
+                cardViewHolder.bindView(cardInfoList.get(position));
+            }
+            else {
+                cardViewHolder.bindView(null);
+            }
         }
 
         @Override
         public int getItemCount() {
             return cardManager.getCardCount() + 1;
+        }
+
+        class CardViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+
+            TextView txtCardNumber;
+            TextView txtHolderName;
+            TextView txtCardExpiry;
+            ImageView imgCardVendor;
+            ImageView emptyView;
+            ImageView background;
+            View cardView;
+
+            CardViewHolder(@NonNull View itemView) {
+                super(itemView);
+
+                cardView = itemView;
+                txtCardNumber = itemView.findViewById(R.id.txt_cardNumber);
+                txtHolderName = itemView.findViewById(R.id.txt_cardHolderName);
+                txtCardExpiry = itemView.findViewById(R.id.txt_cardExpiry);
+                imgCardVendor = itemView.findViewById(R.id.img_cardVendor);
+                emptyView = itemView.findViewById(R.id.img_emptyView);
+                background = itemView.findViewById(R.id.background);
+            }
+
+            void bindView(CardInfo cardInfo){
+                if(cardInfo == null){
+                    emptyView.setVisibility(View.VISIBLE);
+                    txtCardNumber.setVisibility(View.INVISIBLE);
+                    txtHolderName.setVisibility(View.INVISIBLE);
+                    txtCardExpiry.setVisibility(View.INVISIBLE);
+                    imgCardVendor.setVisibility(View.INVISIBLE);
+                    cardView.findViewById(R.id.txt_valid).setVisibility(View.INVISIBLE);
+                    cardView.findViewById(R.id.img_cardChip).setVisibility(View.INVISIBLE);
+                    cardView.findViewById(R.id.txt_cardType).setVisibility(View.INVISIBLE);
+                    cardView.findViewById(R.id.btn_deleteCard).setVisibility(View.INVISIBLE);
+
+                    background.setEnabled(false);
+                }
+                else{
+                    emptyView.setVisibility(View.GONE);
+                    txtCardNumber.setVisibility(View.VISIBLE);
+                    txtHolderName.setVisibility(View.VISIBLE);
+                    txtCardExpiry.setVisibility(View.VISIBLE);
+                    imgCardVendor.setVisibility(View.VISIBLE);
+                    cardView.findViewById(R.id.txt_valid).setVisibility(View.VISIBLE);
+                    cardView.findViewById(R.id.img_cardChip).setVisibility(View.VISIBLE);
+                    cardView.findViewById(R.id.txt_cardType).setVisibility(View.VISIBLE);
+                    cardView.findViewById(R.id.btn_deleteCard).setVisibility(View.VISIBLE);
+
+                    background.setEnabled(true);
+
+                    txtCardNumber.setText(cardManager.formatCardNumber(cardInfo.getCardNumber()));
+                    txtHolderName.setText(cardInfo.getHolderName());
+                    txtCardExpiry.setText(String.format(Locale.ENGLISH, "%d/%d", cardInfo.getExpiryMonth()
+                            , cardInfo.getExpiryYear()));
+                    cardView.findViewById(R.id.btn_deleteCard).setOnClickListener(this);
+                }
+
+                loadBackground();
+            }
+
+            private void loadBackground(){
+                GlideApp.with(background.getContext())
+                        .load(R.drawable.card_bg)
+                        .transform(new CenterCrop(), new RoundedCorners(48))
+                        .transition(DrawableTransitionOptions.withCrossFade())
+                        .into(background);
+            }
+
+            @Override
+            public void onClick(View v) {
+                if(v.getId() == R.id.btn_deleteCard){
+                    deleteCardInfo(getAdapterPosition());
+                }
+            }
+        }
+
+        void addCardInfo(CardInfo card){
+            cardInfoList.add(card);
+            notifyItemInserted(cardInfoList.size() - 1);
+            setEditTexts(card);
+        }
+
+        void deleteCardInfo(int position){
+            cardManager.deleteCard(position);
+
+            Snackbar.make((View) myLayout.getParent(),
+                    "Card Deleted.", Snackbar.LENGTH_SHORT).show();
+
+            cardInfoList.remove(position);
+            setEditTexts(cardManager.getSavedCard(position));
+            notifyItemRemoved(position - 1);
         }
     }
 }

@@ -255,13 +255,13 @@
             android:clickable="true"
             android:gravity="center"
             android:padding="16dp"
-            android:text="@string/prompt_delivery_payment"
             android:textAppearance="@style/DarkTextAppearance"
             android:textSize="14sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="@string/prompt_delivery_payment" />
 
         <ImageView
             android:id="@+id/imv_defaultPayment"
@@ -269,10 +269,10 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:clickable="true"
-            android:src="@drawable/ic_cash"
             app:layout_constraintBottom_toBottomOf="@id/tv_defaultPayment"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tv_defaultPayment" />
+            app:layout_constraintTop_toTopOf="@+id/tv_defaultPayment"
+            tools:srcCompat="@drawable/ic_cash" />
 
         <ImageButton
             android:id="@+id/img_arrowDown"

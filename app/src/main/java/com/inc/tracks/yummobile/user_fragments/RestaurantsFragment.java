@@ -39,11 +39,7 @@ import java.util.List;
 public class RestaurantsFragment extends Fragment{
     private OnFragmentInteractionListener mListener;
 
-    private RecyclerView rvRestaurantList;
-
     private RestaurantsRVAdapter restaurantsRVAdapter;
-
-    private FirebaseFirestore fireDB;
 
     public RestaurantsFragment() {
         // Required empty public constructor
@@ -68,7 +64,7 @@ public class RestaurantsFragment extends Fragment{
         View fragView = inflater.inflate(R.layout.fragment_restaurants,
                 container, false);
 
-        rvRestaurantList = fragView.findViewById(R.id.rv_restaurantList);
+        RecyclerView rvRestaurantList = fragView.findViewById(R.id.rv_restaurantList);
 
         rvRestaurantList.setLayoutManager(new LinearLayoutManager(fragView.getContext()));
         if(restaurantsRVAdapter == null){
@@ -123,7 +119,7 @@ public class RestaurantsFragment extends Fragment{
         private List<RestaurantItem> restaurantListFiltered = new ArrayList<>();
 
         RestaurantsRVAdapter() {
-            fireDB = FirebaseFirestore.getInstance();
+            FirebaseFirestore fireDB = FirebaseFirestore.getInstance();
 
             EventListener<QuerySnapshot> dataChangedListener =
                     new EventListener<QuerySnapshot>() {
@@ -254,7 +250,7 @@ public class RestaurantsFragment extends Fragment{
         class RstViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
             RestaurantItem restaurantItem;
             TextView tvName;
-            TextView tvDesc;
+            TextView tvAddress;
             TextView tvRange;
             ImageView imgLogo;
             ConstraintLayout container;
@@ -262,7 +258,7 @@ public class RestaurantsFragment extends Fragment{
             RstViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvName = itemView.findViewById(R.id.tv_restaurantName);
-                tvDesc = itemView.findViewById(R.id.tv_restaurantDescription);
+                tvAddress = itemView.findViewById(R.id.tv_restaurantAddress);
                 tvRange = itemView.findViewById(R.id.tv_priceRange);
                 imgLogo = itemView.findViewById(R.id.img_restaurantLogo);
                 container = itemView.findViewById(R.id.item_catalogueRestaurant);
@@ -280,7 +276,7 @@ public class RestaurantsFragment extends Fragment{
 
                 tvName.setText(restaurantItem.getName());
 
-                tvDesc.setText(restaurantItem.getDescription());
+                tvAddress.setText(restaurantItem.getAddress());
 
                 String range = "₦" + restaurantItem.getPriceRange().get(0)
                         + " - ₦" + restaurantItem.getPriceRange().get(1);
@@ -295,7 +291,7 @@ public class RestaurantsFragment extends Fragment{
                             .getReferenceFromUrl(item.getImgRef());
 
                     GlideApp.with(imgLogo.getContext())
-                            .load(R.drawable.egusi)
+                            .load(imageRef)
                             .transform(new CenterCrop(), new RoundedCorners(16))
                             .transition(DrawableTransitionOptions.withCrossFade())
                             .into(imgLogo);

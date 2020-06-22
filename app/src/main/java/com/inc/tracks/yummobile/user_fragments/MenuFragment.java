@@ -2,6 +2,7 @@ package com.inc.tracks.yummobile.user_fragments;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -124,9 +125,12 @@ public class MenuFragment extends Fragment implements View.OnClickListener{
 
         tvRestaurantAddress.setText(activeRestItem.getAddress());
 
+        loadRestaurantBanner((ImageView) fragView.findViewById(R.id.imv_restaurantBanner));
+
         fragView.findViewById(R.id.btn_cart).setOnClickListener(this);
         fragView.findViewById(R.id.btn_emptyCart).setOnClickListener(this);
         fragView.findViewById(R.id.btn_back).setOnClickListener(this);
+        tvRestaurantAddress.setOnClickListener(this);
 
         if(orderItems.isEmpty() && orderGroups.isEmpty()){
             btnCart.setVisibility(View.GONE);
@@ -136,6 +140,21 @@ public class MenuFragment extends Fragment implements View.OnClickListener{
         }
 
         return fragView;
+    }
+
+    private void loadRestaurantBanner(ImageView banner) {
+        try {
+            StorageReference imageRef = UserAuth.firebaseStorage
+                    .getReferenceFromUrl(activeRestItem.getImgRef());
+
+            GlideApp.with(banner.getContext())
+                    .load(imageRef)
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .into(banner);
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     private void onButtonPressed(int buttonId) {
@@ -173,6 +192,9 @@ public class MenuFragment extends Fragment implements View.OnClickListener{
                 break;
             case R.id.btn_back:
                 onButtonPressed(v.getId());
+                break;
+            case R.id.tv_restaurantAddress:
+                findInGMaps(activeRestItem);
                 break;
         }
     }
@@ -255,6 +277,28 @@ public class MenuFragment extends Fragment implements View.OnClickListener{
         rvFoodMenu.invalidate();
     }
 
+    private void findInGMaps(RestaurantItem restaurantItem){
+        if(restaurantItem.getLocation() == null){
+            Snackbar.make(myLayout, "Sorry, This restaurant is not geo-tagged :(.",
+                    Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+        String latitude = "" + restaurantItem.getLocation().getLatitude();
+        String longitude = "" + restaurantItem.getLocation().getLongitude();
+
+        Uri gmmIntentUri = Uri.parse("geo:"+latitude+","+longitude);
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+        mapIntent.setPackage("com.google.android.apps.maps");
+        if (mapIntent.resolveActivity(requireActivity()
+                .getPackageManager()) != null) {
+            startActivity(mapIntent);
+        }
+        else{
+            Snackbar.make(myLayout, "Install Google Maps to find this restaurant on the map.",
+                    Snackbar.LENGTH_SHORT).show();
+        }
+    }
+
 
     public class FoodMenuRVAdapter extends RecyclerView.Adapter<FoodMenuRVAdapter.MenuItemViewHolder>
             implements Filterable {
@@ -262,9 +306,6 @@ public class MenuFragment extends Fragment implements View.OnClickListener{
         private final String TAG = "FireStore";
         private ArrayList<MenuItem> menuItems = new ArrayList<>();
         private List<MenuItem> menuItemsFiltered = new ArrayList<>();
-
-        private int activeMenuItemPos = -1;
-
 
         FoodMenuRVAdapter() {
             FirebaseFirestore fireDB = FirebaseFirestore.getInstance();
@@ -437,18 +478,6 @@ public class MenuFragment extends Fragment implements View.OnClickListener{
                 fabMinus = itemView.findViewById(R.id.btn_remove);
             }
 
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()){
-                    case R.id.btn_add:
-                        addToCart();
-                        break;
-                    case R.id.btn_remove:
-                        removeFromCart();
-                        break;
-                }
-            }
-
             void bindView(MenuItem menuItem){
                 this.menuItem = menuItem;
 
@@ -467,6 +496,17 @@ public class MenuFragment extends Fragment implements View.OnClickListener{
                 refreshThumbnail();
             }
 
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()){
+                    case R.id.btn_add:
+                        addToCart();
+                        break;
+                    case R.id.btn_remove:
+                        removeFromCart();
+                        break;
+                }
+            }
 
             private void refreshThumbnail() {
                 try {
@@ -506,27 +546,6 @@ public class MenuFragment extends Fragment implements View.OnClickListener{
                 }
                 else {
                     orderItems.put(mKey, 1);
-                }
-                updateOrderCount();
-            }
-
-            private void addToCart(String strCount){
-                int count = 0;
-                try{
-                    count = Integer.parseInt(strCount);
-                }
-                catch (NumberFormatException e){
-                    e.printStackTrace();
-                }
-                String mKey = menuItem.getId();
-                if(count >= 1){
-                    orderItems.put(mKey, count);
-                }
-                else {
-                    orderItems.remove(mKey);
-                }
-                if(orderItems.isEmpty()){
-                    orderGroups.remove(activeRestItem.getId());
                 }
                 updateOrderCount();
             }
@@ -578,21 +597,6 @@ public class MenuFragment extends Fragment implements View.OnClickListener{
                 else {
                     btnCart.setVisibility(View.VISIBLE);
                 }
-            }
-
-            private void selectActiveMenuItemFromPosition(int position){
-                int formerActive = activeMenuItemPos;
-
-                activeMenuItemPos = position;
-
-                menuItemsAdapter.notifyItemChanged(formerActive);
-
-
-                menuItemsAdapter.notifyItemChanged(activeMenuItemPos);
-
-                rvFoodMenu.scrollToPosition(activeMenuItemPos);
-
-                Log.d("Selected Menu Item",  "" + activeMenuItemPos);
             }
         }
     }

@@ -119,4 +119,7 @@
     <string name="secret_date">XX/XX</string>
     <string name="file_default_payment">DefaultPayment</string>
     <string name="key_default_payment">Default</string>
+    <string name="no_price_range">No price range</string>
+    <string name="sample_price_range">₦0.00 - ₦0.00</string>
+    <string name="add_card">Add Card</string>
 </resources>

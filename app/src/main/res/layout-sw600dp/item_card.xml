@@ -44,7 +44,7 @@
             android:tint="@color/white"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/txt_cardNumber"
-            app:srcCompat="@drawable/card_logo" />
+            app:srcCompat="@drawable/visa_card_logo" />
 
         <TextView
             android:id="@+id/txt_cardType"

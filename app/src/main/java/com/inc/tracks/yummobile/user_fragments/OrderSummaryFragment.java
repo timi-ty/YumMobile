@@ -38,8 +38,6 @@ import java.util.Objects;
 
 public class OrderSummaryFragment extends Fragment implements View.OnClickListener{
     private static final String ARG_ORDER_GROUPS = "order_groups";
-    public static final String OPTION_CARD = "card";
-    public static final String OPTION_CASH = "cash";
 
     private HashMap<String, HashMap<String, Integer>> orderGroups;
 
@@ -92,7 +90,6 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         if (getArguments() != null) {
             orderGroups = (HashMap) getArguments().getSerializable(ARG_ORDER_GROUPS);
         }
-
     }
 
     @Override
@@ -115,8 +112,8 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         btnMorePaymentOptions = fragView.findViewById(R.id.img_arrowDown);
 
         rvPaymentOptions = fragView.findViewById(R.id.rv_paymentOptions);
-
         rvPaymentOptions.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvPaymentOptions.setAdapter(new PaymentOptionsRVAdapter());
 
         btnCheckout = fragView.findViewById(R.id.btn_checkout);
 
@@ -125,6 +122,7 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         fragView.findViewById(R.id.btn_back).setOnClickListener(this);
 
         setCheckoutOption();
+        setPaymentMethod(cardManager.getDefaultPaymentMethod(fragView.getContext()));
 
         return fragView;
     }
@@ -190,7 +188,6 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
     private void setCheckoutOption(){
         if(groupsPrices.size() == orderGroups.size()){
             showCheckoutButton(true);
-            btnCheckout.setEnabled(false);
 
             tvDefaultPayment.setOnClickListener(this);
             imvDefaultPayment.setOnClickListener(this);
@@ -223,10 +220,10 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
     private void setPaymentMethod(CardInfo paymentMethod){
         this.paymentMethod = paymentMethod;
-        cardManager.saveDefaultCard(paymentMethod, tvDefaultPayment.getContext());
+        cardManager.saveDefaultPaymentMethod(paymentMethod, tvDefaultPayment.getContext());
+        tvDefaultPayment.setText(cardManager.getDefaultPaymentMethodName(tvDefaultPayment.getContext()));
         imvDefaultPayment.setImageResource(cardManager.getCardHolderIcon(paymentMethod));
         showPaymentOptions(false);
-
     }
 
     private void showPaymentOptions(boolean show){
@@ -237,6 +234,10 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         btnCheckout.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
 
         pbLoading.setVisibility(show ? View.INVISIBLE : View.VISIBLE);
+    }
+
+    public void refreshPaymentOptions(){
+        rvPaymentOptions.setAdapter(new PaymentOptionsRVAdapter());
     }
 
 
@@ -435,13 +436,13 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
         public OptionViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
             View optionView = LayoutInflater.from(getContext())
-                    .inflate(R.layout.item_order_summary, viewGroup, false);
+                    .inflate(R.layout.item_payment_method, viewGroup, false);
             return new OptionViewHolder(optionView);
         }
 
         @Override
         public void onBindViewHolder(@NonNull OptionViewHolder viewHolder, int i) {
-            if(i > 0 && i < cardInfoList.size()) {
+            if(i > 0 && i <= cardInfoList.size()) {
                 viewHolder.bindView(cardInfoList.get(i - 1));
             }
             else{
@@ -460,7 +461,7 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
             TextView tvCardNumber;
             ImageView imgHolderLogo;
-            ImageButton imgSelected;
+            ImageView imgSelected;
 
             OptionViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -478,7 +479,7 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
                 itemView.setOnClickListener(this);
 
                 imgSelected.setVisibility(cardInfo.getId() ==
-                        cardManager.getDefaultCard(itemView.getContext()) ?
+                        cardManager.getDefaultPaymentMethodId(itemView.getContext()) ?
                         View.VISIBLE : View.INVISIBLE);
 
                 setHolderThumbnail(cardInfo);
@@ -490,13 +491,15 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
                     tvCardNumber.setText(R.string.prompt_delivery_payment);
 
-                    imgSelected.setVisibility(cardManager.getDefaultCard(itemView.getContext())
+                    imgSelected.setVisibility(cardManager.getDefaultPaymentMethodId(itemView.getContext())
                             == -1 ? View.VISIBLE : View.INVISIBLE);
 
                     imgHolderLogo.setImageResource(R.drawable.ic_cash);
+
+                    itemView.setOnClickListener(this);
                 }
                 else{
-                    tvCardNumber.setText("Add Card");
+                    tvCardNumber.setText(R.string.add_card);
 
                     imgSelected.setVisibility(View.INVISIBLE);
 
@@ -504,8 +507,14 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
                     assert drawable != null;
                     drawable.setTint(itemView.getContext().getResources().getColor(R.color.colorDark));
                     imgHolderLogo.setImageDrawable(drawable);
+
+                    itemView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            mListener.onFragmentInteraction(R.id.btn_addCard);
+                        }
+                    });
                 }
-                itemView.setOnClickListener(this);
             }
 
             private void setHolderThumbnail(CardInfo cardInfo) {
@@ -514,8 +523,8 @@ public class OrderSummaryFragment extends Fragment implements View.OnClickListen
 
             @Override
             public void onClick(View v) {
-                rvPaymentOptions.invalidate();
                 setPaymentMethod(mCardInfo);
+                notifyDataSetChanged();
             }
         }
     }

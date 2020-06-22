@@ -16,8 +16,6 @@ import com.inc.tracks.yummobile.components.CardInfo;
 
 import java.util.Objects;
 
-import co.paystack.android.model.Card;
-
 public class CardManager {
 
     private FeedProgressDbHelper progressDbHelper;
@@ -29,7 +27,6 @@ public class CardManager {
         readableProgressDb = progressDbHelper.getReadableDatabase();
         writableProgressDb = progressDbHelper.getWritableDatabase();
 
-        progressDbHelper.deleteDb(writableProgressDb);
         progressDbHelper.onCreate(writableProgressDb);
     }
 
@@ -98,7 +95,7 @@ public class CardManager {
         writableProgressDb.insert(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE, null, cardData);
     }
 
-    public void saveDefaultCard(@Nullable CardInfo card, Context context){
+    public void saveDefaultPaymentMethod(@Nullable CardInfo card, Context context){
         long id = card != null ? card.getId() : -1;
         SharedPreferences sharedPreferences =
                 context.getSharedPreferences(context.getString(R.string.file_default_payment), Context.MODE_PRIVATE);
@@ -107,10 +104,76 @@ public class CardManager {
         editor.apply();
     }
 
-    public long getDefaultCard(Context context){
+    public long getDefaultPaymentMethodId(Context context){
         SharedPreferences sharedPreferences =
                 context.getSharedPreferences(context.getString(R.string.file_default_payment), Context.MODE_PRIVATE);
         return sharedPreferences.getLong(context.getString(R.string.key_default_payment), -1);
+    }
+
+    public String getDefaultPaymentMethodName(Context context){
+        SharedPreferences sharedPreferences =
+                context.getSharedPreferences(context.getString(R.string.file_default_payment), Context.MODE_PRIVATE);
+        long optionId = sharedPreferences.getLong(context.getString(R.string.key_default_payment), -1);
+
+        if(optionId == -1) return "Pay on Delivery";
+        Cursor cursor;
+        String[] projection = {
+                BaseColumns._ID,
+                ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN
+        };
+        String selection = ProgressDbContract.FeedSavedCardEntry._ID + " = ?";
+        String[] selectionArgs = {String.valueOf(optionId)};
+        cursor = readableProgressDb.query(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE,
+                projection, selection, selectionArgs, null, null, null);
+
+        if(cursor.getCount() < 1) return "null";
+
+        cursor.moveToFirst();
+
+        String cardNum = cursor.getString(cursor.getColumnIndexOrThrow(ProgressDbContract
+                .FeedSavedCardEntry.CARD_NUM_COLUMN));
+
+        cursor.close();
+
+        return formatCardNumber(cardNum);
+    }
+
+    public CardInfo getDefaultPaymentMethod(Context context){
+        SharedPreferences sharedPreferences =
+                context.getSharedPreferences(context.getString(R.string.file_default_payment), Context.MODE_PRIVATE);
+        long optionId = sharedPreferences.getLong(context.getString(R.string.key_default_payment), -1);
+
+        Cursor cursor;
+        String[] projection = {
+                BaseColumns._ID,
+                ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN,
+                ProgressDbContract.FeedSavedCardEntry.CVV_COLUMN,
+                ProgressDbContract.FeedSavedCardEntry.NAME_COLUMN,
+                ProgressDbContract.FeedSavedCardEntry.EXP_MONTH_COLUMN,
+                ProgressDbContract.FeedSavedCardEntry.EXPIRY_YEAR_COLUMN,
+        };
+        String selection = ProgressDbContract.FeedSavedCardEntry._ID + " = ?";
+        String[] selectionArgs = {String.valueOf(optionId)};
+        cursor = readableProgressDb.query(ProgressDbContract.FeedSavedCardEntry.CARD_TABLE,
+                projection, selection, selectionArgs, null, null, null);
+
+        if(cursor.getCount() < 1) return null;
+
+        cursor.moveToFirst();
+
+        String cardNum = cursor.getString(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.CARD_NUM_COLUMN));
+        String cvv = cursor.getString(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.CVV_COLUMN));
+        String cardName = cursor.getString(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.NAME_COLUMN));
+        int expMonth = cursor.getInt(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.EXP_MONTH_COLUMN));
+        int expYear = cursor.getInt(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry.EXPIRY_YEAR_COLUMN));
+        int id = cursor.getInt(cursor.getColumnIndexOrThrow(ProgressDbContract.FeedSavedCardEntry._ID));
+
+        cursor.close();
+
+        CardInfo card = new CardInfo(cardNum, cvv, expMonth, expYear, cardName);
+        card.setId(id);
+
+        return card;
     }
 
     public void deleteCard(int position){
@@ -132,12 +195,14 @@ public class CardManager {
     }
 
     public int getCardHolderIcon(CardInfo cardInfo){
-        return R.drawable.ic_mastercard_symbol;
+        if(cardInfo == null) return R.drawable.ic_cash;
+        if(cardInfo.getCardNumber().charAt(0) == '5') return R.drawable.ic_mastercard_symbol;
+        else return R.drawable.ic_visa_card_logo;
     }
 
     public void finishManagingCards(){
         readableProgressDb.close();
         writableProgressDb.close();
-        progressDbHelper.close();
+//        progressDbHelper.close();
     }
 }

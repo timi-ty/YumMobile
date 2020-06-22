@@ -5,7 +5,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -50,7 +49,11 @@ public class OrderActivity extends AppCompatActivity implements
         OrderSummaryFragment.OnFragmentInteractionListener,
         ManageCardsFragment.OnFragmentInteractionListener{
 
+    private final String ORDER_SUMMARY_FRAG = "order_summary";
+
     FragmentManager fragmentManager;
+
+    ManageCardsFragment manageCardsFragment;
 
     ConstraintLayout myLayout;
 
@@ -84,7 +87,8 @@ public class OrderActivity extends AppCompatActivity implements
 
     private void goToOrderSummaryFragment(HashMap orderSummary){
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.order_fragment_container, OrderSummaryFragment.newInstance(orderSummary));
+        fragmentTransaction.replace(R.id.order_fragment_container,
+                OrderSummaryFragment.newInstance(orderSummary), ORDER_SUMMARY_FRAG);
         fragmentTransaction.commit();
     }
 
@@ -94,27 +98,15 @@ public class OrderActivity extends AppCompatActivity implements
         fragmentTransaction.commit();
     }
 
-    private void addPaymentFragment(){
-        findViewById(R.id.order_fragment_container).setAlpha(0.4f);
+    private void goToManageCardsFragment(){
+        if(manageCardsFragment == null){
+            manageCardsFragment = ManageCardsFragment.newInstance();
+        }
+
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.add(R.id.payment_fragment_container, ManageCardsFragment.newInstance());
+        fragmentTransaction.add(R.id.order_fragment_container, manageCardsFragment);
+        fragmentTransaction.addToBackStack("ManageCards");
         fragmentTransaction.commit();
-    }
-
-    private void getCardInfo(){
-        addPaymentFragment();
-    }
-
-
-    @Override
-    public void onFragmentInteraction(int buttonId, Card card) {
-        /**/
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        Fragment paymentFragment = fragmentManager.findFragmentById(R.id.payment_fragment_container);
-        assert paymentFragment != null;
-        fragmentTransaction.detach(paymentFragment);
-        fragmentTransaction.commit();
-        findViewById(R.id.order_fragment_container).setAlpha(1.0f);
     }
 
     @SuppressWarnings("unchecked")
@@ -135,8 +127,26 @@ public class OrderActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onFragmentInteraction(int buttonId) {
-        if(buttonId == R.id.btn_back)   onBackPressed();
+    public void onFragmentInteraction(int interactionId) {
+        switch (interactionId) {
+            case R.id.btn_back:
+                onBackPressed();
+                checkVisibleFragment();
+                break;
+            case R.id.btn_addCard:
+                goToManageCardsFragment();
+                break;
+        }
+        if(manageCardsFragment != null) manageCardsFragment.cardInteraction(interactionId);
+    }
+
+    private void checkVisibleFragment(){
+        OrderSummaryFragment orderSummaryFragment = (OrderSummaryFragment)
+                fragmentManager.findFragmentByTag(ORDER_SUMMARY_FRAG);
+        if (orderSummaryFragment != null) {
+            orderSummaryFragment.refreshPaymentOptions();
+            Log.d("Adapter", "Refreshed");
+        }
     }
 
     private void chargeCard(CardInfo cardInfo){

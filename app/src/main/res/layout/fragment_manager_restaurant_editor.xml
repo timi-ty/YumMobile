@@ -181,7 +181,7 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/tv_restaurantAddress"
+                android:id="@+id/tv_priceRange"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
@@ -197,7 +197,7 @@
                 app:layout_constraintVertical_bias="0.0" />
 
             <TextView
-                android:id="@+id/tv_priceRange"
+                android:id="@+id/tv_restaurantAddress"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
@@ -212,7 +212,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toEndOf="@+id/img_restaurantLogo"
-                app:layout_constraintTop_toBottomOf="@+id/tv_restaurantAddress" />
+                app:layout_constraintTop_toBottomOf="@+id/tv_priceRange" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

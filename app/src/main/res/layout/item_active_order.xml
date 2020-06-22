@@ -101,7 +101,7 @@
             android:id="@+id/tv_orderState"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Your order has been picked up!"
+            android:text="@string/placeholder_loading"
             app:layout_constraintStart_toStartOf="@+id/pb_orderState"
             app:layout_constraintTop_toBottomOf="@+id/pb_orderState" />
 
@@ -109,7 +109,7 @@
             android:id="@+id/tv_orderId"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="order #0001"
+            android:text="@string/placeholder_loading"
             android:textColor="@color/colorPrimaryDark"
             android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="@+id/pb_orderProgress"

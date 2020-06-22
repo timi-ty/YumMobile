@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 
 public class ManagerOrdersAdminFragment extends Fragment{
@@ -234,8 +233,10 @@ public class ManagerOrdersAdminFragment extends Fragment{
                         List<OrderItem> filteredList = new ArrayList<>();
                         for (OrderItem order : activeOrders) {
                             RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
-                            assert  restaurantItem != null;
-                            String restaurantName = restaurantItem.getName();
+                            String restaurantName = "";
+                            if(restaurantItem != null){
+                                restaurantName = restaurantItem.getName();
+                            }
                             if (order.getDescription().toLowerCase().contains(charString.toLowerCase())
                                     || restaurantName.toLowerCase().contains(charString.toLowerCase())) {
                                 filteredList.add(order);
@@ -402,7 +403,7 @@ public class ManagerOrdersAdminFragment extends Fragment{
 
                     Intent dialerIntent = new Intent(Intent.ACTION_DIAL, phone);
 
-                    if (dialerIntent.resolveActivity(Objects.requireNonNull(getActivity())
+                    if (dialerIntent.resolveActivity(requireActivity()
                             .getPackageManager()) != null) {
                         startActivity(dialerIntent);
                     }

@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 
 public class ManagerOrderDetailsFragment extends Fragment implements View.OnClickListener{
@@ -173,7 +172,7 @@ public class ManagerOrderDetailsFragment extends Fragment implements View.OnClic
 
             Intent dialerIntent = new Intent(Intent.ACTION_DIAL, phone);
 
-            if (dialerIntent.resolveActivity(Objects.requireNonNull(getActivity())
+            if (dialerIntent.resolveActivity(requireActivity()
                     .getPackageManager()) != null) {
                 startActivity(dialerIntent);
             }
@@ -187,7 +186,7 @@ public class ManagerOrderDetailsFragment extends Fragment implements View.OnClic
         Uri gmmIntentUri = Uri.parse("geo:"+latitude+","+longitude);
         Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
         mapIntent.setPackage("com.google.android.apps.maps");
-        if (mapIntent.resolveActivity(Objects.requireNonNull(getActivity())
+        if (mapIntent.resolveActivity(requireActivity()
                 .getPackageManager()) != null) {
             startActivity(mapIntent);
         }

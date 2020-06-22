@@ -68,7 +68,7 @@ public class ManagerOrdersFragment extends Fragment{
 
     private ActiveOrdersRVAdapter activeOrdersRVAdapter;
 
-    FirebaseFirestore fireDB;
+    private FirebaseFirestore fireDB;
 
     public ManagerOrdersFragment() {
         // Required empty public constructor
@@ -324,8 +324,10 @@ public class ManagerOrdersFragment extends Fragment{
                         List<OrderItem> filteredList = new ArrayList<>();
                         for (OrderItem order : activeOrders) {
                             RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
-                            assert  restaurantItem != null;
-                            String restaurantName = restaurantItem.getName();
+                            String restaurantName = "";
+                            if(restaurantItem != null){
+                                restaurantName = restaurantItem.getName();
+                            }
                             if (order.getDescription().toLowerCase().contains(charString.toLowerCase())
                                     || restaurantName.toLowerCase().contains(charString.toLowerCase())) {
                                 filteredList.add(order);

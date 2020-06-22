@@ -40,7 +40,6 @@ import com.inc.tracks.yummobile.utils.GlideApp;
 
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.Objects;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -68,7 +67,7 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
 
     private ImageView imgRestaurantLogo;
     private TextView tvRestaurantName;
-    private TextView tvRestaurantDesc;
+    private TextView tvPriceRange;
     private TextView tvRestaurantAddress;
 
     private Button btnUpImage;
@@ -121,8 +120,8 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
 
         imgRestaurantLogo = fragView.findViewById(R.id.img_restaurantLogo);
         tvRestaurantName = fragView.findViewById(R.id.tv_restaurantName);
-        tvRestaurantDesc = fragView.findViewById(R.id.tv_restaurantAddress);
-        tvRestaurantAddress = fragView.findViewById(R.id.tv_priceRange);
+        tvPriceRange = fragView.findViewById(R.id.tv_priceRange);
+        tvRestaurantAddress = fragView.findViewById(R.id.tv_restaurantAddress);
 
         pbUploading = fragView.findViewById(R.id.pb_restEditor);
 
@@ -132,7 +131,7 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
         btnGeoTagRestaurant.setOnClickListener(this);
 
         synchronizeTextFields(txtRestaurantName, tvRestaurantName);
-        synchronizeTextFields(txtMinPrice, tvRestaurantDesc);
+        synchronizePriceRange(txtMinPrice, txtMaxPrice, tvPriceRange);
         synchronizeTextFields(txtRestaurantAddress, tvRestaurantAddress);
 
         Integer[] range = currentRestItem.getPriceRange().toArray(new Integer[2]);
@@ -205,7 +204,7 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
                 restImgUri = getArguments().getParcelable(ARG_REST_IMG);
             }
 
-            GlideApp.with(Objects.requireNonNull(getActivity()))
+            GlideApp.with(requireActivity())
                     .load(restImgUri).into(imgRestaurantLogo);
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -236,7 +235,7 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
 
                     onEndGeoTagAttempt();
 
-                    updateEditorUi(true);
+                    updateEditorUi();
                 }
             }, 3000);
         }
@@ -263,7 +262,7 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
         Snackbar.make(myLayout, "Geo Tag Removed.",
                 Snackbar.LENGTH_SHORT).show();
 
-        updateEditorUi(true);
+        updateEditorUi();
     }
 
     private void synchronizeTextFields(EditText editableField, final TextView displayField){
@@ -275,7 +274,9 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if(s.length()>=1) displayField.setText(s);
+                if(s.length()>=1) {
+                    displayField.setText(s);
+                }
                 else{
                     switch (displayField.getId()){
                         case R.id.tv_restaurantName:
@@ -286,15 +287,17 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
                                 displayField.setText(R.string.sample_restaurant_name);
                             }
                             break;
-                        case R.id.tv_restaurantAddress:
+                        case R.id.tv_priceRange:
                             if(currentRestItem.getPriceRange() != null){
-//                                displayField.setText(currentRestItem.getPriceRange());
+                                String range = "₦" + currentRestItem.getPriceRange().get(0) + " - ₦"
+                                        + currentRestItem.getPriceRange().get(1);
+                                displayField.setText(range);
                             }
                             else{
-                                displayField.setText(R.string.sample_description);
+                                displayField.setText(R.string.no_price_range);
                             }
                             break;
-                        case R.id.tv_priceRange:
+                        case R.id.tv_restaurantAddress:
                             if(currentRestItem.getAddress() != null){
                                 displayField.setText(currentRestItem.getAddress());
                             }
@@ -312,6 +315,34 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
 
             }
         });
+    }
+
+    private void synchronizePriceRange(final EditText editableFieldMin, final EditText editableFieldMax, final TextView displayField){
+        TextWatcher rangeWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (currentRestItem.getPriceRange() != null) {
+                    String range = "₦" + editableFieldMin.getText().toString() + " - ₦"
+                            + editableFieldMax.getText().toString();
+                    displayField.setText(range);
+                } else {
+                    displayField.setText(R.string.no_price_range);
+                }
+                updateEditorUi();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        };
+        editableFieldMin.addTextChangedListener(rangeWatcher);
+        editableFieldMax.addTextChangedListener(rangeWatcher);
     }
 
     private void pickRestaurantImage(){
@@ -461,7 +492,7 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
         txtRestaurantName.requestFocus();
 
         tvRestaurantName.setText(R.string.sample_restaurant_name);
-        tvRestaurantDesc.setText(R.string.sample_description);
+        tvPriceRange.setText(R.string.sample_description);
         tvRestaurantAddress.setText(R.string.sample_address);
 
         imgRestaurantLogo.setImageResource(R.drawable.restaurant);
@@ -485,42 +516,29 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
     private void updateEditorUi(){
         boolean _check_1 = txtRestaurantName.getText().toString().equals(currentRestItem.getName());
         boolean _check_2 = txtMinPrice.getText().toString().equals(String.valueOf(currentRestItem.getPriceRange().get(0)));
-        boolean _check_3 = txtRestaurantAddress.getText().toString().equals(currentRestItem.getAddress());
-        boolean _check_4 = restImgUri == null;
-        boolean _check_5 = currentRestItem.getId() != null;
+        boolean _check_3 = txtMaxPrice.getText().toString().equals(String.valueOf(currentRestItem.getPriceRange().get(1)));
+        boolean _check_4 = txtRestaurantAddress.getText().toString().equals(currentRestItem.getAddress());
+        boolean _check_5 = restImgUri == null;
+        boolean _check_6 = currentRestItem.getId() != null;
 
-        if(!(_check_1 && _check_2 && _check_3 && _check_4)){
+        if(!(_check_1 && _check_2 && _check_3 && _check_4 && _check_5)){
             btnSaveRestaurant.setVisibility(View.VISIBLE);
             btnManageMenu.setVisibility(View.INVISIBLE);
         }
-        else if(_check_5){
+        else if(_check_6){
             btnSaveRestaurant.setVisibility(View.INVISIBLE);
             btnManageMenu.setVisibility(View.VISIBLE);
         }
 
         if(currentRestItem.getLocation() == null){
             btnGeoTagRestaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_pin));
+            tvRestaurantAddress.setCompoundDrawablesRelativeWithIntrinsicBounds
+                    (0, 0, 0, 0);
         }
         else{
             btnGeoTagRestaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_minus));
-        }
-    }
-
-    private void updateEditorUi(boolean canSave){
-        if(canSave){
-            btnSaveRestaurant.setVisibility(View.VISIBLE);
-            btnManageMenu.setVisibility(View.INVISIBLE);
-        }
-        else{
-            btnSaveRestaurant.setVisibility(View.INVISIBLE);
-            btnManageMenu.setVisibility(View.VISIBLE);
-        }
-
-        if(currentRestItem.getLocation() == null){
-            btnGeoTagRestaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_pin));
-        }
-        else{
-            btnGeoTagRestaurant.setImageDrawable(getResources().getDrawable(R.drawable.ic_minus));
+            tvRestaurantAddress.setCompoundDrawablesRelativeWithIntrinsicBounds
+                    (0, 0, R.drawable.ic_pin, 0);
         }
     }
 

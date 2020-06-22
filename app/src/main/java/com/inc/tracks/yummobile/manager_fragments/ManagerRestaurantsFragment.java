@@ -39,7 +39,6 @@ import com.inc.tracks.yummobile.utils.GlideApp;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 
 public class ManagerRestaurantsFragment extends Fragment implements View.OnClickListener{
@@ -295,18 +294,18 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
 
                 tvName.setText(restaurantItem.getName());
                 String range = "₦" + restaurantItem.getPriceRange().get(0)
-                        + " - " + restaurantItem.getPriceRange().get(1);
-                tvAddress.setText(range);
-                tvRange.setText(restaurantItem.getAddress());
+                        + " - ₦" + restaurantItem.getPriceRange().get(1);
+                tvRange.setText(range);
+                tvAddress.setText(restaurantItem.getAddress());
 
                 if(restaurantItem.getLocation() != null){
-                    tvRange.setOnClickListener(this);
+                    tvAddress.setOnClickListener(this);
 
-                    tvRange.setCompoundDrawablesRelativeWithIntrinsicBounds
+                    tvAddress.setCompoundDrawablesRelativeWithIntrinsicBounds
                             (0, 0, R.drawable.ic_pin, 0);
                 }
                 else{
-                    tvRange.setCompoundDrawablesRelativeWithIntrinsicBounds
+                    tvAddress.setCompoundDrawablesRelativeWithIntrinsicBounds
                             (0, 0, 0, 0);
                 }
 
@@ -336,7 +335,7 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
                     case R.id.item_manageRestaurant:
                         onButtonPressed(v.getId(), restaurantItem);
                         break;
-                    case R.id.tv_priceRange:
+                    case R.id.tv_restaurantAddress:
                         findInGMaps(restaurantItem);
                         break;
                 }
@@ -349,7 +348,7 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
                 Uri gmmIntentUri = Uri.parse("geo:"+latitude+","+longitude);
                 Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
                 mapIntent.setPackage("com.google.android.apps.maps");
-                if (mapIntent.resolveActivity(Objects.requireNonNull(getActivity())
+                if (mapIntent.resolveActivity(requireActivity()
                         .getPackageManager()) != null) {
                     startActivity(mapIntent);
                 }

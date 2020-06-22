@@ -48,7 +48,6 @@ import com.inc.tracks.yummobile.utils.GlideApp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 
 public class ActiveOrdersFragment extends Fragment {
@@ -252,8 +251,10 @@ public class ActiveOrdersFragment extends Fragment {
                         List<OrderItem> filteredList = new ArrayList<>();
                         for (OrderItem order : activeOrders) {
                             RestaurantItem restaurantItem = restaurantItems.get(order.getRestaurantId());
-                            assert  restaurantItem != null;
-                            String restaurantName = restaurantItem.getName();
+                            String restaurantName = "";
+                            if(restaurantItem != null){
+                                restaurantName = restaurantItem.getName();
+                            }
                             if (order.getDescription().toLowerCase().contains(charString.toLowerCase())
                                 || restaurantName.toLowerCase().contains(charString.toLowerCase())) {
                                 filteredList.add(order);
@@ -282,6 +283,8 @@ public class ActiveOrdersFragment extends Fragment {
 
             TextView tvDescription;
             TextView tvOrderPrice;
+            TextView tvOrderId;
+            TextView tvOrderState;
             ProgressBar pbOrderProgress;
             ProgressBar pbOrderState;
             ProgressBar pbLoading;
@@ -296,6 +299,8 @@ public class ActiveOrdersFragment extends Fragment {
 
                 tvDescription = itemView.findViewById(R.id.tv_orderDesc);
                 tvOrderPrice = itemView.findViewById(R.id.tv_orderPrice);
+                tvOrderId = itemView.findViewById(R.id.tv_orderId);
+                tvOrderState = itemView.findViewById(R.id.tv_orderState);
                 pbOrderState = itemView.findViewById(R.id.pb_orderState);
                 pbOrderProgress = itemView.findViewById(R.id.pb_orderProgress);
                 pbLoading = itemView.findViewById(R.id.pb_activeOrder);
@@ -312,12 +317,15 @@ public class ActiveOrdersFragment extends Fragment {
                 if(restaurantItem != null && (transporter != null || !activeOrder.isAccepted())){
 
                     String message;
+                    String orderStateMessage;
 
                     if(activeOrder.isAccepted() && transporter != null){
                         message = "Order Confirmed! Click here to call "
                                 + transporter.getUserName() + " (" + transporter.getUserPhone() +
                                 ") to track your delivery of " + activeOrder.getDescription() +
                                 " from " + restaurantItem.getName();
+
+                        orderStateMessage = "Your order has been picked up!";
 
                         int orderProgress = activeOrder.getInitialDistance() - computeOrderDistance
                                 (activeOrder.getTransLocation(), UserAuth.mCurrentLocation);
@@ -326,12 +334,17 @@ public class ActiveOrdersFragment extends Fragment {
                                 (activeOrder.getTransLocation(), UserAuth.mCurrentLocation));
 
                         pbOrderProgress.setMax(activeOrder.getInitialDistance());
+                        pbOrderState.setMax(100);
 
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                             pbOrderProgress.setProgress(orderProgress, true);
+
+                            pbOrderState.setProgress(100, true);
                         }
                         else{
                             pbOrderProgress.setProgress(orderProgress);
+
+                            pbOrderState.setProgress(100);
                         }
 
                         if(activeOrder.isTransporterConfirmed()){
@@ -352,12 +365,20 @@ public class ActiveOrdersFragment extends Fragment {
                     else{
                         message = activeOrder.getDescription() + " from "
                                 + restaurantItem.getName() + " is coming up.";
+
+                        orderStateMessage = "Your order will be picked up soon.";
+
+                        pbOrderState.setProgress(0);
                     }
 
                     tvDescription.setText(message);
+                    tvOrderState.setText(orderStateMessage);
 
                     String price = "₦" + activeOrder.getCost();
                     tvOrderPrice.setText(price);
+
+                    String serialNumber = "order #" + Math.abs(activeOrder.getId().hashCode()) % 10000;
+                    tvOrderId.setText(serialNumber);
 
                     refreshThumbnail(restaurantItem);
                 }
@@ -432,7 +453,7 @@ public class ActiveOrdersFragment extends Fragment {
 
                     Intent dialerIntent = new Intent(Intent.ACTION_DIAL, phone);
 
-                    if (dialerIntent.resolveActivity(Objects.requireNonNull(getActivity())
+                    if (dialerIntent.resolveActivity(requireActivity()
                             .getPackageManager()) != null) {
                         startActivity(dialerIntent);
                     }

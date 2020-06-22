@@ -49,7 +49,6 @@ import com.inc.tracks.yummobile.utils.GlideApp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -159,7 +158,7 @@ public class ManagerMenuFragment extends Fragment implements View.OnClickListene
 
             Log.d("SparseArray",  "key =  " + tempItemId);
 
-            GlideApp.with(Objects.requireNonNull(getActivity()))
+            GlideApp.with(requireActivity())
                     .load(data.getData()).into(tempImageView);
         }
         super.onActivityResult(requestCode, resultCode, data);
