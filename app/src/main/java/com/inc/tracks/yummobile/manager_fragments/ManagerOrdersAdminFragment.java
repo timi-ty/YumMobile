@@ -301,7 +301,8 @@ public class ManagerOrdersAdminFragment extends Fragment{
                                 ").";
 
                         btnCallTransporter.setText(getResources().
-                                getString(R.string.call_transporter));
+                                getString(activeOrder.isPaidFor() ?
+                                        R.string.call_transporter : R.string.call_transporter_cash));
 
                         btnCallTransporter.setOnClickListener(this);
                     }

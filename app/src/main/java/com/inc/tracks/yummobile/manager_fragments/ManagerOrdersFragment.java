@@ -694,7 +694,7 @@ public class ManagerOrdersFragment extends Fragment{
                 if(restaurantItem != null && buyer != null){
                     String message = buyer.getUserName() +
                             " (" + buyer.getUserPhone() + ") is waiting for you " +
-                            "to deliver his order from " + restaurantItem.getName() + ".";
+                            "to deliver their order from " + restaurantItem.getName() + ".";
 
                     tvDesc.setText(message);
 
@@ -704,8 +704,11 @@ public class ManagerOrdersFragment extends Fragment{
                     tvTimestamp.setText(acceptedOrder.getTimestamp().toDate().toString());
 
                     boolean fulfilled = acceptedOrder.isTransporterConfirmed();
+                    boolean isPayedFor = acceptedOrder.isPaidFor();
+                    int fulfillMessage = isPayedFor ?
+                            R.string.confirm_delivery : R.string.confirm_cash_delivery;
                     btnOrderDelivered.setText(fulfilled ?
-                            R.string.wait_on_customer : R.string.confirm_delivered);
+                            R.string.wait_on_customer : fulfillMessage);
 
                     btnOrderDelivered.setOnClickListener(this);
 

@@ -51,13 +51,11 @@ public class ManagerCompletedOrdersFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
-    private RecyclerView rvOrders;
-
     private ConstraintLayout myLayout;
 
     private CompletedOrdersOrdersRVAdapter completedOrdersRVAdapter;
 
-    FirebaseFirestore fireDB;
+    private FirebaseFirestore fireDB;
 
     public ManagerCompletedOrdersFragment() {
         // Required empty public constructor
@@ -87,7 +85,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
 
         myLayout = fragView.findViewById(R.id.layout_orderManager);
 
-        rvOrders = fragView.findViewById(R.id.rv_completedOrders);
+        RecyclerView rvOrders = fragView.findViewById(R.id.rv_completedOrders);
 
         if (savedInstanceState == null) {
             completedOrdersRVAdapter = new CompletedOrdersOrdersRVAdapter();
@@ -307,11 +305,11 @@ public class ManagerCompletedOrdersFragment extends Fragment {
                 itemView.setOnClickListener(this);
             }
 
-            void bindView(final OrderItem activeOrder) {
-                this.completedOrder = activeOrder;
+            void bindView(final OrderItem completedOrder) {
+                this.completedOrder = completedOrder;
 
-                RestaurantItem restaurantItem = restaurantItems.get(activeOrder.getRestaurantId());
-                UserPrefs buyer = buyers.get(activeOrder.getClientId());
+                RestaurantItem restaurantItem = restaurantItems.get(completedOrder.getRestaurantId());
+                UserPrefs buyer = buyers.get(completedOrder.getClientId());
 
                 if (restaurantItem != null && buyer != null) {
                     String message = "Order for " + buyer.getUserName() +
@@ -321,11 +319,12 @@ public class ManagerCompletedOrdersFragment extends Fragment {
                     tvDesc.setText(message);
 
                     tvPrice.setText(String.format(Locale.ENGLISH,
-                            "%d", activeOrder.getCost()));
+                            "%d", completedOrder.getCost()));
 
-                    tvTimestamp.setText(activeOrder.getTimestamp().toDate().toString());
+                    tvTimestamp.setText(completedOrder.getTimestamp().toDate().toString());
 
-                    btnAcceptOrder.setText(R.string.close_order);
+                    btnAcceptOrder.setText(completedOrder.isPaidFor() ?
+                            R.string.close_transaction : R.string.close_cash_transaction);
 
                     btnAcceptOrder.setOnClickListener(this);
 
@@ -333,7 +332,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
                 }
                 if (restaurantItem == null) {
                     fireDB.collection("restaurants")
-                            .document(activeOrder.getRestaurantId())
+                            .document(completedOrder.getRestaurantId())
                             .get()
                             .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                                 @Override
@@ -341,7 +340,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
                                     RestaurantItem restaurantItem = documentSnapshot
                                             .toObject(RestaurantItem.class);
 
-                                    restaurantItems.put(activeOrder.getRestaurantId(),
+                                    restaurantItems.put(completedOrder.getRestaurantId(),
                                             restaurantItem);
 
                                     notifyItemChanged(getAdapterPosition());
@@ -350,7 +349,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
                 }
                 if (buyer == null) {
                     fireDB.collection("users")
-                            .document(activeOrder.getClientId())
+                            .document(completedOrder.getClientId())
                             .get()
                             .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                                 @Override
@@ -358,7 +357,7 @@ public class ManagerCompletedOrdersFragment extends Fragment {
                                     UserPrefs buyer = documentSnapshot
                                             .toObject(UserPrefs.class);
 
-                                    buyers.put(activeOrder.getClientId(),
+                                    buyers.put(completedOrder.getClientId(),
                                             buyer);
 
                                     notifyItemChanged(getAdapterPosition());
