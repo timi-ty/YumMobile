@@ -196,9 +196,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@color/white"
-        app:layout_constraintBottom_toTopOf="@+id/divider13"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/guideline8">
+        app:layout_constraintStart_toStartOf="@+id/guideline8"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/tv_defaultPayment"
