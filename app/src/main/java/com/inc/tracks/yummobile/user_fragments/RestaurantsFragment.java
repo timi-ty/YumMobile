@@ -277,10 +277,10 @@ public class RestaurantsFragment extends Fragment{
                 tvName.setText(restaurantItem.getName());
 
                 tvAddress.setText(restaurantItem.getAddress());
-
-                String range = "₦" + restaurantItem.getPriceRange().get(0)
-                        + " - ₦" + restaurantItem.getPriceRange().get(1);
-                tvRange.setText(range);
+                Integer[] range = restaurantItem.getPriceRange().toArray(new Integer[2]);
+                String s_range = "₦" + range[0]
+                        + " - ₦" + range[1];
+                tvRange.setText(s_range);
 
                 refreshThumbnail(restaurantItem);
             }

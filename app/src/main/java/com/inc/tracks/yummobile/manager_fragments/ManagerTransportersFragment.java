@@ -324,7 +324,7 @@ public class ManagerTransportersFragment extends Fragment{
 
                     Intent dialerIntent = new Intent(Intent.ACTION_DIAL, phone);
 
-                    if (dialerIntent.resolveActivity(Objects.requireNonNull(getActivity())
+                    if (dialerIntent.resolveActivity(requireActivity()
                             .getPackageManager()) != null) {
                         startActivity(dialerIntent);
                     }

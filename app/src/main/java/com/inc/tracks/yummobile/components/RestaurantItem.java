@@ -18,7 +18,7 @@ public class RestaurantItem implements Serializable {
     private String address;
     private String description;
     private String imgRef;
-    private ArrayList<Integer> priceRange;
+    private ArrayList<Integer> priceRange = new ArrayList<>();
 
     private Double latitude;
     private Double longitude;

@@ -6,9 +6,12 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -20,6 +23,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -35,6 +39,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -42,10 +47,14 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.inc.tracks.yummobile.R;
+import com.inc.tracks.yummobile.components.AppInfo;
 import com.inc.tracks.yummobile.components.MessageDialog;
 import com.inc.tracks.yummobile.components.RestaurantItem;
 import com.inc.tracks.yummobile.components.UserAuth;
+import com.inc.tracks.yummobile.components.UserPrefs;
 import com.inc.tracks.yummobile.manager_activities.ManagerActivity;
 import com.inc.tracks.yummobile.user_fragments.ActiveOrdersFragment;
 import com.inc.tracks.yummobile.user_fragments.HomeFragment;
@@ -101,16 +110,16 @@ public class MainActivity extends AppCompatActivity implements
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
-            switch (item.getItemId()) {
-                case R.id.navigation_home:
-                    goToHomeFragment();
-                    return true;
-                case R.id.navigation_catalogue:
-                    goToRestaurantsFragment();
-                    return true;
-                case R.id.navigation_orders:
-                    goToOrdersFragment();
-                    return true;
+            int itemId = item.getItemId();
+            if (itemId == R.id.navigation_home) {
+                goToHomeFragment();
+                return true;
+            } else if (itemId == R.id.navigation_catalogue) {
+                goToRestaurantsFragment();
+                return true;
+            } else if (itemId == R.id.navigation_orders) {
+                goToOrdersFragment();
+                return true;
             }
             return false;
         }
@@ -126,24 +135,24 @@ public class MainActivity extends AppCompatActivity implements
 
         myLayout = findViewById(R.id.layout_mainActivity);
 
-        bottomNavView = findViewById(R.id.bottom_nav_view);
-        myToolbar = findViewById(R.id.toolbar);
 
+        myToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
 
+        bottomNavView = findViewById(R.id.bottom_nav_view);
         bottomNavView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         bottomMenu = bottomNavView.getMenu();
 
 
-        if(savedInstanceState == null){
+        if (savedInstanceState == null) {
             goToHomeFragment();
         }
 
-        initializeSideNav(myToolbar);
-
-        if(hasLocationPermission()){
+        if (hasLocationPermission()) {
             createLocationRequest();
         }
+
+        requestAppInfo();
 
         locationCallback = new LocationCallback() {
             @Override
@@ -153,13 +162,19 @@ public class MainActivity extends AppCompatActivity implements
                 }
                 UserAuth.mCurrentLocation = locationResult.getLastLocation();
 
-                if(homeFragment != null)
+                if (homeFragment != null)
                     homeFragment.onLocationUpdate();
 
-                if(activeOrdersFragment != null)
+                if (activeOrdersFragment != null)
                     activeOrdersFragment.onLocationUpdate();
             }
         };
+    }
+
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        initializeSideNav(myToolbar);
     }
 
     @Override
@@ -187,18 +202,19 @@ public class MainActivity extends AppCompatActivity implements
             public boolean onQueryTextSubmit(String query) {
                 return false;
             }
+
             @Override
             public boolean onQueryTextChange(String newText) {
-                if(homeFragment != null){
+                if (homeFragment != null) {
                     homeFragment.onSearchQuery(newText);
                 }
-                if(menuFragment != null){
+                if (menuFragment != null) {
                     menuFragment.onSearchQuery(newText);
                 }
-                if(activeOrdersFragment != null){
+                if (activeOrdersFragment != null) {
                     activeOrdersFragment.onSearchQuery(newText);
                 }
-                if(restaurantsFragment != null){
+                if (restaurantsFragment != null) {
                     restaurantsFragment.onSearchQuery(newText);
                 }
                 return true;
@@ -209,16 +225,15 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if(requestCode == RC_PERMISSION_LOCATION){
-            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+        if (requestCode == RC_PERMISSION_LOCATION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Snackbar.make(myLayout, "Location Permission Granted.",
                         Snackbar.LENGTH_SHORT).show();
 
                 createLocationRequest();
 
                 startLocationUpdates();
-            }
-            else{
+            } else {
                 Snackbar.make(myLayout, "You Must Grant Location Permission " +
                         "For Convenient Shopping And Delivery.", Snackbar.LENGTH_SHORT).show();
             }
@@ -228,14 +243,10 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onFragmentInteraction(int interactionId, RestaurantItem restaurantItem) {
-        switch (interactionId){
-            case R.id.item_nearRestaurant:
-            case R.id.item_catalogueRestaurant:
-                goToMenuFragment(restaurantItem);
-                break;
-            case R.id.tv_viewMore:
-                goToRestaurantsFragment();
-                break;
+        if (interactionId == R.id.item_nearRestaurant || interactionId == R.id.item_catalogueRestaurant) {
+            goToMenuFragment(restaurantItem);
+        } else if (interactionId == R.id.tv_viewMore) {
+            goToRestaurantsFragment();
         }
     }
 
@@ -246,11 +257,11 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onFragmentInteraction(int interactionId) {
-        if(manageCardsFragment != null){
+        if (manageCardsFragment != null) {
             boolean isConsumed = manageCardsFragment.cardInteraction(interactionId);
-            if(isConsumed) return;
+            if (isConsumed) return;
         }
-        if(interactionId == R.id.btn_back){
+        if (interactionId == R.id.btn_back) {
             onBackPressed();
 
             new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
@@ -269,6 +280,16 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         fusedLocationClient.requestLocationUpdates(locationRequest,
                 locationCallback,
                 Looper.getMainLooper());
@@ -278,12 +299,12 @@ public class MainActivity extends AppCompatActivity implements
         fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
-    private void checkVisibleFragment(){
-        HomeFragment homeFrag = (HomeFragment)fragmentManager.findFragmentByTag(HOME_FRAG_TAG);
-        MenuFragment menuFrag= (MenuFragment)fragmentManager.findFragmentByTag(MENU_FRAG_TAG);
-        RestaurantsFragment restFrag = (RestaurantsFragment)fragmentManager.findFragmentByTag(RESTAURANTS_FRAG_TAG);
-        ActiveOrdersFragment ordersFrag = (ActiveOrdersFragment)fragmentManager.findFragmentByTag(ORDERS_FRAG_TAG);
-        ManageCardsFragment manageCardsFrag = (ManageCardsFragment)fragmentManager.findFragmentByTag(MANAGE_CARDS_FRAG_TAG);
+    private void checkVisibleFragment() {
+        HomeFragment homeFrag = (HomeFragment) fragmentManager.findFragmentByTag(HOME_FRAG_TAG);
+        MenuFragment menuFrag = (MenuFragment) fragmentManager.findFragmentByTag(MENU_FRAG_TAG);
+        RestaurantsFragment restFrag = (RestaurantsFragment) fragmentManager.findFragmentByTag(RESTAURANTS_FRAG_TAG);
+        ActiveOrdersFragment ordersFrag = (ActiveOrdersFragment) fragmentManager.findFragmentByTag(ORDERS_FRAG_TAG);
+        ManageCardsFragment manageCardsFrag = (ManageCardsFragment) fragmentManager.findFragmentByTag(MANAGE_CARDS_FRAG_TAG);
         if (homeFrag != null && homeFrag.isVisible()) {
             goToHomeFragment();
         }
@@ -301,8 +322,8 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    private void goToHomeFragment(){
-        if(homeFragment == null){
+    private void goToHomeFragment() {
+        if (homeFragment == null) {
             homeFragment = HomeFragment.newInstance();
         }
 
@@ -321,11 +342,10 @@ public class MainActivity extends AppCompatActivity implements
         myToolbar.setTitle(R.string.prompt_restaurant_search);
     }
 
-    private void goToMenuFragment(RestaurantItem restaurantItem){
-        if(menuFragment == null){
+    private void goToMenuFragment(RestaurantItem restaurantItem) {
+        if (menuFragment == null) {
             menuFragment = MenuFragment.newInstance(restaurantItem);
-        }
-        else if(restaurantItem != null){
+        } else if (restaurantItem != null) {
             menuFragment.updateActiveRestaurantItem(restaurantItem);
         }
 
@@ -343,8 +363,8 @@ public class MainActivity extends AppCompatActivity implements
         myToolbar.setTitle(R.string.prompt_menu_search);
     }
 
-    private void goToRestaurantsFragment(){
-        if(restaurantsFragment == null){
+    private void goToRestaurantsFragment() {
+        if (restaurantsFragment == null) {
             restaurantsFragment = RestaurantsFragment.newInstance();
         }
 
@@ -361,8 +381,8 @@ public class MainActivity extends AppCompatActivity implements
         myToolbar.setTitle(R.string.prompt_restaurant_search);
     }
 
-    private void goToOrdersFragment(){
-        if(activeOrdersFragment == null){
+    private void goToOrdersFragment() {
+        if (activeOrdersFragment == null) {
             activeOrdersFragment = ActiveOrdersFragment.newInstance();
         }
 
@@ -382,8 +402,8 @@ public class MainActivity extends AppCompatActivity implements
         myToolbar.setTitle(R.string.prompt_order_search);
     }
 
-    private void goToManageCardsFragment(){
-        if(manageCardsFragment == null){
+    private void goToManageCardsFragment() {
+        if (manageCardsFragment == null) {
             manageCardsFragment = ManageCardsFragment.newInstance();
         }
 
@@ -397,34 +417,34 @@ public class MainActivity extends AppCompatActivity implements
         bottomNavView.setVisibility(View.GONE);
     }
 
-    private void goToCart(HashMap orderSummary){
+    private void goToCart(HashMap orderSummary) {
         Intent orderIntent = new Intent(this, OrderActivity.class);
         orderIntent.putExtra("cart", orderSummary);
         startActivity(orderIntent);
     }
 
-    private void startManagingServices(){
+    private void startManagingServices() {
         Intent managerIntent = new Intent(MainActivity.this, ManagerActivity.class);
         managerIntent.putExtra("mode", "manage");
         startActivity(managerIntent);
     }
 
-    private void startTransportingOrders(){
+    private void startTransportingOrders() {
         Intent managerIntent = new Intent(MainActivity.this, ManagerActivity.class);
         managerIntent.putExtra("mode", "transport");
         startActivity(managerIntent);
     }
 
-    private void initializeSideNav(Toolbar mToolbar){
+    private void initializeSideNav(Toolbar mToolbar) {
         ActionBarDrawerToggle drawerToggle;
         NavigationView sideNavView;
         final DrawerLayout drawerLayout = findViewById(R.id.layout_mainActivity);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, mToolbar, R.string.open, R.string.close);
 
-
         drawerLayout.addDrawerListener(drawerToggle);
 
         drawerToggle.syncState();
+        
 
         sideNavView = findViewById(R.id.side_nav_view);
 
@@ -438,52 +458,76 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 int id = item.getItemId();
-                switch(id)
-                {
-                    case R.id.side_nav_home:
-                        goToHomeFragment();
-                        drawerLayout.closeDrawers();
-                        break;
-                    case R.id.side_nav_orders:
-                        goToOrdersFragment();
-                        drawerLayout.closeDrawers();
-                        break;
-                    case R.id.side_nav_support:
-                        Toast.makeText(MainActivity.this, "Support",
-                                Toast.LENGTH_SHORT).show();
-                        break;
-                    case R.id.side_nav_about:
-                        Toast.makeText(MainActivity.this, "About",
-                                Toast.LENGTH_SHORT).show();
-                        break;
-                    case R.id.side_nav_payment_methods:
-                        goToManageCardsFragment();
-                        drawerLayout.closeDrawers();
-                        break;
-                    case R.id.side_nav_sign_out:
-                        signOutToLauncher();
-                        break;
-                    case R.id.side_nav_manage_services:
-                        startManagingServices();
-                        break;
-                    case R.id.side_nav_transport_orders:
-                        startTransportingOrders();
-                        break;
-                    default:
-                        return true;
+                //The Android developers decided to make the resource ids non-final which
+                //means they should no longer be used with switch statements, hence the
+                //long chain of conditionals.
+                if (id == R.id.side_nav_home) {
+                    goToHomeFragment();
+                    drawerLayout.closeDrawers();
+                } else if (id == R.id.side_nav_orders) {
+                    goToOrdersFragment();
+                    drawerLayout.closeDrawers();
+                } else if (id == R.id.side_nav_support) {
+                    callCustomerSupport();
+                } else if (id == R.id.side_nav_about) {
+                    Toast.makeText(MainActivity.this, "About",
+                            Toast.LENGTH_SHORT).show();
+                } else if (id == R.id.side_nav_payment_methods) {
+                    goToManageCardsFragment();
+                    drawerLayout.closeDrawers();
+                } else if (id == R.id.side_nav_sign_out) {
+                    signOutToLauncher();
+                } else if (id == R.id.side_nav_manage_services) {
+                    startManagingServices();
+                } else if (id == R.id.side_nav_transport_orders) {
+                    startTransportingOrders();
+                } else {
+                    return true;
                 }
                 return true;
             }
         });
     }
 
-    private void signOutToLauncher(){
-         FirebaseAuth.getInstance().signOut();
+    private void signOutToLauncher() {
+        FirebaseAuth.getInstance().signOut();
 
-         Intent mainActivityIntent = new Intent(MainActivity.this,
-                 Launcher.class);
-         startActivity(mainActivityIntent);
-         MainActivity.this.finish();
+        Intent mainActivityIntent = new Intent(MainActivity.this,
+                Launcher.class);
+        startActivity(mainActivityIntent);
+        MainActivity.this.finish();
+    }
+
+    private void requestAppInfo(){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("appInfo")
+                .document("main")
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if(task.isSuccessful()){
+                            DocumentSnapshot appInfoDocument = task.getResult();
+                            assert appInfoDocument != null;
+                            AppInfo.setCachedInstance(appInfoDocument.toObject(AppInfo.class));
+                            Log.w(this.toString(), "Cached Was Null: " + AppInfo.getCachedInstance(), task.getException());
+                        } else {
+                            Log.w(this.toString(), "Error getting app info.", task.getException());
+                        }
+                    }
+                });
+    }
+
+    private void callCustomerSupport(){
+        Uri phone = Uri.parse("tel:" + AppInfo.getCachedInstance().getCustomerSupportPhone());
+
+        Intent dialerIntent = new Intent(Intent.ACTION_DIAL, phone);
+
+        if (dialerIntent.resolveActivity(this
+                .getPackageManager()) != null) {
+            startActivity(dialerIntent);
+        }
     }
 
     protected void createLocationRequest() {
@@ -508,22 +552,31 @@ public class MainActivity extends AppCompatActivity implements
                 new Handler(getMainLooper()).postDelayed(new Runnable() {
                     @Override
                     public void run() {
+                        if (ActivityCompat.checkSelfPermission(myLayout.getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(myLayout.getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            // TODO: Consider calling
+                            //    ActivityCompat#requestPermissions
+                            // here to request the missing permissions, and then overriding
+                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                            //                                          int[] grantResults)
+                            // to handle the case where the user grants the permission. See the documentation
+                            // for ActivityCompat#requestPermissions for more details.
+                            return;
+                        }
                         fusedLocationClient.getLastLocation()
                                 .addOnSuccessListener(MainActivity.this, new OnSuccessListener<Location>() {
                                     @Override
                                     public void onSuccess(Location location) {
-                                        if(location != null && location.getTime() >
+                                        if (location != null && location.getTime() >
                                                 Calendar.getInstance().getTimeInMillis() - 2 * 60 * 1000) {
 
                                             UserAuth.mCurrentLocation = location;
 
-                                            if(homeFragment != null)
+                                            if (homeFragment != null)
                                                 homeFragment.onLocationUpdate();
 
-                                            if(activeOrdersFragment != null)
+                                            if (activeOrdersFragment != null)
                                                 activeOrdersFragment.onLocationUpdate();
-                                        }
-                                        else {
+                                        } else {
                                             Snackbar snack = Snackbar.make(myLayout,
                                                     "Location Update Timed Out.",
                                                     Snackbar.LENGTH_SHORT);

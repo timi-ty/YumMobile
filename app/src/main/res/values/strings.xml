@@ -125,4 +125,5 @@
     <string name="no_price_range">No price range</string>
     <string name="sample_price_range">₦0.00 - ₦0.00</string>
     <string name="add_card">Add Card</string>
+    <string name="customer_support_hotline">customer support hotline</string>
 </resources>

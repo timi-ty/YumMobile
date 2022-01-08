@@ -293,9 +293,10 @@ public class ManagerRestaurantsFragment extends Fragment implements View.OnClick
                 this.restaurantItem = restaurantItem;
 
                 tvName.setText(restaurantItem.getName());
-                String range = "₦" + restaurantItem.getPriceRange().get(0)
-                        + " - ₦" + restaurantItem.getPriceRange().get(1);
-                tvRange.setText(range);
+                Integer[] range = restaurantItem.getPriceRange().toArray(new Integer[2]);
+                String s_range = "₦" + range[0]
+                        + " - ₦" + range[1];
+                tvRange.setText(s_range);
                 tvAddress.setText(restaurantItem.getAddress());
 
                 if(restaurantItem.getLocation() != null){

@@ -289,9 +289,10 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
                             break;
                         case R.id.tv_priceRange:
                             if(currentRestItem.getPriceRange() != null){
-                                String range = "₦" + currentRestItem.getPriceRange().get(0) + " - ₦"
-                                        + currentRestItem.getPriceRange().get(1);
-                                displayField.setText(range);
+                                Integer[] range = currentRestItem.getPriceRange().toArray(new Integer[2]);
+                                String sRange = "₦" + range[0] + " - ₦"
+                                        + range[1];
+                                displayField.setText(sRange);
                             }
                             else{
                                 displayField.setText(R.string.no_price_range);
@@ -515,8 +516,9 @@ public class ManagerRestaurantsEditorFragment extends Fragment implements
 
     private void updateEditorUi(){
         boolean _check_1 = txtRestaurantName.getText().toString().equals(currentRestItem.getName());
-        boolean _check_2 = txtMinPrice.getText().toString().equals(String.valueOf(currentRestItem.getPriceRange().get(0)));
-        boolean _check_3 = txtMaxPrice.getText().toString().equals(String.valueOf(currentRestItem.getPriceRange().get(1)));
+        Integer[] range = currentRestItem.getPriceRange().toArray(new Integer[2]);
+        boolean _check_2 = txtMinPrice.getText().toString().equals(String.valueOf(range[0]));
+        boolean _check_3 = txtMaxPrice.getText().toString().equals(String.valueOf(range[1]));
         boolean _check_4 = txtRestaurantAddress.getText().toString().equals(currentRestItem.getAddress());
         boolean _check_5 = restImgUri == null;
         boolean _check_6 = currentRestItem.getId() != null;

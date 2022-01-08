@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_number": "279907092185",
+    "firebase_url": "https://yum-mobile-32.firebaseio.com",
+    "project_id": "yum-mobile-32",
+    "storage_bucket": "yum-mobile-32.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:279907092185:android:1318141f479aa10bef60c8",
+        "android_client_info": {
+          "package_name": "com.inc.tracks.yummobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "279907092185-dbed72nlibuate2dfe4jem6sbd4scv0g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.inc.tracks.yummobile",
+            "certificate_hash": "d6c62e9a8929f87dc372c4ca2f664b1d12a1fe32"
+          }
+        },
+        {
+          "client_id": "279907092185-8b1orfcj8qnnvuism2ga42pmbsg5kohn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.inc.tracks.yummobile",
+            "certificate_hash": "47b5649e2cdc0e03a954d8dd1b196fbda753760b"
+          }
+        },
+        {
+          "client_id": "279907092185-or1b072hra2r1ff6s7rlgbhdn998l3ql.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANrcmJBY8_Pf4FPZmhyEr8Z3f3MCv9AhA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "279907092185-8d5e1efsv29c1c4jhjvbv2g89pokp9b8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
